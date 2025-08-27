@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kramp - Inteligentny Asystent Części Zamiennych</title>
+    <meta name="description" content="Universal Soldier - Elitarny bot e-commerce dla Kramp">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚜</text></svg>">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">🚜</div>
+                <div class="logo-text">
+                    <h1>Kramp Assistant</h1>
+                    <span>Powered by Universal Soldier</span>
+                </div>
+            </div>
+            <div class="header-badge">
+                <div class="company-badge">
+                    <span>🛒</span>
+                    E-commerce Solution
+                </div>
+                <div class="security-indicator">
+                    <span>🔒</span>
+                    Secure
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Chat Interface -->
+        <div id="chat-interface" class="chat-interface">
+            <div class="chat-header">
+                <div class="chat-status">
+                    <div class="status-indicator"></div>
+                    <span>Asystent Kramp - <strong>Online</strong></span>
+                </div>
+                <div class="header-controls">
+                    <div class="cart-counter" id="cart-counter">
+                        🛒 Koszyk: 0
+                    </div>
+                    <button id="reset-btn" class="reset-btn" type="button">
+                        <span>🔄</span>
+                        Nowa sesja
+                    </button>
+                </div>
+            </div>
+            
+            <div id="messages-container" class="messages-container">
+                <!-- Messages will be added dynamically -->
+            </div>
+            
+            <div class="input-section">
+                <div id="button-container" class="button-container">
+                    <!-- Buttons will be added dynamically -->
+                </div>
+                
+                <div id="text-input-container" class="text-input-container">
+                    <form class="input-group" id="message-form">
+                        <input
+                            type="text"
+                            id="user-input"
+                            placeholder="Wpisz pytanie o produkty Kramp..."
+                            autocomplete="off"
+                            maxlength="500"
+                        >
+                        <button id="send-btn" class="send-btn" type="submit">
+                            <span>Wyślij</span>
+                            <span class="btn-icon">📤</span>
+                        </button>
+                    </form>
+                    <div class="input-hint">
+                        <small>💡 Możesz zapytać o części, dostawę, płatności lub pomoc w doborze produktów</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <div class="company">Kramp Demo</div>
+                <div class="version">Universal Soldier v2.0</div>
+                <div class="copyright">© 2024 Adept AI</div>
+            </div>
+            <div class="footer-center">
+                <div class="compliance-badges">
+                    <div class="badge">
+                        <span>🚚</span>
+                        Dostawa 24h
+                    </div>
+                    <div class="badge">
+                        <span>💳</span>
+                        Bezpieczne płatności
+                    </div>
+                    <div class="badge">
+                        <span>✅</span>
+                        Gwarancja 24m
+                    </div>
+                </div>
+            </div>
+            <div class="footer-right">
+                <div class="tech-stack">Powered by Adept AI</div>
+                <div class="support-info">
+                    <a href="mailto:support@kramp.com" class="support-link">
+                        📧 support@kramp.com
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Przetwarzam zapytanie...</p>
+        </div>
+    </div>
+    
+    <!-- Product Preview Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Podgląd produktu</h3>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-body" id="product-preview">
+                <!-- Product details will be shown here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</body>
+</html>
