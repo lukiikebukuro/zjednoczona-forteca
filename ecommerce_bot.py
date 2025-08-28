@@ -177,71 +177,143 @@ class EcommerceBot:
         return query
     
     def get_fuzzy_product_matches(self, query, machine_filter=None, limit=6):
-        """Inteligentne dopasowanie produktów z fuzzy matching"""
+        """Inteligentne dopasowanie produktów z fuzzy matching i kontekstowym ważeniem"""
         query = self.normalize_query(query)
         matches = []
+        
+        # Wagi dla różnych typów dopasowań
+        weights = {
+            'exact_id': 100,     # Dokładne dopasowanie ID
+            'exact_name': 90,    # Dokładne dopasowanie nazwy
+            'brand': 85,         # Dopasowanie marki
+            'model': 80,         # Dopasowanie modelu
+            'category': 70,      # Dopasowanie kategorii
+            'partial': 60,       # Częściowe dopasowanie
+            'token': 50          # Dopasowanie tokenów
+        }
         
         for product in self.product_database['products']:
             if machine_filter and product['machine'] != machine_filter and product['machine'] != 'uniwersalny':
                 continue
+                
+            # Inicjalizacja bazowego wyniku
+            final_score = 0
             
-            search_text = f"{product['name']} {product['category']} {product['brand']} {product['model']} {product['id']}"
-            
-            scores = [
-                fuzz.ratio(query, search_text.lower()),
-                fuzz.partial_ratio(query, search_text.lower()),
-                fuzz.token_sort_ratio(query, search_text.lower()),
-                fuzz.token_set_ratio(query, search_text.lower())
-            ]
-            
+            # 1. Sprawdzanie dokładnych dopasowań
+            if query == product['id'].lower():
+                final_score = weights['exact_id']
+            elif query == product['name'].lower():
+                final_score = weights['exact_name']
+                
+            # 2. Dopasowania marki i modelu
             brand_score = fuzz.ratio(query, product['brand'].lower())
+            if brand_score > 85:
+                final_score = max(final_score, weights['brand'])
+                
             model_score = fuzz.ratio(query, product['model'].lower())
+            if model_score > 85:
+                final_score = max(final_score, weights['model'])
+                
+            # 3. Dopasowanie kategorii
+            if query in product['category'].lower():
+                final_score = max(final_score, weights['category'])
+                
+            # 4. Dopasowania częściowe i tokenowe
+            if not final_score:  # Jeśli nie znaleziono dokładnych dopasowań
+                search_text = f"{product['name']} {product['category']} {product['brand']} {product['model']}"
+                search_text = search_text.lower()
+                
+                # Częściowe dopasowania
+                partial_score = fuzz.partial_ratio(query, search_text)
+                if partial_score > 75:
+                    final_score = max(final_score, weights['partial'] * (partial_score / 100))
+                
+                # Dopasowania tokenów
+                token_score = fuzz.token_set_ratio(query, search_text)
+                if token_score > 60:
+                    final_score = max(final_score, weights['token'] * (token_score / 100))
+                    
+                # Bonus za dopasowanie fragmentów
+                query_words = query.split()
+                product_words = search_text.split()
+                for q_word in query_words:
+                    if len(q_word) > 2:  # Ignorujemy krótkie słowa
+                        for p_word in product_words:
+                            if q_word in p_word and len(p_word) > 2:
+                                final_score += 5  # Mały bonus za każde dopasowanie fragmentu
+                
+            # 5. Normalizacja końcowego wyniku
+            final_score = min(100, final_score)
             
-            max_score = max(scores)
-            
-            if brand_score > 80:
-                max_score = min(100, max_score + 15)
-            if model_score > 80:
-                max_score = min(100, max_score + 15)
-            
-            query_words = query.split()
-            search_words = search_text.lower().split()
-            for q_word in query_words:
-                for s_word in search_words:
-                    if q_word in s_word or s_word in q_word:
-                        max_score = min(100, max_score + 10)
-                        break
-            
-            if max_score >= 40:
-                matches.append((product, max_score))
+            # Dodaj do wyników jeśli przekroczono próg
+            if final_score >= 45:
+                matches.append((product, final_score))
         
+        # Sortowanie po wyniku
         matches.sort(key=lambda x: x[1], reverse=True)
         return matches[:limit]
     
     def get_fuzzy_faq_matches(self, query, limit=5):
-        """Dopasowanie FAQ z fuzzy matching"""
+        """Dopasowanie FAQ z inteligentnym ważeniem kontekstowym"""
         query = self.normalize_query(query)
         matches = []
         
         for faq in self.faq_database:
-            search_text = f"{faq['question']} {' '.join(faq['keywords'])}"
+            # Przygotowanie tekstu do przeszukiwania
+            question = faq['question'].lower()
+            keywords = [k.lower() for k in faq['keywords']]
+            category = faq.get('category', '').lower()
             
-            scores = [
-                fuzz.ratio(query, search_text.lower()),
-                fuzz.partial_ratio(query, search_text.lower()),
-                fuzz.token_sort_ratio(query, search_text.lower()),
-                fuzz.token_set_ratio(query, search_text.lower())
-            ]
+            # System punktacji
+            final_score = 0
             
-            max_score = max(scores)
+            # 1. Sprawdzanie dokładnych dopasowań
+            if query == question:
+                final_score = 100
+            elif query in keywords:
+                final_score = 90
+                
+            # 2. Dopasowania częściowe
+            if not final_score:
+                # Dopasowanie do pytania
+                question_score = fuzz.ratio(query, question)
+                if question_score > 80:
+                    final_score = max(final_score, question_score)
+                    
+                # Dopasowanie do słów kluczowych
+                for keyword in keywords:
+                    keyword_score = fuzz.ratio(query, keyword)
+                    if keyword_score > 85:
+                        final_score = max(final_score, keyword_score + 5)
+                
+                # Dopasowanie tokenów
+                search_text = f"{question} {' '.join(keywords)}"
+                token_score = fuzz.token_set_ratio(query, search_text.lower())
+                if token_score > 60:
+                    final_score = max(final_score, token_score)
+                    
+                # Bonusy za dopasowania częściowe
+                query_words = query.split()
+                for q_word in query_words:
+                    if len(q_word) > 2:  # Ignorujemy krótkie słowa
+                        # Sprawdzamy w pytaniu
+                        if q_word in question:
+                            final_score += 5
+                        # Sprawdzamy w słowach kluczowych
+                        if any(q_word in k for k in keywords):
+                            final_score += 8
+                        # Bonus za dopasowanie kategorii
+                        if category and q_word in category:
+                            final_score += 10
+                
+            # Normalizacja wyniku
+            final_score = min(100, final_score)
             
-            for keyword in faq['keywords']:
-                if fuzz.partial_ratio(query, keyword) > 75:
-                    max_score = min(100, max_score + 10)
-            
-            if max_score >= 35:
-                matches.append((faq, max_score))
-        
+            # Dodawanie do wyników jeśli przekroczono próg
+            if final_score >= 40:
+                matches.append((faq, final_score))
+                
+        # Sortowanie po wyniku
         matches.sort(key=lambda x: x[1], reverse=True)
         return matches[:limit]
     
