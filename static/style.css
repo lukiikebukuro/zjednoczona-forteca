@@ -1,5 +1,319 @@
-/* Responsive - Mobile First Approach */
-@media (max-width: 768px) {
+/* Mobile First - Base styles for mobile devices */
+@media screen and (max-width: 480px) {
+    /* Viewport adjustments */
+    body {
+        touch-action: manipulation; /* Prevent double-tap zoom */
+        -webkit-text-size-adjust: 100%; /* Prevent font size adjustment */
+    }
+    
+    /* Header mobile optimization */
+    .app-header {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+    }
+    
+    .header-content {
+        padding: 0.5rem;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .logo-section {
+        gap: 0.5rem;
+    }
+    
+    .logo-icon {
+        font-size: 1.5rem;
+    }
+    
+    .logo-text h1 {
+        font-size: 1rem;
+    }
+    
+    .logo-text span {
+        display: none; /* Hide tagline on very small screens */
+    }
+    
+    .header-badge {
+        display: none; /* Hide badges on mobile */
+    }
+    
+    /* Main content mobile */
+    .main-content {
+        padding: 0.5rem;
+        padding-top: 60px; /* Account for fixed header */
+        padding-bottom: 60px; /* Account for fixed footer */
+    }
+    
+    /* Chat interface full screen on mobile */
+    .chat-interface {
+        height: calc(100vh - 120px); /* Full height minus header and footer */
+        border-radius: 8px;
+        margin-bottom: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Chat header mobile */
+    .chat-header {
+        padding: 0.75rem;
+    }
+    
+    .chat-status {
+        font-size: 0.8rem;
+    }
+    
+    .cart-counter {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .reset-btn {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Messages mobile optimization */
+    .messages-container {
+        padding: 0.75rem;
+        /* Smooth scrolling on iOS */
+        -webkit-overflow-scrolling: touch;
+        /* Prevent horizontal scroll */
+        overflow-x: hidden;
+    }
+    
+    .message {
+        margin-bottom: 1rem;
+    }
+    
+    .message-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+    }
+    
+    .message-content {
+        max-width: 85%;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+    
+    /* Input section mobile */
+    .input-section {
+        padding: 0.75rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        border-top: 2px solid var(--gray-200);
+        z-index: 100;
+    }
+    
+    /* Buttons mobile - full width */
+    .button-container {
+        gap: 0.5rem;
+        max-height: 150px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .action-btn {
+        min-width: 100%;
+        padding: 0.75rem;
+        font-size: 0.875rem;
+        min-height: 44px; /* iOS touch target */
+    }
+    
+    /* Text input mobile */
+    .input-group {
+        gap: 0.5rem;
+    }
+    
+    .input-group input {
+        padding: 0.75rem;
+        font-size: 16px; /* Prevent zoom on iOS */
+        border-radius: 20px; /* More touch-friendly */
+    }
+    
+    .send-btn {
+        padding: 0.75rem;
+        min-width: 60px;
+        border-radius: 20px;
+    }
+    
+    .btn-icon {
+        display: none; /* Hide icon on mobile to save space */
+    }
+    
+    .input-hint {
+        display: none; /* Hide hint on mobile */
+    }
+    
+    /* Suggestions dropdown mobile */
+    .suggestions-dropdown {
+        max-height: 40vh; /* Limit height on mobile */
+        bottom: calc(100% + 2px);
+        left: 0;
+        right: 0;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .suggestion-item {
+        padding: 0.875rem;
+        min-height: 44px;
+    }
+    
+    .suggestion-product-name {
+        font-size: 0.875rem;
+    }
+    
+    .suggestion-product-details {
+        font-size: 0.75rem;
+    }
+    
+    .suggestion-price {
+        font-size: 0.875rem;
+    }
+    
+    /* Footer mobile - simplified */
+    .app-footer {
+        display: none; /* Hide footer on mobile to save space */
+    }
+    
+    /* Loading overlay mobile */
+    .loading-overlay {
+        background: rgba(0, 0, 0, 0.8);
+    }
+    
+    .loading-spinner {
+        padding: 1.5rem;
+    }
+    
+    /* Modal mobile */
+    .modal-content {
+        width: 95%;
+        padding: 1rem;
+    }
+}
+
+/* Tablet optimization */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    .chat-interface {
+        height: calc(100vh - 160px);
+        max-width: 100%;
+    }
+    
+    .header-content {
+        padding: 0.75rem 1rem;
+    }
+    
+    .messages-container {
+        padding: 1rem;
+    }
+    
+    .message-content {
+        max-width: 75%;
+    }
+    
+    .action-btn {
+        min-width: calc(50% - 0.25rem);
+    }
+    
+    .suggestions-dropdown {
+        max-height: 250px;
+    }
+}
+
+/* Landscape mode on mobile */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    .chat-interface {
+        height: calc(100vh - 60px);
+    }
+    
+    .chat-header {
+        padding: 0.5rem;
+    }
+    
+    .messages-container {
+        padding: 0.5rem;
+    }
+    
+    .input-section {
+        padding: 0.5rem;
+    }
+    
+    .suggestions-dropdown {
+        max-height: 30vh;
+    }
+    
+    .action-btn {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        min-height: 36px;
+    }
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+    /* iOS Safari fixes */
+    .chat-interface {
+        height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 120px);
+    }
+    
+    .input-section {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Prevent rubber band scrolling */
+    .messages-container {
+        position: relative;
+        overflow-y: scroll;
+    }
+}
+
+/* Android specific optimizations */
+@media screen and (-webkit-min-device-pixel-ratio: 1.5) {
+    /* High DPI Android devices */
+    .message-text {
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+    }
+}
+
+/* PWA optimizations */
+@media (display-mode: standalone) {
+    /* When app is installed as PWA */
+    .app-header {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .chat-interface {
+        height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 100px);
+    }
+}
+
+/* Accessibility for mobile */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Dark mode mobile optimization */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+    .loading-overlay {
+        background: rgba(0, 0, 0, 0.95);
+    }
+    
+    .message-content {
+        box-shadow: none; /* Remove shadows in dark mode for better performance */
+    }
+}
     /* Header adjustments */
     .header-content {
         padding: 0.75rem 1rem;
@@ -173,7 +487,7 @@
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
     }
-}
+
 
 /* Small mobile devices */
 @media (max-width: 480px) {
@@ -301,11 +615,11 @@
         /* Universal Soldier E-commerce Bot - Style Sheet */
 
 :root {
-    /* Brand Colors - Kramp corporate colors */
-    --primary-color: #005030;
-    --secondary-color: #00a04a;
-    --accent-color: #ffd100;
-    --danger-color: #dc2626;
+    /* Brand Colors - Automotive theme (red/gray) */
+    --primary-color: #dc2626;    /* Czerwony motoryzacyjny */
+    --secondary-color: #ef4444;   /* Jaśniejszy czerwony */
+    --accent-color: #fbbf24;      /* Złoty akcent */
+    --danger-color: #7f1d1d;
     --warning-color: #f59e0b;
     
     /* Neutrals */
