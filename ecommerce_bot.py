@@ -1,774 +1,616 @@
-// Universal Soldier E-commerce Bot - JavaScript Frontend
-class EcommerceBotUI {
-    constructor() {
-        this.cartCount = 0;
-        this.chatInterface = document.getElementById('chat-interface');
-        this.messagesContainer = document.getElementById('messages-container');
-        this.buttonContainer = document.getElementById('button-container');
-        this.textInputContainer = document.getElementById('text-input-container');
-        this.userInput = document.getElementById('user-input');
-        this.sendBtn = document.getElementById('send-btn');
-        this.loadingOverlay = document.getElementById('loading-overlay');
-        this.cartCounter = document.getElementById('cart-counter');
-        
-        // Search state
-        this.searchMode = false;
-        this.faqMode = false;
-        this.currentContext = null;
-        this.searchTimeout = null;
-        this.suggestionsDropdown = null;
-        
-        this.createSuggestionsDropdown();
-        this.initializeEventListeners();
-        this.startBot();
-    }
+"""
+Uniwersalny Żołnierz - Silnik bota e-commerce v3.0
+Prototyp dla branży motoryzacyjnej z inteligentnym wyszukiwaniem i fuzzy matching
+"""
+import json
+import os
+from flask import session
+from datetime import datetime
+import random
+import re
+from difflib import SequenceMatcher
+from fuzzywuzzy import fuzz, process
+
+
+class EcommerceBot:
+    def __init__(self):
+        self.product_database = {}
+        self.faq_database = {}
+        self.orders_database = {}
+        self.current_context = None
+        self.initialize_data()
     
-    createSuggestionsDropdown() {
-        // Create suggestions dropdown container
-        this.suggestionsDropdown = document.createElement('div');
-        this.suggestionsDropdown.className = 'suggestions-dropdown';
-        // CSS styles are now in style.css
-    }
-    
-    initializeEventListeners() {
-        // Reset button
-        const resetBtn = document.getElementById('reset-btn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                if (confirm('Czy na pewno chcesz rozpocząć nową sesję? Koszyk zostanie wyczyszczony.')) {
-                    this.resetSession();
-                }
-            });
+    def initialize_data(self):
+        """Inicjalizuje bazę danych dla branży motoryzacyjnej"""
+        
+        # Baza produktów motoryzacyjnych
+        self.product_database = {
+            'products': [
+                # Klocki hamulcowe
+                {'id': 'KH001', 'name': 'Klocki hamulcowe przód Bosch BMW E90', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Bosch', 'model': '0986494104', 'price': 189.00, 'stock': 45},
+                {'id': 'KH002', 'name': 'Klocki hamulcowe tył ATE Mercedes W204', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'ATE', 'model': '13.0460-7218', 'price': 156.00, 'stock': 38},
+                {'id': 'KH003', 'name': 'Klocki hamulcowe Ferodo Audi A4 B8', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Ferodo', 'model': 'FDB4050', 'price': 245.00, 'stock': 22},
+                
+                # Tarcze hamulcowe
+                {'id': 'TH001', 'name': 'Tarcza hamulcowa przednia Brembo 320mm', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Brembo', 'model': '09.9772.11', 'price': 420.00, 'stock': 18},
+                {'id': 'TH002', 'name': 'Tarcza hamulcowa tylna ATE 300mm', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'ATE', 'model': '24.0330-0184', 'price': 285.00, 'stock': 25},
+                
+                # Filtry
+                {'id': 'FO001', 'name': 'Filtr oleju Mann HU719/7x BMW', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mann', 'model': 'HU719/7x', 'price': 62.00, 'stock': 120},
+                {'id': 'FP001', 'name': 'Filtr paliwa Bosch diesel PSA', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'F026402836', 'price': 89.00, 'stock': 85},
+                {'id': 'FA001', 'name': 'Filtr powietrza K&N sportowy uniwersalny', 'category': 'filtry', 'machine': 'uniwersalny', 'brand': 'K&N', 'model': '33-2990', 'price': 285.00, 'stock': 35},
+                {'id': 'FK001', 'name': 'Filtr kabinowy węglowy Mann CUK2939', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mann', 'model': 'CUK2939', 'price': 95.00, 'stock': 68},
+                
+                # Amortyzatory
+                {'id': 'AM001', 'name': 'Amortyzator przód Bilstein B4 VW Golf VII', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'Bilstein', 'model': '22-266767', 'price': 520.00, 'stock': 15},
+                {'id': 'AM002', 'name': 'Amortyzator tył KYB Excel-G Ford Focus MK3', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'KYB', 'model': '349034', 'price': 385.00, 'stock': 24},
+                {'id': 'AM003', 'name': 'Amortyzator przód Sachs Opel Astra J', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'Sachs', 'model': '314896', 'price': 425.00, 'stock': 19},
+                
+                # Świece zapłonowe
+                {'id': 'SZ001', 'name': 'Świeca zapłonowa NGK Laser Iridium', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'NGK', 'model': 'ILZKR7B11', 'price': 45.00, 'stock': 280},
+                {'id': 'SZ002', 'name': 'Świeca zapłonowa Bosch Platinum Plus', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'FR7DPP33', 'price': 38.00, 'stock': 320},
+                {'id': 'SZ003', 'name': 'Świeca żarowa Beru PSG diesel', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'Beru', 'model': 'PSG006', 'price': 78.00, 'stock': 145},
+                
+                # Akumulatory
+                {'id': 'AK001', 'name': 'Akumulator Varta Blue 74Ah 680A', 'category': 'elektryka', 'machine': 'osobowy', 'brand': 'Varta', 'model': 'E12', 'price': 420.00, 'stock': 38},
+                {'id': 'AK002', 'name': 'Akumulator Bosch S4 60Ah 540A', 'category': 'elektryka', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'S4005', 'price': 350.00, 'stock': 45},
+                
+                # Oleje silnikowe
+                {'id': 'OL001', 'name': 'Olej silnikowy Castrol Edge 5W30 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Castrol', 'model': 'Edge 5W30', 'price': 165.00, 'stock': 92},
+                {'id': 'OL002', 'name': 'Olej silnikowy Mobil 1 0W40 4L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Mobil', 'model': 'ESP 0W40', 'price': 189.00, 'stock': 78},
+                {'id': 'OL003', 'name': 'Olej silnikowy Shell Helix Ultra 5W40 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Shell', 'model': 'Helix Ultra', 'price': 145.00, 'stock': 110}
+            ],
+            'categories': {
+                'hamulce': '🔧 Układ hamulcowy',
+                'filtry': '🔍 Filtry',
+                'zawieszenie': '🚗 Zawieszenie',
+                'zapłon': '⚡ Układ zapłonowy',
+                'elektryka': '🔋 Elektryka',
+                'oleje': '🛢️ Oleje i płyny'
+            },
+            'machines': {
+                'osobowy': '🚗 Samochód osobowy',
+                'dostawczy': '🚐 Samochód dostawczy',
+                'ciężarowy': '🚚 Samochód ciężarowy',
+                'motocykl': '🏍️ Motocykl',
+                'uniwersalny': '🔧 Uniwersalne'
+            }
         }
         
-        // Form submit prevention and send button
-        const messageForm = document.getElementById('message-form');
-        if (messageForm) {
-            messageForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.sendTextMessage();
-            });
+        # FAQ dla branży motoryzacyjnej
+        self.faq_database = [
+            {
+                'id': 'FAQ001',
+                'keywords': ['dostawa', 'wysyłka', 'kiedy', 'czas dostawy', 'przesyłka', 'kurier', 'odbiór'],
+                'question': 'Jaki jest czas dostawy części samochodowych?',
+                'answer': '🚚 **Opcje dostawy:**\n\n• **Dostawa kurierem:** 24h dla produktów na stanie\n• **Odbiór osobisty:** tego samego dnia do godz. 18:00\n• **Dostawa ekspresowa:** do 4h w wybranych miastach (+49 zł)\n• **Części na zamówienie:** 2-5 dni roboczych\n\n✅ Darmowa dostawa od 299 zł!',
+                'category': 'dostawa'
+            },
+            {
+                'id': 'FAQ002',
+                'keywords': ['zwrot', 'reklamacja', 'wymiana', 'gwarancja', 'wadliwa część'],
+                'question': 'Jak zwrócić lub wymienić część?',
+                'answer': '↩️ **Zwroty i reklamacje:**\n\n• **14 dni** na zwrot bez montażu\n• **24 miesiące** gwarancji na wszystkie części\n• **Darmowa wymiana** przy wadzie fabrycznej\n• **Zwrot kosztów montażu** przy wadliwej części\n\n📝 Wypełnij formularz online i otrzymasz etykietę zwrotową',
+                'category': 'zwroty'
+            },
+            {
+                'id': 'FAQ003',
+                'keywords': ['montaż', 'warsztat', 'mechanik', 'instalacja', 'wymiana'],
+                'question': 'Czy oferujecie montaż części?',
+                'answer': '🔧 **Usługi montażu:**\n\n• **Sieć 200+ warsztatów partnerskich** w całej Polsce\n• **Rabat 15%** na montaż przy zakupie u nas\n• **Gwarancja na montaż:** 12 miesięcy\n• **Umów montaż online** przy składaniu zamówienia\n\n📞 Pomoc w doborze warsztatu: 800-MONTAZ',
+                'category': 'montaż'
+            },
+            {
+                'id': 'FAQ004',
+                'keywords': ['pasuje', 'kompatybilność', 'VIN', 'model', 'rocznik', 'dopasowanie'],
+                'question': 'Jak sprawdzić czy część pasuje do mojego auta?',
+                'answer': '🔍 **Sprawdzanie kompatybilności:**\n\n• **Wyszukiwarka po VIN** - 100% pewności\n• **Katalog TecDoc** - wybierz markę/model/rocznik\n• **Czat z ekspertem** - pomoc w doborze\n• **Numer OE części** - znajdziemy zamiennik\n\n💡 W razie wątpliwości wyślij nam zdjęcie tabliczki znamionowej',
+                'category': 'dobór'
+            }
+        ]
+        
+        # Przykładowe zamówienia
+        self.orders_database = {
+            'MOT-2024001': {
+                'status': '🚚 W drodze',
+                'details': 'Przesyłka nadana dziś o 14:30. Dostawa jutro do 12:00',
+                'tracking': 'DPD: 0123456789',
+                'items': ['Klocki hamulcowe Bosch BMW E90', 'Filtr oleju Mann HU719/7x']
+            },
+            'MOT-2024002': {
+                'status': '✅ Dostarczone',
+                'details': 'Dostarczone wczoraj o 16:45. Podpis: J.Kowalski',
+                'tracking': 'InPost: 670000123456',
+                'items': ['Amortyzator Bilstein B4 (2 szt.)', 'Olej Castrol Edge 5W30']
+            }
+        }
+    
+    def normalize_query(self, query):
+        """Normalizacja zapytania - obsługa literówek typowych dla motoryzacji"""
+        query = query.lower().strip()
+        
+        # Korekta popularnych literówek w motoryzacji
+        typo_corrections = {
+            'kloki': 'klocki',
+            'klocek': 'klocki',
+            'hamulec': 'hamulce',
+            'amortyztor': 'amortyzator',
+            'amortyzaor': 'amortyzator',
+            'filtr': 'filtr',
+            'filetr': 'filtr',
+            'swica': 'świeca',
+            'swieca': 'świeca',
+            'akumulator': 'akumulator',
+            'akumlator': 'akumulator',
+            'bateria': 'akumulator',
+            'bosch': 'bosch',
+            'bosh': 'bosch',
+            'mann': 'mann',
+            'man': 'mann',
+            'brembo': 'brembo',
+            'brebo': 'brembo'
         }
         
-        // Enter key in input
-        if (this.userInput) {
-            this.userInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    this.sendTextMessage();
-                }
-            });
+        for typo, correction in typo_corrections.items():
+            query = query.replace(typo, correction)
+        
+        # Liczba mnoga/pojedyncza
+        plural_singular = {
+            'klocki': 'klocki',
+            'klocków': 'klocki',
+            'tarcze': 'tarcza',
+            'tarcz': 'tarcza',
+            'filtry': 'filtr',
+            'filtrów': 'filtr',
+            'świece': 'świeca',
+            'świec': 'świeca',
+            'amortyzatory': 'amortyzator',
+            'amortyzatorów': 'amortyzator',
+            'oleje': 'olej',
+            'olejów': 'olej'
+        }
+        
+        for plural, singular in plural_singular.items():
+            query = query.replace(plural, singular)
+        
+        query = ' '.join(query.split())
+        return query
+    
+    def get_fuzzy_product_matches(self, query, machine_filter=None, limit=6):
+        """Inteligentne dopasowanie produktów z fuzzy matching"""
+        query = self.normalize_query(query)
+        matches = []
+        
+        for product in self.product_database['products']:
+            if machine_filter and product['machine'] != machine_filter and product['machine'] != 'uniwersalny':
+                continue
             
-            // Real-time search on every keystroke
-            this.userInput.addEventListener('input', (e) => {
-                const query = e.target.value.trim();
-                
-                // Clear previous timeout
-                if (this.searchTimeout) {
-                    clearTimeout(this.searchTimeout);
-                }
-                
-                // Hide suggestions if query too short
-                if (query.length < 2) {
-                    this.hideSuggestions();
-                    return;
-                }
-                
-                // Only search if in search or FAQ mode
-                if (!this.searchMode && !this.faqMode) {
-                    return;
-                }
-                
-                // Debounce for 200ms to avoid too many requests
-                this.searchTimeout = setTimeout(() => {
-                    this.performSearch(query);
-                }, 200);
-            });
+            search_text = f"{product['name']} {product['category']} {product['brand']} {product['model']} {product['id']}"
             
-            // Also search on keyup for immediate feedback
-            this.userInput.addEventListener('keyup', (e) => {
-                // Skip special keys
-                if (e.key === 'Enter' || e.key === 'Escape' || e.key === 'Tab') {
-                    return;
+            scores = [
+                fuzz.ratio(query, search_text.lower()),
+                fuzz.partial_ratio(query, search_text.lower()),
+                fuzz.token_sort_ratio(query, search_text.lower()),
+                fuzz.token_set_ratio(query, search_text.lower())
+            ]
+            
+            brand_score = fuzz.ratio(query, product['brand'].lower())
+            model_score = fuzz.ratio(query, product['model'].lower())
+            
+            max_score = max(scores)
+            
+            if brand_score > 80:
+                max_score = min(100, max_score + 15)
+            if model_score > 80:
+                max_score = min(100, max_score + 15)
+            
+            query_words = query.split()
+            search_words = search_text.lower().split()
+            for q_word in query_words:
+                for s_word in search_words:
+                    if q_word in s_word or s_word in q_word:
+                        max_score = min(100, max_score + 10)
+                        break
+            
+            if max_score >= 40:
+                matches.append((product, max_score))
+        
+        matches.sort(key=lambda x: x[1], reverse=True)
+        return matches[:limit]
+    
+    def get_fuzzy_faq_matches(self, query, limit=5):
+        """Dopasowanie FAQ z fuzzy matching"""
+        query = self.normalize_query(query)
+        matches = []
+        
+        for faq in self.faq_database:
+            search_text = f"{faq['question']} {' '.join(faq['keywords'])}"
+            
+            scores = [
+                fuzz.ratio(query, search_text.lower()),
+                fuzz.partial_ratio(query, search_text.lower()),
+                fuzz.token_sort_ratio(query, search_text.lower()),
+                fuzz.token_set_ratio(query, search_text.lower())
+            ]
+            
+            max_score = max(scores)
+            
+            for keyword in faq['keywords']:
+                if fuzz.partial_ratio(query, keyword) > 75:
+                    max_score = min(100, max_score + 10)
+            
+            if max_score >= 35:
+                matches.append((faq, max_score))
+        
+        matches.sort(key=lambda x: x[1], reverse=True)
+        return matches[:limit]
+    
+    def search_products(self, query, machine_filter=None):
+        """Wyszukiwanie produktów"""
+        results = self.get_fuzzy_product_matches(query, machine_filter, limit=20)
+        return [product for product, score in results]
+    
+    def search_faq(self, query):
+        """Wyszukiwanie FAQ"""
+        results = self.get_fuzzy_faq_matches(query, limit=10)
+        return [faq for faq, score in results]
+    
+    def get_initial_greeting(self):
+        """Powitanie dostosowane do branży motoryzacyjnej"""
+        return {
+            'text_message': """🚗 **Witaj w Auto Parts Pro**
+
+Jestem Twoim ekspertem od części samochodowych. Pomogę Ci znaleźć idealną część lub odpowiem na pytania.
+
+Co Cię interesuje?""",
+            'buttons': [
+                {'text': '🔧 Znajdź część', 'action': 'search_product'},
+                {'text': '📦 Status zamówienia', 'action': 'order_status'},
+                {'text': '❓ Mam pytanie', 'action': 'faq_search'},
+                {'text': '🚚 Dostawa i koszty', 'action': 'faq_delivery'},
+                {'text': '↩️ Zwroty i gwarancja', 'action': 'faq_returns'},
+                {'text': '📞 Kontakt', 'action': 'contact'}
+            ]
+        }
+    
+    def handle_button_action(self, action):
+        """Obsługa akcji przycisków"""
+        session['context'] = action
+        
+        if action == 'search_product':
+            return {
+                'text_message': """🔧 **Wyszukiwarka części**
+
+Wybierz typ pojazdu:""",
+                'buttons': [
+                    {'text': '🚗 Samochód osobowy', 'action': 'machine_osobowy'},
+                    {'text': '🚐 Dostawczy', 'action': 'machine_dostawczy'},
+                    {'text': '🏍️ Motocykl', 'action': 'machine_motocykl'},
+                    {'text': '🔧 Części uniwersalne', 'action': 'machine_uniwersalny'},
+                    {'text': '↩️ Powrót', 'action': 'main_menu'}
+                ]
+            }
+        
+        elif action.startswith('machine_'):
+            machine_type = action.replace('machine_', '')
+            session['machine_filter'] = machine_type
+            
+            machine_names = {
+                'osobowy': 'Samochód osobowy',
+                'dostawczy': 'Samochód dostawczy',
+                'motocykl': 'Motocykl',
+                'uniwersalny': 'Części uniwersalne'
+            }
+            
+            return {
+                'text_message': f"""✅ **{machine_names.get(machine_type, 'Pojazd')}**
+
+Wpisz czego szukasz (nazwę części, markę, numer OE):""",
+                'enable_input': True,
+                'input_placeholder': 'np. klocki bosch, filtr mann, amortyzator...',
+                'search_mode': True
+            }
+        
+        elif action == 'faq_search':
+            return {
+                'text_message': """❓ **Centrum pomocy**
+
+Wpisz swoje pytanie:""",
+                'enable_input': True,
+                'input_placeholder': 'np. jak sprawdzić czy część pasuje...',
+                'faq_mode': True
+            }
+        
+        elif action == 'order_status':
+            return {
+                'text_message': """📦 **Status zamówienia**
+
+Wpisz numer (format: MOT-XXXXXXX):""",
+                'enable_input': True,
+                'input_placeholder': 'np. MOT-2024001'
+            }
+        
+        elif action.startswith('faq_'):
+            return self.handle_faq(action)
+        
+        elif action == 'contact':
+            return {
+                'text_message': """📞 **Kontakt**
+
+**Infolinia:** 800 AUTO PARTS (bezpłatna)
+**WhatsApp:** +48 500 100 200
+**Email:** pomoc@autoparts.pl
+
+⏰ Pon-Pt 8:00-20:00, Sob 9:00-16:00""",
+                'buttons': [
+                    {'text': '💬 Zadaj pytanie', 'action': 'faq_search'},
+                    {'text': '↩️ Menu główne', 'action': 'main_menu'}
+                ]
+            }
+        
+        elif action == 'main_menu':
+            return self.get_initial_greeting()
+        
+        elif action.startswith('add_to_cart_'):
+            product_id = action.replace('add_to_cart_', '')
+            return self.add_to_cart(product_id)
+        
+        elif action.startswith('product_details_'):
+            product_id = action.replace('product_details_', '')
+            return self.show_product_details(product_id)
+        
+        return {
+            'text_message': 'Wybierz opcję:',
+            'buttons': [{'text': '↩️ Menu główne', 'action': 'main_menu'}]
+        }
+    
+    def handle_faq(self, action):
+        """Obsługa FAQ"""
+        faq_mapping = {
+            'faq_delivery': 'FAQ001',
+            'faq_returns': 'FAQ002'
+        }
+        
+        faq_id = faq_mapping.get(action)
+        if faq_id:
+            faq = next((f for f in self.faq_database if f['id'] == faq_id), None)
+            if faq:
+                return {
+                    'text_message': f"**{faq['question']}**\n\n{faq['answer']}",
+                    'buttons': [
+                        {'text': '❓ Inne pytanie', 'action': 'faq_search'},
+                        {'text': '↩️ Menu główne', 'action': 'main_menu'}
+                    ]
                 }
+        
+        return {
+            'text_message': 'Nie znaleziono odpowiedzi.',
+            'buttons': [
+                {'text': '📞 Kontakt', 'action': 'contact'},
+                {'text': '↩️ Menu główne', 'action': 'main_menu'}
+            ]
+        }
+    
+    def process_message(self, message):
+        """Przetwarzanie wiadomości"""
+        context = session.get('context', '')
+        
+        if context == 'faq_search':
+            faq_results = self.search_faq(message)
+            
+            if faq_results:
+                best_match = faq_results[0]
+                response = f"**{best_match['question']}**\n\n{best_match['answer']}"
                 
-                const query = e.target.value.trim();
+                if len(faq_results) > 1:
+                    response += "\n\n**Zobacz też:**"
+                    for faq in faq_results[1:3]:
+                        response += f"\n• {faq['question']}"
                 
-                if (query.length >= 2 && (this.searchMode || this.faqMode)) {
-                    // Clear existing timeout
-                    if (this.searchTimeout) {
-                        clearTimeout(this.searchTimeout);
+                return {
+                    'text_message': response,
+                    'buttons': [
+                        {'text': '❓ Zadaj inne pytanie', 'action': 'faq_search'},
+                        {'text': '↩️ Menu główne', 'action': 'main_menu'}
+                    ]
+                }
+            else:
+                return {
+                    'text_message': """Nie znalazłem odpowiedzi.
+
+📞 Zadzwoń: 800 AUTO PARTS
+📧 Email: pomoc@autoparts.pl""",
+                    'buttons': [
+                        {'text': '❓ Spróbuj ponownie', 'action': 'faq_search'},
+                        {'text': '↩️ Menu główne', 'action': 'main_menu'}
+                    ]
+                }
+        
+        elif context == 'order_status' or message.upper().startswith('MOT-'):
+            order_num = message.upper()
+            if order_num in self.orders_database:
+                order = self.orders_database[order_num]
+                items_list = '\n'.join([f"• {item}" for item in order['items']])
+                
+                return {
+                    'text_message': f"""📦 **Zamówienie {order_num}**
+
+**Status:** {order['status']}
+**Szczegóły:** {order['details']}
+**Tracking:** {order['tracking']}
+
+**Produkty:**
+{items_list}""",
+                    'buttons': [
+                        {'text': '📦 Sprawdź inne', 'action': 'order_status'},
+                        {'text': '↩️ Menu główne', 'action': 'main_menu'}
+                    ]
+                }
+            else:
+                return {
+                    'text_message': f"""❌ Nie znaleziono zamówienia {order_num}""",
+                    'buttons': [
+                        {'text': '🔄 Spróbuj ponownie', 'action': 'order_status'},
+                        {'text': '↩️ Menu główne', 'action': 'main_menu'}
+                    ]
+                }
+        
+        elif session.get('machine_filter'):
+            machine_filter = session.get('machine_filter')
+            results = self.search_products(message, machine_filter)
+            
+            if not results:
+                results = self.search_products(message)
+                
+                if results:
+                    return {
+                        'text_message': f"""⚠️ Nie znaleziono dla wybranego typu, ale mamy inne:
+
+{self.format_product_results(results[:3])}""",
+                        'buttons': self.create_product_buttons(results[:3])
                     }
-                    
-                    // Immediate search on keyup
-                    this.performSearch(query);
-                }
-            });
-            
-            // Hide suggestions on blur
-            this.userInput.addEventListener('blur', () => {
-                setTimeout(() => this.hideSuggestions(), 200);
-            });
-        }
-        
-        // Modal close
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.target.closest('.modal').style.display = 'none';
-            });
-        });
-        
-        // Close modal on outside click
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
-            }
-        });
-    }
-    
-    async startBot() {
-        console.log('[DEBUG] Starting Universal Soldier bot session');
-        this.showLoading(true);
-        
-        // Clear containers
-        this.messagesContainer.innerHTML = '';
-        this.buttonContainer.innerHTML = '';
-        this.textInputContainer.style.display = 'none';
-        
-        try {
-            const response = await fetch('/bot/start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({})
-            });
-            
-            console.log('[DEBUG] Response status:', response.status);
-            
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('[DEBUG] Received data:', data);
-            
-            if (data.reply) {
-                this.displayBotMessage(data.reply);
-            }
-            
-        } catch (error) {
-            console.error('[ERROR] Failed to start bot:', error);
-            this.showError('Nie udało się uruchomić asystenta. Odśwież stronę i spróbuj ponownie.');
-        } finally {
-            this.showLoading(false);
-        }
-    }
-    
-    displayBotMessage(reply) {
-        if (!reply) return;
-        
-        this.removeTypingIndicator();
-        
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message bot-message';
-        messageElement.style.opacity = '0';
-        
-        let messageContent = `
-            <div class="message-avatar">🤖</div>
-            <div class="message-content">
-        `;
-        
-        // Format message with bold support and line breaks
-        if (reply.text_message) {
-            let formattedMessage = reply.text_message
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>');
-            messageContent += `<div class="message-text">${formattedMessage}</div>`;
-        }
-        
-        // Add product image if present
-        if (reply.product_image) {
-            messageContent += `
-                <div class="product-card">
-                    <div class="product-image">${reply.product_image}</div>
-                </div>
-            `;
-        }
-        
-        // Check if order was confirmed
-        if (reply.order_confirmed) {
-            this.cartCount = 0;
-            this.updateCartCounter();
-            this.showNotification('✅ Zamówienie zostało potwierdzone!');
-        }
-        
-        // Check if item was added to cart
-        if (reply.cart_updated || (reply.text_message && reply.text_message.includes('dodany do koszyka'))) {
-            this.cartCount++;
-            this.updateCartCounter();
-            
-            // Extract cart info from message if present
-            const cartMatch = reply.text_message.match(/Koszyk \((\d+) produkt/);
-            if (cartMatch) {
-                this.cartCount = parseInt(cartMatch[1]);
-                this.updateCartCounter();
-            }
-        }
-        
-        messageContent += '</div>';
-        messageElement.innerHTML = messageContent;
-        this.messagesContainer.appendChild(messageElement);
-        
-        // Fade in animation
-        setTimeout(() => {
-            messageElement.style.opacity = '1';
-        }, 50);
-        
-        // Handle button display
-        if (reply.buttons && reply.buttons.length > 0) {
-            this.displayButtons(reply.buttons);
-            this.textInputContainer.style.display = 'none';
-        }
-        
-        // Handle input expectation
-        if (reply.enable_input || reply.input_expected) {
-            this.textInputContainer.style.display = 'block';
-            this.buttonContainer.innerHTML = '';
-            this.searchMode = reply.search_mode || false;
-            this.faqMode = reply.faq_mode || false;  // Add FAQ mode
-            if (this.userInput) {
-                this.userInput.placeholder = reply.input_placeholder || 'Wpisz swoją wiadomość...';
-                this.userInput.focus();
-            }
-        } else if (!reply.buttons || reply.buttons.length === 0) {
-            // If no buttons and no input expected, show input
-            this.textInputContainer.style.display = 'block';
-        }
-        
-        this.scrollToBottom();
-    }
-    
-    displayButtons(buttons) {
-        this.buttonContainer.innerHTML = '';
-        this.textInputContainer.style.display = 'none'; // Hide input when showing buttons
-        
-        buttons.forEach((button, index) => {
-            const buttonElement = document.createElement('button');
-            buttonElement.className = 'action-btn';
-            buttonElement.innerHTML = button.text;
-            buttonElement.style.animationDelay = `${index * 0.1}s`;
-            buttonElement.addEventListener('click', () => this.handleButtonClick(button.action));
-            this.buttonContainer.appendChild(buttonElement);
-        });
-    }
-    
-    async handleButtonClick(action) {
-        console.log('[DEBUG] Button clicked:', action);
-        
-        // Display user's choice as a message
-        const clickedButton = event.target;
-        this.displayUserMessage(clickedButton.textContent);
-        
-        // Clear buttons immediately after click
-        this.buttonContainer.innerHTML = '';
-        
-        this.showLoading(true);
-        this.showTypingIndicator();
-        
-        try {
-            const response = await fetch('/bot/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ button_action: action })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            // Update context if needed
-            if (action.startsWith('machine_')) {
-                this.currentContext = 'product_search';
-                this.searchMode = true;
-                this.faqMode = false;
-            } else if (action === 'faq_search') {
-                this.currentContext = 'faq_search';
-                this.searchMode = false;
-                this.faqMode = true;
-            }
-            
-            if (data.reply) {
-                // Simulate typing delay
-                setTimeout(() => {
-                    this.displayBotMessage(data.reply);
-                }, 500);
-            }
-        } catch (error) {
-            console.error('[ERROR] Button action failed:', error);
-            this.showError('Wystąpił błąd podczas przetwarzania akcji. Spróbuj ponownie.');
-        } finally {
-            this.showLoading(false);
-        }
-    }
-    
-    async sendTextMessage() {
-        const message = this.userInput.value.trim();
-        if (!message) return;
-        
-        // Display user message
-        this.displayUserMessage(message);
-        
-        // Clear input
-        this.userInput.value = '';
-        
-        // Show typing indicator
-        this.showTypingIndicator();
-        this.showLoading(true);
-        
-        try {
-            const response = await fetch('/bot/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ message })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            if (data.reply) {
-                // Simulate typing delay
-                setTimeout(() => {
-                    this.displayBotMessage(data.reply);
-                }, 300 + Math.random() * 700); // Random delay between 300-1000ms
-            }
-        } catch (error) {
-            console.error('[ERROR] Message send failed:', error);
-            this.showError('Nie udało się wysłać wiadomości. Sprawdź połączenie internetowe.');
-        } finally {
-            this.showLoading(false);
-        }
-    }
-    
-    displayUserMessage(text) {
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message user-message';
-        messageElement.style.opacity = '0';
-        messageElement.innerHTML = `
-            <div class="message-content">
-                <div class="message-text">${this.escapeHtml(text)}</div>
-            </div>
-            <div class="message-avatar">👤</div>
-        `;
-        this.messagesContainer.appendChild(messageElement);
-        
-        // Fade in animation
-        setTimeout(() => {
-            messageElement.style.opacity = '1';
-        }, 50);
-        
-        this.scrollToBottom();
-    }
-    
-    async performSearch(query) {
-        // Unified search function
-        const searchType = this.faqMode ? 'faq' : 'products';
-        
-        try {
-            const response = await fetch('/search-suggestions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    query: query,
-                    type: searchType 
-                })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('[DEBUG] Suggestions received:', data);
-                
-                if (data.suggestions && data.suggestions.length > 0) {
-                    this.displaySearchSuggestions(data.suggestions);
-                } else {
-                    this.displayNoSuggestions(query, searchType);
-                }
-            }
-        } catch (error) {
-            console.error('[ERROR] Search failed:', error);
-            this.hideSuggestions();
-        }
-    }
-    
-    displaySearchSuggestions(suggestions) {
-        // Clear and prepare dropdown
-        this.suggestionsDropdown.innerHTML = '';
-        this.suggestionsDropdown.className = 'suggestions-dropdown';
-        
-        suggestions.forEach(item => {
-            const suggestionElement = document.createElement('div');
-            suggestionElement.className = 'suggestion-item';
-            
-            if (item.type === 'faq') {
-                // FAQ suggestion
-                suggestionElement.classList.add('faq-suggestion');
-                suggestionElement.innerHTML = `
-                    <div class="suggestion-item-header">
-                        <div class="suggestion-product-info">
-                            <div class="suggestion-product-name">
-                                ❓ ${item.text}
-                            </div>
-                            <div class="suggestion-product-details">
-                                <span class="suggestion-match-score">Dopasowanie: ${item.score}%</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                // Product suggestion
-                let stockBadge = '';
-                if (item.stock_status === 'available') {
-                    stockBadge = `<span class="suggestion-stock-indicator stock-available">✅ ${item.stock} szt.</span>`;
-                } else if (item.stock_status === 'limited') {
-                    stockBadge = `<span class="suggestion-stock-indicator stock-limited">⚠️ Ostatnie ${item.stock} szt.</span>`;
-                } else {
-                    stockBadge = `<span class="suggestion-stock-indicator stock-out">❌ Brak</span>`;
-                }
-                
-                suggestionElement.innerHTML = `
-                    <div class="suggestion-item-header">
-                        <div class="suggestion-product-info">
-                            <div class="suggestion-product-name">${item.text}</div>
-                            <div class="suggestion-product-details">
-                                <span class="suggestion-product-code">${item.id}</span>
-                                <span style="color: #d1d5db;">|</span>
-                                <span class="suggestion-product-brand">${item.brand}</span>
-                                <span style="color: #d1d5db;">|</span>
-                                ${stockBadge}
-                            </div>
-                        </div>
-                        <div class="suggestion-price-info">
-                            <div class="suggestion-price">${item.price}</div>
-                            <div class="suggestion-price-label">netto</div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            // Click handler
-            suggestionElement.addEventListener('click', () => {
-                this.userInput.value = item.text;
-                this.hideSuggestions();
-                // Optionally send the message immediately
-                setTimeout(() => this.sendTextMessage(), 100);
-            });
-            
-            this.suggestionsDropdown.appendChild(suggestionElement);
-        });
-        
-        this.positionDropdown();
-    }
-    
-    displayNoSuggestions(query, searchType) {
-        this.suggestionsDropdown.innerHTML = '';
-        this.suggestionsDropdown.className = 'suggestions-dropdown';
-        
-        const message = document.createElement('div');
-        message.className = 'no-results-message';
-        
-        const icon = searchType === 'faq' ? '❓' : '🔍';
-        const text = searchType === 'faq' ? 
-            'Nie znaleziono pytań' : 
-            'Nie znaleziono produktów';
-        
-        message.innerHTML = `
-            <div class="no-results-icon">${icon}</div>
-            <div class="no-results-text">
-                ${text} dla "<strong>${this.escapeHtml(query)}</strong>"
-            </div>
-            <div class="no-results-tips">
-                <div class="no-results-tips-title">
-                    🤖 System automatycznie poprawia błędy!
-                </div>
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 8px;">
-                    Kontynuuj pisanie - znajdziemy to czego szukasz
-                </p>
-            </div>
-        `;
-        
-        this.suggestionsDropdown.appendChild(message);
-        this.positionDropdown();
-    }
-    
-    displaySuggestions(suggestions) {
-        // This method is now replaced by displaySearchSuggestions
-        this.displaySearchSuggestions(suggestions);
-    }
-    
-    displayNoResults(query, searchType = 'products') {
-        this.suggestionsDropdown.innerHTML = '';
-        this.suggestionsDropdown.className = 'suggestions-dropdown';
-        
-        const message = document.createElement('div');
-        message.className = 'no-results-message';
-        
-        if (searchType === 'faq') {
-            message.innerHTML = `
-                <div class="no-results-icon">❓</div>
-                <div class="no-results-text">
-                    Nie znaleziono odpowiedzi dla "<strong>${this.escapeHtml(query)}</strong>"
-                </div>
-                <div class="no-results-tips">
-                    <div class="no-results-tips-title">
-                        💡 Spróbuj
-                    </div>
-                    <ul>
-                        <li>Użyć innych słów kluczowych</li>
-                        <li>Zadać pytanie inaczej</li>
-                        <li>Skontaktować się z nami</li>
-                    </ul>
-                </div>
-            `;
-        } else {
-            message.innerHTML = `
-                <div class="no-results-icon">🔍</div>
-                <div class="no-results-text">
-                    Brak wyników dla "<strong>${this.escapeHtml(query)}</strong>"
-                </div>
-                <div class="no-results-tips">
-                    <div class="no-results-tips-title">
-                        System automatycznie poprawia literówki!
-                    </div>
-                    <ul>
-                        <li>Spróbuj innych słów</li>
-                        <li>Użyj numeru katalogowego</li>
-                        <li>Wpisz markę lub model</li>
-                    </ul>
-                </div>
-            `;
-        }
-        
-        this.suggestionsDropdown.appendChild(message);
-        this.positionDropdown();
-    }
-    
-    positionDropdown() {
-        // Position dropdown ABOVE the input
-        const inputGroup = document.getElementById('message-form');
-        
-        // Ensure input group is relatively positioned
-        inputGroup.style.position = 'relative';
-        
-        // Append dropdown to the form
-        if (this.suggestionsDropdown.parentElement !== inputGroup) {
-            inputGroup.appendChild(this.suggestionsDropdown);
-        }
-        
-        // Set dropdown styles to appear above input
-        this.suggestionsDropdown.style.position = 'absolute';
-        this.suggestionsDropdown.style.left = '0';
-        this.suggestionsDropdown.style.right = '0';
-        this.suggestionsDropdown.style.bottom = '100%'; 
-        this.suggestionsDropdown.style.marginBottom = '4px';
-        this.suggestionsDropdown.style.display = 'block';
-    }
-    
-    hideSuggestions() {
-        if (this.suggestionsDropdown) {
-            this.suggestionsDropdown.style.display = 'none';
-        }
-    }
-    
-    async resetSession() {
-        this.showLoading(true);
-        try {
-            this.cartCount = 0;
-            this.updateCartCounter();
-            this.searchMode = false;
-            this.currentContext = null;
-            await this.startBot();
-        } catch (error) {
-            console.error('[ERROR] Reset failed:', error);
-            this.showError('Nie udało się zresetować sesji. Odśwież stronę.');
-        } finally {
-            this.showLoading(false);
-        }
-    }
-    
-    showError(message) {
-        const errorElement = document.createElement('div');
-        errorElement.className = 'message bot-message error';
-        errorElement.innerHTML = `
-            <div class="message-avatar">⚠️</div>
-            <div class="message-content">
-                <div class="message-text">${message}</div>
-            </div>
-        `;
-        this.messagesContainer.appendChild(errorElement);
-        this.scrollToBottom();
-    }
-    
-    showTypingIndicator() {
-        this.removeTypingIndicator();
-        const typingElement = document.createElement('div');
-        typingElement.className = 'message bot-message typing-indicator';
-        typingElement.innerHTML = `
-            <div class="message-avatar">🤖</div>
-            <div class="message-content">
-                <div class="typing-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </div>
-        `;
-        this.messagesContainer.appendChild(typingElement);
-        this.scrollToBottom();
-    }
-    
-    removeTypingIndicator() {
-        const typingIndicator = this.messagesContainer.querySelector('.typing-indicator');
-        if (typingIndicator) {
-            typingIndicator.remove();
-        }
-    }
-    
-    showLoading(show) {
-        if (this.loadingOverlay) {
-            this.loadingOverlay.style.display = show ? 'flex' : 'none';
-        }
-    }
-    
-    scrollToBottom() {
-        if (this.messagesContainer) {
-            setTimeout(() => {
-                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-            }, 100);
-        }
-    }
-    
-    updateCartCounter() {
-        if (this.cartCounter) {
-            this.cartCounter.textContent = `🛒 Koszyk: ${this.cartCount}`;
-            
-            // Animate cart update
-            this.cartCounter.style.transform = 'scale(1.2)';
-            setTimeout(() => {
-                this.cartCounter.style.transform = 'scale(1)';
-            }, 200);
-        }
-    }
-    
-    showNotification(message) {
-        const notification = document.createElement('div');
-        notification.className = 'notification';
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--accent-color);
-            color: var(--primary-color);
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 1001;
-            animation: slideIn 0.3s ease;
-            font-weight: 600;
-        `;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-    
-    escapeHtml(text) {
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, m => map[m]);
-    }
-}
+                else:
+                    return {
+                        'text_message': """❌ Nie znaleziono produktów.
 
-// Add necessary CSS for animations
-const style = document.createElement('style');
-style.textContent = `
-    .typing-dots {
-        display: inline-flex;
-        gap: 4px;
-    }
-    
-    .typing-dots span {
-        width: 8px;
-        height: 8px;
-        background: var(--gray-500);
-        border-radius: 50%;
-        animation: typing 1.4s infinite;
-    }
-    
-    .typing-dots span:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-    
-    .typing-dots span:nth-child(3) {
-        animation-delay: 0.4s;
-    }
-    
-    @keyframes typing {
-        0%, 60%, 100% {
-            transform: translateY(0);
-            opacity: 0.5;
-        }
-        30% {
-            transform: translateY(-10px);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes fadeOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(20px); }
-    }
-    
-    .action-btn {
-        animation: slideUp 0.3s ease backwards;
-    }
-    
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-`;
-document.head.appendChild(style);
+System automatycznie poprawia błędy. Spróbuj inaczej.""",
+                        'buttons': [
+                            {'text': '🔄 Szukaj ponownie', 'action': 'search_product'},
+                            {'text': '↩️ Menu główne', 'action': 'main_menu'}
+                        ]
+                    }
+            
+            elif len(results) == 1:
+                product = results[0]
+                return self.show_product_details(product['id'])
+            
+            elif len(results) <= 5:
+                return {
+                    'text_message': f"""✅ Znaleziono {len(results)} produktów:
 
-// Initialize the bot UI when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Universal Soldier Bot - Initializing...');
-    new EcommerceBotUI();
-    console.log('✅ Universal Soldier Bot - Ready for action!');
-});
+{self.format_product_results(results)}""",
+                    'buttons': self.create_product_buttons(results)
+                }
+            
+            else:
+                return {
+                    'text_message': f"""🔍 Znaleziono {len(results)} produktów. Top 5:
+
+{self.format_product_results(results[:5])}""",
+                    'buttons': self.create_product_buttons(results[:5])
+                }
+        
+        return {
+            'text_message': 'Wybierz opcję:',
+            'buttons': [
+                {'text': '🔧 Szukaj części', 'action': 'search_product'},
+                {'text': '↩️ Menu główne', 'action': 'main_menu'}
+            ]
+        }
+    
+    def format_product_results(self, products):
+        """Formatowanie wyników"""
+        result = ""
+        for product in products:
+            stock_icon = "✅" if product['stock'] > 10 else "⚠️" if product['stock'] > 0 else "❌"
+            result += f"""
+**{product['name']}**
+{product['id']} | {stock_icon} {product['stock']} szt. | {product['price']:.2f} zł
+"""
+        return result
+    
+    def create_product_buttons(self, products):
+        """Przyciski produktów"""
+        buttons = []
+        for product in products[:4]:
+            buttons.append({
+                'text': f"🛒 {product['name'][:30]}... ({product['price']:.0f} zł)",
+                'action': f"product_details_{product['id']}"
+            })
+        
+        buttons.extend([
+            {'text': '🔄 Szukaj ponownie', 'action': 'search_product'},
+            {'text': '↩️ Menu główne', 'action': 'main_menu'}
+        ])
+        
+        return buttons
+    
+    def show_product_details(self, product_id):
+        """Szczegóły produktu"""
+        product = None
+        for p in self.product_database['products']:
+            if p['id'] == product_id:
+                product = p
+                break
+        
+        if not product:
+            return {
+                'text_message': 'Produkt nie znaleziony.',
+                'buttons': [{'text': '↩️ Menu główne', 'action': 'main_menu'}]
+            }
+        
+        stock_status = "✅ Dostępny" if product['stock'] > 10 else "⚠️ Ostatnie sztuki" if product['stock'] > 0 else "❌ Na zamówienie"
+        
+        return {
+            'text_message': f"""🔧 **{product['name']}**
+
+📋 **Dane techniczne:**
+• Kod: {product['id']}
+• Producent: {product['brand']}
+• Model: {product['model']}
+• Kategoria: {self.product_database['categories'].get(product['category'], product['category'])}
+
+💰 **Cena:** {product['price']:.2f} zł netto
+💵 **Cena brutto:** {product['price'] * 1.23:.2f} zł
+
+📦 **Dostępność:** {stock_status} ({product['stock']} szt.)
+🚚 **Wysyłka:** 24h""",
+            'buttons': [
+                {'text': f"🛒 Dodaj do koszyka", 'action': f"add_to_cart_{product['id']}"},
+                {'text': '🔍 Szukaj dalej', 'action': 'search_product'},
+                {'text': '🏠 Menu główne', 'action': 'main_menu'}
+            ]
+        }
+    
+    def add_to_cart(self, product_id):
+        """Dodanie do koszyka"""
+        product = None
+        for p in self.product_database['products']:
+            if p['id'] == product_id:
+                product = p
+                break
+        
+        if not product:
+            return {
+                'text_message': 'Błąd dodawania do koszyka.',
+                'buttons': [{'text': '↩️ Powrót', 'action': 'main_menu'}]
+            }
+        
+        if 'cart' not in session:
+            session['cart'] = []
+        
+        session['cart'].append({
+            'id': product['id'],
+            'name': product['name'],
+            'price': product['price']
+        })
+        session.modified = True
+        
+        cart_total = sum(item['price'] * 1.23 for item in session['cart'])
+        
+        return {
+            'text_message': f"""✅ **Dodano do koszyka!**
+
+🛒 {product['name']}
+💰 {product['price'] * 1.23:.2f} zł brutto
+
+**Koszyk ({len(session['cart'])} szt.):** {cart_total:.2f} zł
+
+{'🎉 Darmowa dostawa!' if cart_total >= 299 else f'Do darmowej dostawy brakuje: {299 - cart_total:.2f} zł'}""",
+            'cart_updated': True,
+            'buttons': [
+                {'text': '✅ Przejdź do kasy', 'action': 'checkout'},
+                {'text': '🔍 Kontynuuj zakupy', 'action': 'search_product'},
+                {'text': '↩️ Menu główne', 'action': 'main_menu'}
+            ]
+        }
