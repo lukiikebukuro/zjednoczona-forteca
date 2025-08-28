@@ -8,6 +8,10 @@ from flask import session
 from datetime import datetime
 import random
 import re
+import requests
+import uuid
+import hashlib
+import time
 from difflib import SequenceMatcher
 from fuzzywuzzy import fuzz, process
 
@@ -124,7 +128,83 @@ class EcommerceBot:
                 'items': ['Amortyzator Bilstein B4 (2 szt.)', 'Olej Castrol Edge 5W30']
             }
         }
-    
+
+    def send_ga4_no_results_event(self, query, search_type='products'):
+        """
+        Send 'search_no_results' event to Google Analytics 4 via Measurement Protocol
+        
+        Args:
+            query (str): Search query that returned no results
+            search_type (str): Type of search ('products' or 'faq')
+        
+        Returns:
+            bool: True if successfully sent, False otherwise
+        """
+        try:
+            # GA4 Measurement Protocol configuration
+            # UWAGA: Podmień te wartości na swoje rzeczywiste
+            GA4_MEASUREMENT_ID = "G-ECOMMERCE123"  # Podmień na swój Measurement ID
+            GA4_API_SECRET = "YOUR_API_SECRET_HERE"  # Podmień na swój API Secret
+            
+            # Generate consistent client_id for session tracking
+            # Można też użyć session ID z Flask
+            session_data = f"universal_soldier_{int(time.time() // 3600)}"  # Per hour sessions
+            client_id = hashlib.md5(session_data.encode()).hexdigest()
+            
+            # GA4 Measurement Protocol endpoint
+            url = f"https://www.google-analytics.com/mp/collect"
+            
+            # Request parameters
+            params = {
+                'measurement_id': GA4_MEASUREMENT_ID,
+                'api_secret': GA4_API_SECRET
+            }
+            
+            # Event payload
+            payload = {
+                "client_id": client_id,
+                "events": [{
+                    "name": "search_no_results",
+                    "params": {
+                        "search_term": query[:100],  # Limit length for GA4
+                        "search_type": search_type,
+                        "source": "universal_soldier_bot",
+                        "query_length": len(query),
+                        "timestamp": int(time.time()),
+                        "session_id": client_id[:16]
+                    }
+                }]
+            }
+            
+            # Send POST request
+            response = requests.post(
+                url, 
+                params=params, 
+                json=payload, 
+                timeout=5  # 5 second timeout
+            )
+            
+            # Log success/failure
+            if response.status_code == 204:  # GA4 returns 204 on success
+                print(f"[GA4] ✅ No results event sent: '{query}' ({search_type})")
+                return True
+            else:
+                print(f"[GA4] ❌ Failed to send event. Status: {response.status_code}")
+                print(f"[GA4] Response: {response.text}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            print(f"[GA4] ⏱️ Timeout sending no results event for: '{query}'")
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"[GA4] 🚫 Network error sending event: {e}")
+            return False
+        except Exception as e:
+            print(f"[GA4] 💥 Unexpected error sending event: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
     def normalize_query(self, query):
         """Normalizacja zapytania - obsługa literówek typowych dla motoryzacji"""
         query = query.lower().strip()

@@ -397,52 +397,83 @@ class EcommerceBotUI {
         this.scrollToBottom();
     }
     
-    async performSearch(query) {
-        if (!query) return;
+    // W funkcji performSearch(), po linii 332, dodaj:
+
+async performSearch(query) {
+    if (!query) return;
+    
+    const searchType = this.faqMode ? 'faq' : 'products';
+    
+    try {
+        const response = await fetch('/search-suggestions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ 
+                query: query,
+                type: searchType 
+            })
+        });
         
-        const searchType = this.faqMode ? 'faq' : 'products';
+        if (!response.ok) {
+            throw new Error(`Search failed with status: ${response.status}`);
+        }
         
-        try {
-            const response = await fetch('/search-suggestions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ 
-                    query: query,
-                    type: searchType 
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Search failed with status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('[DEBUG] Suggestions received:', data);
-            
-            // Track search
-            this.trackEvent('search_performed', {
+        const data = await response.json();
+        console.log('[DEBUG] Suggestions received:', data);
+        
+        // Track search
+        this.trackEvent('search_performed', {
+            search_term: query,
+            search_type: searchType,
+            results_count: data.suggestions ? data.suggestions.length : 0
+        });
+        
+        // *** DODAJ TEN KOD - TRACKING PUSTYCH WYNIKÓW ***
+        // Check if no results found and query length > 2
+        if ((!data.suggestions || data.suggestions.length === 0) && query.length > 2) {
+            // Track no results event in GA4
+            this.trackEvent('search_no_results', {
                 search_term: query,
                 search_type: searchType,
-                results_count: data.suggestions ? data.suggestions.length : 0
+                query_length: query.length
             });
             
-            if (data.suggestions && data.suggestions.length > 0) {
-                this.displaySearchSuggestions(data.suggestions);
-            } else {
-                this.displayNoSuggestions(query, searchType);
+            // Also send to backend GA4 Measurement Protocol
+            try {
+                await fetch('/track-no-results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        query: query,
+                        search_type: searchType
+                    })
+                });
+            } catch (trackingError) {
+                console.warn('[WARNING] Backend tracking failed:', trackingError);
             }
-        } catch (error) {
-            console.error('[ERROR] Search failed:', error);
-            this.hideSuggestions();
-            this.trackEvent('search_error', {
-                search_term: query,
-                error: error.message
-            });
         }
+        // *** KONIEC DODANEGO KODU ***
+        
+        if (data.suggestions && data.suggestions.length > 0) {
+            this.displaySearchSuggestions(data.suggestions);
+        } else {
+            this.displayNoSuggestions(query, searchType);
+        }
+    } catch (error) {
+        console.error('[ERROR] Search failed:', error);
+        this.hideSuggestions();
+        this.trackEvent('search_error', {
+            search_term: query,
+            error: error.message
+        });
     }
+}
     
     displaySearchSuggestions(suggestions) {
         // Clear and prepare dropdown

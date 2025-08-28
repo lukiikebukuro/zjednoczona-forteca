@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify, session
 from datetime import timedelta
 from ecommerce_bot import EcommerceBot
 import os
+import requests
+import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'universal_soldier_kramp_2024_v2')
@@ -131,6 +133,39 @@ def search_suggestions():
         import traceback
         traceback.print_exc()
         return jsonify({'suggestions': [], 'error': str(e)}), 200
+
+
+@app.route('/track-no-results', methods=['POST'])
+def track_no_results():
+    """Send no results event to GA4 Measurement Protocol"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        search_type = data.get('search_type', 'products')
+        
+        # Only track if query length > 2
+        if len(query.strip()) <= 2:
+            return jsonify({'status': 'skipped', 'reason': 'query too short'}), 200
+        
+        # Send to GA4 Measurement Protocol
+        ga4_success = bot.send_ga4_no_results_event(query, search_type)
+        
+        return jsonify({
+            'status': 'success' if ga4_success else 'partial_success',
+            'ga4_sent': ga4_success,
+            'query': query,
+            'search_type': search_type
+        })
+    
+    except Exception as e:
+        print(f"[ERROR] Track no results error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
 
 @app.route('/health')
 def health_check():
