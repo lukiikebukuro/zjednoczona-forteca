@@ -11,6 +11,11 @@ class EcommerceBotUI {
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.cartCounter = document.getElementById('cart-counter');
         
+        // Initialize GA4 session
+        this.trackEvent('session_initialized', {
+            timestamp: new Date().toISOString()
+        });
+        
         // Search state
         this.searchMode = false;
         this.faqMode = false;
@@ -21,6 +26,17 @@ class EcommerceBotUI {
         this.createSuggestionsDropdown();
         this.initializeEventListeners();
         this.startBot();
+    }
+
+    // Track GA4 events
+    trackEvent(eventName, params = {}) {
+        if (typeof gtag === 'function') {
+            gtag('event', eventName, {
+                ...params,
+                source: 'universal_soldier_bot',
+                timestamp: new Date().toISOString()
+            });
+        }
     }
     
     createSuggestionsDropdown() {
@@ -382,7 +398,8 @@ class EcommerceBotUI {
     }
     
     async performSearch(query) {
-        // Unified search function
+        if (!query) return;
+        
         const searchType = this.faqMode ? 'faq' : 'products';
         
         try {
@@ -391,25 +408,39 @@ class EcommerceBotUI {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({ 
                     query: query,
                     type: searchType 
                 })
             });
             
-            if (response.ok) {
-                const data = await response.json();
-                console.log('[DEBUG] Suggestions received:', data);
-                
-                if (data.suggestions && data.suggestions.length > 0) {
-                    this.displaySearchSuggestions(data.suggestions);
-                } else {
-                    this.displayNoSuggestions(query, searchType);
-                }
+            if (!response.ok) {
+                throw new Error(`Search failed with status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('[DEBUG] Suggestions received:', data);
+            
+            // Track search
+            this.trackEvent('search_performed', {
+                search_term: query,
+                search_type: searchType,
+                results_count: data.suggestions ? data.suggestions.length : 0
+            });
+            
+            if (data.suggestions && data.suggestions.length > 0) {
+                this.displaySearchSuggestions(data.suggestions);
+            } else {
+                this.displayNoSuggestions(query, searchType);
             }
         } catch (error) {
             console.error('[ERROR] Search failed:', error);
             this.hideSuggestions();
+            this.trackEvent('search_error', {
+                search_term: query,
+                error: error.message
+            });
         }
     }
     
