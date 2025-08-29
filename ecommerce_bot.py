@@ -30,40 +30,62 @@ class EcommerceBot:
         # Baza produktów motoryzacyjnych
         self.product_database = {
             'products': [
-                # Klocki hamulcowe
-                {'id': 'KH001', 'name': 'Klocki hamulcowe przód Bosch BMW E90', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Bosch', 'model': '0986494104', 'price': 189.00, 'stock': 45},
-                {'id': 'KH002', 'name': 'Klocki hamulcowe tył ATE Mercedes W204', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'ATE', 'model': '13.0460-7218', 'price': 156.00, 'stock': 38},
-                {'id': 'KH003', 'name': 'Klocki hamulcowe Ferodo Audi A4 B8', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Ferodo', 'model': 'FDB4050', 'price': 245.00, 'stock': 22},
-                
-                # Tarcze hamulcowe
-                {'id': 'TH001', 'name': 'Tarcza hamulcowa przednia Brembo 320mm', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Brembo', 'model': '09.9772.11', 'price': 420.00, 'stock': 18},
-                {'id': 'TH002', 'name': 'Tarcza hamulcowa tylna ATE 300mm', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'ATE', 'model': '24.0330-0184', 'price': 285.00, 'stock': 25},
-                
-                # Filtry
-                {'id': 'FO001', 'name': 'Filtr oleju Mann HU719/7x BMW', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mann', 'model': 'HU719/7x', 'price': 62.00, 'stock': 120},
-                {'id': 'FP001', 'name': 'Filtr paliwa Bosch diesel PSA', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'F026402836', 'price': 89.00, 'stock': 85},
-                {'id': 'FA001', 'name': 'Filtr powietrza K&N sportowy uniwersalny', 'category': 'filtry', 'machine': 'uniwersalny', 'brand': 'K&N', 'model': '33-2990', 'price': 285.00, 'stock': 35},
-                {'id': 'FK001', 'name': 'Filtr kabinowy węglowy Mann CUK2939', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mann', 'model': 'CUK2939', 'price': 95.00, 'stock': 68},
-                
-                # Amortyzatory
-                {'id': 'AM001', 'name': 'Amortyzator przód Bilstein B4 VW Golf VII', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'Bilstein', 'model': '22-266767', 'price': 520.00, 'stock': 15},
-                {'id': 'AM002', 'name': 'Amortyzator tył KYB Excel-G Ford Focus MK3', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'KYB', 'model': '349034', 'price': 385.00, 'stock': 24},
-                {'id': 'AM003', 'name': 'Amortyzator przód Sachs Opel Astra J', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'Sachs', 'model': '314896', 'price': 425.00, 'stock': 19},
-                
-                # Świece zapłonowe
-                {'id': 'SZ001', 'name': 'Świeca zapłonowa NGK Laser Iridium', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'NGK', 'model': 'ILZKR7B11', 'price': 45.00, 'stock': 280},
-                {'id': 'SZ002', 'name': 'Świeca zapłonowa Bosch Platinum Plus', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'FR7DPP33', 'price': 38.00, 'stock': 320},
-                {'id': 'SZ003', 'name': 'Świeca żarowa Beru PSG diesel', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'Beru', 'model': 'PSG006', 'price': 78.00, 'stock': 145},
-                
-                # Akumulatory
-                {'id': 'AK001', 'name': 'Akumulator Varta Blue 74Ah 680A', 'category': 'elektryka', 'machine': 'osobowy', 'brand': 'Varta', 'model': 'E12', 'price': 420.00, 'stock': 38},
-                {'id': 'AK002', 'name': 'Akumulator Bosch S4 60Ah 540A', 'category': 'elektryka', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'S4005', 'price': 350.00, 'stock': 45},
-                
-                # Oleje silnikowe
-                {'id': 'OL001', 'name': 'Olej silnikowy Castrol Edge 5W30 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Castrol', 'model': 'Edge 5W30', 'price': 165.00, 'stock': 92},
-                {'id': 'OL002', 'name': 'Olej silnikowy Mobil 1 0W40 4L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Mobil', 'model': 'ESP 0W40', 'price': 189.00, 'stock': 78},
-                {'id': 'OL003', 'name': 'Olej silnikowy Shell Helix Ultra 5W40 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Shell', 'model': 'Helix Ultra', 'price': 145.00, 'stock': 110}
-            ],
+    # KLOCKI HAMULCOWE - rozszerzone
+    {'id': 'KH001', 'name': 'Klocki hamulcowe przód Bosch BMW E90 320i', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Bosch', 'model': '0986494104', 'price': 189.00, 'stock': 45},
+    {'id': 'KH002', 'name': 'Klocki hamulcowe tył ATE Mercedes W204 C200', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'ATE', 'model': '13.0460-7218', 'price': 156.00, 'stock': 38},
+    {'id': 'KH003', 'name': 'Klocki hamulcowe Ferodo Audi A4 B8 2.0 TDI', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Ferodo', 'model': 'FDB4050', 'price': 245.00, 'stock': 22},
+    {'id': 'KH004', 'name': 'Klocki hamulcowe TRW VW Golf VII 1.4 TSI', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'TRW', 'model': 'GDB1748', 'price': 135.00, 'stock': 67},
+    {'id': 'KH005', 'name': 'Klocki hamulcowe Brembo Toyota Corolla E12', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Brembo', 'model': 'P83052', 'price': 156.00, 'stock': 73},
+    
+    # TARCZE HAMULCOWE - rozszerzone
+    {'id': 'TH001', 'name': 'Tarcza hamulcowa przednia Brembo BMW E90 320mm', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Brembo', 'model': '09.9772.11', 'price': 420.00, 'stock': 18},
+    {'id': 'TH002', 'name': 'Tarcza hamulcowa tylna ATE Mercedes W204 300mm', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'ATE', 'model': '24.0330-0184', 'price': 285.00, 'stock': 25},
+    {'id': 'TH003', 'name': 'Tarcza hamulcowa Zimmermann VW Golf VII przód 312mm', 'category': 'hamulce', 'machine': 'osobowy', 'brand': 'Zimmermann', 'model': '100.3234.20', 'price': 198.00, 'stock': 34},
+    
+    # FILTRY - znacznie rozszerzone
+    {'id': 'FO001', 'name': 'Filtr oleju Mann HU719/7x BMW N47 N57 diesel', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mann', 'model': 'HU719/7x', 'price': 62.00, 'stock': 120},
+    {'id': 'FO002', 'name': 'Filtr oleju Mahle OX371D Mercedes OM651 2.2 CDI', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mahle', 'model': 'OX371D', 'price': 45.00, 'stock': 89},
+    {'id': 'FO003', 'name': 'Filtr oleju Bosch F026407022 VW 1.9 2.0 TDI', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'F026407022', 'price': 38.00, 'stock': 156},
+    {'id': 'FO004', 'name': 'Filtr oleju UFI 25.106.00 Fiat Multijet 1.3 1.9', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'UFI', 'model': '25.106.00', 'price': 28.00, 'stock': 134},
+    
+    {'id': 'FP001', 'name': 'Filtr paliwa Bosch F026402836 PSA 1.6 2.0 HDI', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'F026402836', 'price': 89.00, 'stock': 85},
+    {'id': 'FP002', 'name': 'Filtr paliwa Mann WK853/3x Mercedes Sprinter 2.2', 'category': 'filtry', 'machine': 'dostawczy', 'brand': 'Mann', 'model': 'WK853/3x', 'price': 67.00, 'stock': 76},
+    {'id': 'FP003', 'name': 'Filtr paliwa Mahle KL440/18 BMW 118d 120d 320d', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mahle', 'model': 'KL440/18', 'price': 78.00, 'stock': 93},
+    
+    {'id': 'FA001', 'name': 'Filtr powietrza K&N 33-2990 sportowy uniwersalny', 'category': 'filtry', 'machine': 'uniwersalny', 'brand': 'K&N', 'model': '33-2990', 'price': 285.00, 'stock': 35},
+    {'id': 'FA002', 'name': 'Filtr powietrza Mann C2774/1 BMW E90 E91 E92', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mann', 'model': 'C2774/1', 'price': 67.00, 'stock': 89},
+    {'id': 'FA003', 'name': 'Filtr powietrza Bosch F026400200 VW Golf V VI VII', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'F026400200', 'price': 54.00, 'stock': 112},
+    
+    {'id': 'FK001', 'name': 'Filtr kabinowy węglowy Mann CUK2939 Audi A4 A6', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Mann', 'model': 'CUK2939', 'price': 95.00, 'stock': 68},
+    {'id': 'FK002', 'name': 'Filtr kabinowy Bosch 1987432436 BMW E90 E91 E92', 'category': 'filtry', 'machine': 'osobowy', 'brand': 'Bosch', 'model': '1987432436', 'price': 78.00, 'stock': 84},
+    
+    # AMORTYZATORY - więcej marek
+    {'id': 'AM001', 'name': 'Amortyzator przód Bilstein B4 VW Golf VII 1.4 TSI', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'Bilstein', 'model': '22-266767', 'price': 520.00, 'stock': 15},
+    {'id': 'AM002', 'name': 'Amortyzator tył KYB Excel-G Ford Focus MK3 1.6', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'KYB', 'model': '349034', 'price': 385.00, 'stock': 24},
+    {'id': 'AM003', 'name': 'Amortyzator przód Sachs Opel Astra J 1.7 CDTI', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'Sachs', 'model': '314896', 'price': 425.00, 'stock': 19},
+    {'id': 'AM004', 'name': 'Amortyzator Monroe BMW E90 320d przód', 'category': 'zawieszenie', 'machine': 'osobowy', 'brand': 'Monroe', 'model': 'G7411', 'price': 398.00, 'stock': 28},
+    
+    # ŚWIECE ZAPŁONOWE I ŻAROWE - rozszerzone
+    {'id': 'SZ001', 'name': 'Świeca zapłonowa NGK Laser Iridium ILZKR7B11', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'NGK', 'model': 'ILZKR7B11', 'price': 45.00, 'stock': 280},
+    {'id': 'SZ002', 'name': 'Świeca zapłonowa Bosch Platinum Plus FR7DPP33', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'FR7DPP33', 'price': 38.00, 'stock': 320},
+    {'id': 'SZ003', 'name': 'Świeca żarowa Beru PSG006 Mercedes 2.2 CDI', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'Beru', 'model': 'PSG006', 'price': 78.00, 'stock': 145},
+    {'id': 'SZ004', 'name': 'Świeca zapłonowa Champion RC89YCC BMW N52 N54', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'Champion', 'model': 'RC89YCC', 'price': 42.00, 'stock': 167},
+    {'id': 'SZ005', 'name': 'Świeca zapłonowa Denso IK20TT VW Golf TSI TFSI', 'category': 'zapłon', 'machine': 'osobowy', 'brand': 'Denso', 'model': 'IK20TT', 'price': 51.00, 'stock': 234},
+    
+    # AKUMULATORY - więcej marek
+    {'id': 'AK001', 'name': 'Akumulator Varta Blue Dynamic 74Ah 680A E12', 'category': 'elektryka', 'machine': 'osobowy', 'brand': 'Varta', 'model': 'E12', 'price': 420.00, 'stock': 38},
+    {'id': 'AK002', 'name': 'Akumulator Bosch S4 Silver 60Ah 540A S4005', 'category': 'elektryka', 'machine': 'osobowy', 'brand': 'Bosch', 'model': 'S4005', 'price': 350.00, 'stock': 45},
+    {'id': 'AK003', 'name': 'Akumulator Exide Premium 77Ah 760A EA770', 'category': 'elektryka', 'machine': 'osobowy', 'brand': 'Exide', 'model': 'EA770', 'price': 389.00, 'stock': 32},
+    {'id': 'AK004', 'name': 'Akumulator Yuasa YBX5027 62Ah 540A Silver', 'category': 'elektryka', 'machine': 'osobowy', 'brand': 'Yuasa', 'model': 'YBX5027', 'price': 356.00, 'stock': 29},
+    
+    # OLEJE SILNIKOWE - więcej marek
+    {'id': 'OL001', 'name': 'Olej silnikowy Castrol Edge 5W30 Titanium FST 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Castrol', 'model': 'Edge 5W30', 'price': 165.00, 'stock': 92},
+    {'id': 'OL002', 'name': 'Olej silnikowy Mobil 1 ESP 0W40 syntetyczny 4L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Mobil', 'model': 'ESP 0W40', 'price': 189.00, 'stock': 78},
+    {'id': 'OL003', 'name': 'Olej silnikowy Shell Helix Ultra 5W40 API SN 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Shell', 'model': 'Helix Ultra', 'price': 145.00, 'stock': 110},
+    {'id': 'OL004', 'name': 'Olej silnikowy Total Quartz 9000 5W40 ACEA C3 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Total', 'model': 'Quartz 9000', 'price': 156.00, 'stock': 87},
+    {'id': 'OL005', 'name': 'Olej silnikowy Motul 8100 X-cess 5W40 VW 502.00 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Motul', 'model': '8100 X-cess', 'price': 198.00, 'stock': 54},
+    {'id': 'OL006', 'name': 'Olej silnikowy Liqui Moly Top Tec 4200 5W30 5L', 'category': 'oleje', 'machine': 'osobowy', 'brand': 'Liqui Moly', 'model': 'Top Tec 4200', 'price': 234.00, 'stock': 43}
+],
             'categories': {
                 'hamulce': '🔧 Układ hamulcowy',
                 'filtry': '🔍 Filtry',
