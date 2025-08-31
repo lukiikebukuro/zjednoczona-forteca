@@ -83,7 +83,7 @@ def bot_send():
 
 @app.route('/search-suggestions', methods=['POST'])
 def search_suggestions():
-    """Real-time search suggestions with fuzzy matching"""
+    """Real-time search suggestions with improved fuzzy matching"""
     try:
         data = request.get_json()
         query = data.get('query', '').strip()
@@ -103,7 +103,7 @@ def search_suggestions():
                     'id': faq['id'],
                     'text': faq['question'],
                     'type': 'faq',
-                    'score': score,
+                    'score': int(score),  # Wynik procentowy
                     'category': faq.get('category', 'FAQ')
                 })
         else:
@@ -116,12 +116,17 @@ def search_suggestions():
                     'id': product['id'],
                     'text': product['name'],
                     'type': 'product',
-                    'score': score,
+                    'score': int(score),  # Wynik procentowy jako integer
                     'price': f"{product['price']:.2f} zł",
                     'stock': product['stock'],
                     'stock_status': stock_status,
                     'brand': product['brand']
                 })
+        
+        # Debugging output
+        print(f"[SUGGESTIONS] Query: '{query}' | Type: {search_type} | Results: {len(suggestions)}")
+        if suggestions:
+            print(f"[TOP RESULT] {suggestions[0]['text'][:50]}... Score: {suggestions[0]['score']}%")
         
         return jsonify({
             'suggestions': suggestions,
@@ -172,11 +177,13 @@ def health_check():
     """Health check endpoint"""
     return jsonify({
         'status': 'OK',
-        'service': 'Universal Soldier E-commerce Bot v2.0',
-        'version': '2.0',
+        'service': 'Universal Soldier E-commerce Bot v3.0',
+        'version': '3.0',
         'company': 'Kramp Demo',
-        'session_active': 'cart' in session
+        'session_active': 'cart' in session,
+        'fuzzy_engine': 'Advanced Logarithmic v2.0'
     })
+
 
 @app.route('/debug/session')
 def debug_session():
@@ -190,17 +197,50 @@ def debug_session():
         })
     return jsonify({'error': 'Available only in debug mode'}), 403
 
+@app.route('/debug/test-fuzzy')
+def test_fuzzy():
+    """Test endpoint for fuzzy matching algorithm"""
+    if app.debug:
+        test_queries = [
+            "bmw",
+            "bmw e90",
+            "bmw e90 klocki",
+            "klocki hamulcowe bmw e90",
+            "bosch",
+            "filtr mann",
+            "filtr oleju mann bmw"
+        ]
+        
+        results = {}
+        for query in test_queries:
+            matches = bot.get_fuzzy_product_matches(query, limit=3)
+            results[query] = [
+                {
+                    'name': p['name'][:50] + '...' if len(p['name']) > 50 else p['name'],
+                    'score': score
+                }
+                for p, score in matches
+            ]
+        
+        return jsonify({
+            'test_results': results,
+            'algorithm': 'Advanced Logarithmic Fuzzy Matching v2.0'
+        })
+    return jsonify({'error': 'Available only in debug mode'}), 403
+
 if __name__ == '__main__':
     with app.app_context():
         # Initialize bot data
         bot.initialize_data()
         print("=" * 60)
-        print("🛒 UNIVERSAL SOLDIER E-COMMERCE BOT v2.0")
+        print("🛒 UNIVERSAL SOLDIER E-COMMERCE BOT v3.0")
         print("🚜 Kramp - Inteligentny Asystent Części Zamiennych")
+        print("🔍 Fuzzy Search Engine: Advanced Logarithmic v2.0")
         print("=" * 60)
         print("✅ System uruchomiony!")
         print("📍 Dostępny pod: http://localhost:5000")
         print("🔧 Debug: http://localhost:5000/debug/session")
+        print("🧪 Test Fuzzy: http://localhost:5000/debug/test-fuzzy")
         print("=" * 60)
     
     app.run(debug=True, port=5000)

@@ -1462,3 +1462,8 @@ body {
         justify-content: center;
     }
 }
+
+.suggestion-score { padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; }
+.score-high { background: #059669; color: white; }
+.score-medium { background: #f59e0b; color: white; }
+.score-low { background: #9ca3af; color: white; }

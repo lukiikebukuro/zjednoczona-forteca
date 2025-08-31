@@ -518,6 +518,11 @@ async performSearch(query) {
                                 <span class="suggestion-product-code">${item.id}</span>
                                 <span style="color: #d1d5db;">|</span>
                                 <span class="suggestion-product-brand">${item.brand}</span>
+                                <span class="suggestion-product-brand">${item.brand}</span>
+<span style="color: #d1d5db;">|</span>
+<span class="suggestion-score score-${item.score >= 80 ? 'high' : item.score >= 60 ? 'medium' : 'low'}">${item.score}%</span>
+<span style="color: #d1d5db;">|</span>
+${stockBadge}
                                 <span style="color: #d1d5db;">|</span>
                                 ${stockBadge}
                             </div>

@@ -285,14 +285,14 @@ class EcommerceBot:
         
         # Wagi dla różnych typów dopasowań
         weights = {
-            'exact_id': 100,     # Dokładne dopasowanie ID
-            'exact_name': 90,    # Dokładne dopasowanie nazwy
-            'brand': 85,         # Dopasowanie marki
-            'model': 80,         # Dopasowanie modelu
-            'category': 70,      # Dopasowanie kategorii
-            'partial': 60,       # Częściowe dopasowanie
-            'token': 50          # Dopasowanie tokenów
-        }
+    'exact_id': 100,
+    'exact_name': 95,    # Zwiększ z 90
+    'brand': 90,         # Zwiększ z 85
+    'model': 88,         # Zwiększ z 80
+    'category': 85,      # Zwiększ z 70
+    'partial': 75,       # Zwiększ z 60
+    'token': 65          # Zwiększ z 50
+}
         
         for product in self.product_database['products']:
             if machine_filter and product['machine'] != machine_filter and product['machine'] != 'uniwersalny':
@@ -348,7 +348,7 @@ class EcommerceBot:
             final_score = min(100, final_score)
             
             # Dodaj do wyników jeśli przekroczono próg
-            if final_score >= 45:
+            if final_score >= 35:
                 matches.append((product, final_score))
         
         # Sortowanie po wyniku
@@ -788,3 +788,29 @@ System automatycznie poprawia błędy. Spróbuj inaczej.""",
                 {'text': '↩️ Menu główne', 'action': 'main_menu'}
             ]
         }
+    
+
+def search_suggestions(self, query, context='products'):
+    suggestions = []
+    if context == 'faq':
+        faq_results = self.get_fuzzy_faq_matches(query, limit=6)
+        for faq, score in faq_results:
+            suggestions.append({
+                'title': faq['question'],
+                'subtitle': f"Kategoria: {faq.get('category', 'FAQ')}",
+                'icon': '❓',
+                'score': int(score),
+                'data': faq
+            })
+    else:
+        product_results = self.get_fuzzy_product_matches(query, session.get('machine_filter'), limit=8)
+        for product, score in product_results:
+            suggestions.append({
+                'title': product['name'],
+                'subtitle': f"{product['brand']} • {product['price']:.0f} zł",
+                'icon': '🔧',
+                'score': int(score),
+                'data': product
+            })
+    return suggestions
+    
