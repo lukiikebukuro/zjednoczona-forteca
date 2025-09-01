@@ -6,39 +6,7 @@
         -webkit-text-size-adjust: 100%; /* Prevent font size adjustment */
     }
     
-    /* Header mobile optimization */
-    .app-header {
-        position: fixed;
-        top: 0;
-        width: 100%;
-        z-index: 1000;
-    }
     
-    .header-content {
-        padding: 0.5rem;
-        flex-direction: row;
-        justify-content: space-between;
-    }
-    
-    .logo-section {
-        gap: 0.5rem;
-    }
-    
-    .logo-icon {
-        font-size: 1.5rem;
-    }
-    
-    .logo-text h1 {
-        font-size: 1rem;
-    }
-    
-    .logo-text span {
-        display: none; /* Hide tagline on very small screens */
-    }
-    
-    .header-badge {
-        display: none; /* Hide badges on mobile */
-    }
     
     /* Main content mobile */
     .main-content {
@@ -314,77 +282,7 @@
         box-shadow: none; /* Remove shadows in dark mode for better performance */
     }
 }
-    /* Header adjustments */
-    .header-content {
-        padding: 0.75rem 1rem;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
     
-    .logo-section {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .logo-text h1 {
-        font-size: 1.25rem;
-    }
-    
-    .logo-icon {
-        font-size: 2rem;
-    }
-    
-    .header-badge {
-        width: 100%;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .company-badge,
-    .security-indicator {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-    }
-    
-    /* Main content */
-    .main-content {
-        padding: 1rem;
-        padding-top: 1.5rem;
-    }
-    
-    /* Chat interface */
-    .chat-interface {
-        height: calc(100vh - 200px);
-        border-radius: 12px;
-        margin-bottom: 50px;
-        max-width: 100%;
-    }
-    
-    .chat-header {
-        padding: 1rem;
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: flex-start;
-    }
-    
-    .chat-status {
-        font-size: 0.875rem;
-    }
-    
-    .header-controls {
-        width: 100%;
-        justify-content: space-between;
-    }
-    
-    .cart-counter {
-        font-size: 0.875rem;
-        padding: 0.25rem 0.5rem;
-    }
-    
-    .reset-btn {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-    }
     
     /* Messages */
     .messages-container {
@@ -671,76 +569,7 @@ body {
 }
 
 /* Header */
-.app-header {
-    background: var(--white);
-    border-bottom: 4px solid var(--primary-color);
-    box-shadow: var(--shadow-md);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
 
-.header-content {
-    max-width: var(--container-max);
-    margin: 0 auto;
-    padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo-section {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.logo-icon {
-    font-size: 2.5rem;
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
-}
-
-.logo-text h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin: 0;
-}
-
-.logo-text span {
-    font-size: 0.75rem;
-    color: var(--gray-500);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.header-badge {
-    display: flex;
-    gap: 1rem;
-}
-
-.company-badge,
-.security-indicator {
-    background: var(--gray-100);
-    padding: 0.5rem 1rem;
-    border-radius: var(--border-radius);
-    font-size: 0.875rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s;
-}
-
-.security-indicator {
-    background: var(--accent-color);
-    color: var(--primary-color);
-    font-weight: 600;
-}
 
 /* Main Content */
 .main-content {
@@ -1467,3 +1296,175 @@ body {
 .score-high { background: #059669; color: white; }
 .score-medium { background: #f59e0b; color: white; }
 .score-low { background: #9ca3af; color: white; }
+
+
+
+
+/* ========== NOWY HEADER LAYOUT ========== */
+.app-header {
+    background: var(--white); /* Białe tło zamiast ciemnego */
+    border-bottom: 4px solid var(--primary-color);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between; /* To rozłoży elementy na lewo i prawo */
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0; /* Usuń padding */
+}
+
+/* Lewa strona - Logo */
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-icon {
+    font-size: 2.5rem;
+    animation: pulse-icon 2s infinite;
+}
+
+.logo-text h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color); /* Czerwony kolor zamiast białego */
+    margin: 0;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.logo-subtitle {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    font-style: italic;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Prawa strona - Badges */
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.header-badges {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.badge-ecommerce {
+    color: var(--gray-700);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.security-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px solid #3b82f6;
+    color: #2563eb;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.security-badge:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: translateY(-2px);
+}
+
+.iso-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(34, 197, 94, 0.1);
+    border: 2px solid #22c55e;
+    color: #16a34a;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    position: relative;
+    animation: glow-effect 2s ease-in-out infinite;
+}
+
+.iso-badge:hover {
+    background: rgba(34, 197, 94, 0.2);
+    transform: translateY(-2px);
+}
+
+.check-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: #22c55e;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+/* Animacje - zmienione nazwy aby uniknąć konfliktów */
+@keyframes pulse-icon {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes glow-effect {
+    0%, 100% { 
+        box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), 
+                    0 0 30px rgba(34, 197, 94, 0.4);
+    }
+}
+
+/* Responsywność */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .header-badges {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .badge-ecommerce {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .logo-text h1 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Ukryj wszystkie stare elementy */
+.header-badge,
+.company-badge,
+.security-indicator {
+    display: none !important;
+}
