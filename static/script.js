@@ -1,4 +1,4 @@
-// Universal Soldier E-commerce Bot - JavaScript Frontend
+// Universal Soldier E-commerce Bot v5.0 FIXED - Naprawiony UI
 class EcommerceBotUI {
     constructor() {
         this.cartCount = 0;
@@ -11,9 +11,42 @@ class EcommerceBotUI {
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.cartCounter = document.getElementById('cart-counter');
         
+        // NAPRAWIONE confidence messages
+        this.CONFIDENCE_MESSAGES = {
+            HIGH: {
+                icon: '✅',
+                prefix: 'Znaleźliśmy',
+                class: 'results-high-confidence'
+            },
+            MEDIUM: {
+                icon: '🤔',
+                prefix: 'Czy chodziło Ci o',
+                class: 'results-medium-confidence',
+                suffix: 'System automatycznie poprawił literówki'
+            },
+            LOW: {
+                icon: '❓',
+                prefix: 'Nie rozumiemy zapytania',
+                class: 'results-low-confidence',
+                helper: 'Sprawdź pisownię lub użyj innych słów'
+            },
+            NO_MATCH: {
+                icon: '🔍',
+                prefix: 'Nie mamy tego produktu',
+                class: 'results-no-match',
+                cta: 'Twoje zapytanie zostało zapisane!'
+            },
+            NONE: {
+                icon: '💭',
+                prefix: 'Wpisz zapytanie',
+                class: 'results-none'
+            }
+        };
+        
         // Initialize GA4 session
         this.trackEvent('session_initialized', {
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            version: '5.0-fixed'
         });
         
         // Search state
@@ -22,42 +55,57 @@ class EcommerceBotUI {
         this.currentContext = null;
         this.searchTimeout = null;
         this.suggestionsDropdown = null;
+        this.lastConfidenceLevel = 'NONE';
+        this.lastQuery = '';
         
         this.createSuggestionsDropdown();
         this.initializeEventListeners();
         this.startBot();
     }
 
-    // Track GA4 events
     trackEvent(eventName, params = {}) {
         if (typeof gtag === 'function') {
             gtag('event', eventName, {
                 ...params,
-                source: 'universal_soldier_bot',
+                source: 'universal_soldier_bot_fixed',
                 timestamp: new Date().toISOString()
             });
         }
     }
     
+    async trackAnalytics(eventType, eventData) {
+        try {
+            await fetch('/track-analytics', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    event_type: eventType,
+                    event_data: eventData
+                })
+            });
+        } catch (error) {
+            console.warn('[Analytics] Failed to track event:', error);
+        }
+    }
+    
     createSuggestionsDropdown() {
-        // Create suggestions dropdown container
         this.suggestionsDropdown = document.createElement('div');
         this.suggestionsDropdown.className = 'suggestions-dropdown';
-        // CSS styles are now in style.css
     }
     
     initializeEventListeners() {
-        // Reset button
         const resetBtn = document.getElementById('reset-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
-                if (confirm('Czy na pewno chcesz rozpocząć nową sesję? Koszyk zostanie wyczyszczony.')) {
+                if (confirm('Czy na pewno chcesz rozpocząć nową sesję?')) {
                     this.resetSession();
                 }
             });
         }
         
-        // Form submit prevention and send button
         const messageForm = document.getElementById('message-form');
         if (messageForm) {
             messageForm.addEventListener('submit', (e) => {
@@ -66,7 +114,6 @@ class EcommerceBotUI {
             });
         }
         
-        // Enter key in input
         if (this.userInput) {
             this.userInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -75,78 +122,40 @@ class EcommerceBotUI {
                 }
             });
             
-            // Real-time search on every keystroke
+            // Real-time search with FIXED intent analysis
             this.userInput.addEventListener('input', (e) => {
                 const query = e.target.value.trim();
+                this.lastQuery = query;
                 
-                // Clear previous timeout
                 if (this.searchTimeout) {
                     clearTimeout(this.searchTimeout);
                 }
                 
-                // Hide suggestions if query too short
                 if (query.length < 2) {
                     this.hideSuggestions();
+                    this.lastConfidenceLevel = 'NONE';
                     return;
                 }
                 
-                // Only search if in search or FAQ mode
                 if (!this.searchMode && !this.faqMode) {
                     return;
                 }
                 
-                // Debounce for 200ms to avoid too many requests
                 this.searchTimeout = setTimeout(() => {
                     this.performSearch(query);
                 }, 200);
             });
             
-            // Also search on keyup for immediate feedback
-            this.userInput.addEventListener('keyup', (e) => {
-                // Skip special keys
-                if (e.key === 'Enter' || e.key === 'Escape' || e.key === 'Tab') {
-                    return;
-                }
-                
-                const query = e.target.value.trim();
-                
-                if (query.length >= 2 && (this.searchMode || this.faqMode)) {
-                    // Clear existing timeout
-                    if (this.searchTimeout) {
-                        clearTimeout(this.searchTimeout);
-                    }
-                    
-                    // Immediate search on keyup
-                    this.performSearch(query);
-                }
-            });
-            
-            // Hide suggestions on blur
             this.userInput.addEventListener('blur', () => {
                 setTimeout(() => this.hideSuggestions(), 200);
             });
         }
-        
-        // Modal close
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.target.closest('.modal').style.display = 'none';
-            });
-        });
-        
-        // Close modal on outside click
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
-            }
-        });
     }
     
     async startBot() {
-        console.log('[DEBUG] Starting Universal Soldier bot session');
+        console.log('[DEBUG] Starting Universal Soldier bot v5.0 FIXED');
         this.showLoading(true);
         
-        // Clear containers
         this.messagesContainer.innerHTML = '';
         this.buttonContainer.innerHTML = '';
         this.textInputContainer.style.display = 'none';
@@ -161,14 +170,11 @@ class EcommerceBotUI {
                 body: JSON.stringify({})
             });
             
-            console.log('[DEBUG] Response status:', response.status);
-            
             if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }
             
             const data = await response.json();
-            console.log('[DEBUG] Received data:', data);
             
             if (data.reply) {
                 this.displayBotMessage(data.reply);
@@ -176,7 +182,7 @@ class EcommerceBotUI {
             
         } catch (error) {
             console.error('[ERROR] Failed to start bot:', error);
-            this.showError('Nie udało się uruchomić asystenta. Odśwież stronę i spróbuj ponownie.');
+            this.showError('Nie udało się uruchomić asystenta.');
         } finally {
             this.showLoading(false);
         }
@@ -189,6 +195,14 @@ class EcommerceBotUI {
         
         const messageElement = document.createElement('div');
         messageElement.className = 'message bot-message';
+        
+        if (reply.confidence_level) {
+            const confidenceConfig = this.CONFIDENCE_MESSAGES[reply.confidence_level];
+            if (confidenceConfig) {
+                messageElement.classList.add(confidenceConfig.class);
+            }
+        }
+        
         messageElement.style.opacity = '0';
         
         let messageContent = `
@@ -196,79 +210,112 @@ class EcommerceBotUI {
             <div class="message-content">
         `;
         
-        // Format message with bold support and line breaks
-        if (reply.text_message) {
+        // Handle lost demand special case
+        if (reply.lost_demand) {
+            messageContent += this.createLostDemandForm(reply.text_message);
+        } else if (reply.text_message) {
             let formattedMessage = reply.text_message
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\n/g, '<br>');
             messageContent += `<div class="message-text">${formattedMessage}</div>`;
         }
         
-        // Add product image if present
-        if (reply.product_image) {
-            messageContent += `
-                <div class="product-card">
-                    <div class="product-image">${reply.product_image}</div>
-                </div>
-            `;
-        }
-        
-        // Check if order was confirmed
-        if (reply.order_confirmed) {
-            this.cartCount = 0;
-            this.updateCartCounter();
-            this.showNotification('✅ Zamówienie zostało potwierdzone!');
-        }
-        
-        // Check if item was added to cart
-        if (reply.cart_updated || (reply.text_message && reply.text_message.includes('dodany do koszyka'))) {
+        if (reply.cart_updated) {
             this.cartCount++;
             this.updateCartCounter();
-            
-            // Extract cart info from message if present
-            const cartMatch = reply.text_message.match(/Koszyk \((\d+) produkt/);
-            if (cartMatch) {
-                this.cartCount = parseInt(cartMatch[1]);
-                this.updateCartCounter();
-            }
         }
         
         messageContent += '</div>';
         messageElement.innerHTML = messageContent;
         this.messagesContainer.appendChild(messageElement);
         
-        // Fade in animation
         setTimeout(() => {
             messageElement.style.opacity = '1';
         }, 50);
         
-        // Handle button display
         if (reply.buttons && reply.buttons.length > 0) {
             this.displayButtons(reply.buttons);
             this.textInputContainer.style.display = 'none';
         }
         
-        // Handle input expectation
         if (reply.enable_input || reply.input_expected) {
             this.textInputContainer.style.display = 'block';
             this.buttonContainer.innerHTML = '';
             this.searchMode = reply.search_mode || false;
-            this.faqMode = reply.faq_mode || false;  // Add FAQ mode
+            this.faqMode = reply.faq_mode || false;
             if (this.userInput) {
                 this.userInput.placeholder = reply.input_placeholder || 'Wpisz swoją wiadomość...';
                 this.userInput.focus();
             }
         } else if (!reply.buttons || reply.buttons.length === 0) {
-            // If no buttons and no input expected, show input
             this.textInputContainer.style.display = 'block';
         }
         
         this.scrollToBottom();
     }
     
+    createLostDemandForm(message) {
+        const formattedMessage = message
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+            
+        return `
+            <div class="message-text">${formattedMessage}</div>
+            <div class="lost-demand-form" style="margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 8px;">
+                <input type="email" 
+                       id="lost-demand-email" 
+                       placeholder="Twój email (opcjonalnie)" 
+                       style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                <button onclick="window.botUI.submitLostDemand()" 
+                        style="background: #22c55e; color: white; padding: 0.5rem 1rem; border-radius: 4px; border: none; cursor: pointer;">
+                    📧 Powiadom mnie o dostępności
+                </button>
+            </div>
+        `;
+    }
+    
+    async submitLostDemand() {
+        const emailInput = document.getElementById('lost-demand-email');
+        const email = emailInput ? emailInput.value : '';
+        const query = this.lastQuery || this.userInput.value;
+        
+        try {
+            const response = await fetch('/report-lost-demand', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    query: query,
+                    email: email,
+                    notify: !!email
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                this.showNotification('✅ ' + data.message);
+                if (emailInput) {
+                    emailInput.value = '';
+                    emailInput.disabled = true;
+                }
+                
+                this.trackAnalytics('lost_demand_reported', {
+                    query: query,
+                    email_provided: !!email
+                });
+            }
+        } catch (error) {
+            console.error('[ERROR] Failed to submit lost demand:', error);
+            this.showNotification('❌ Wystąpił błąd.');
+        }
+    }
+    
     displayButtons(buttons) {
         this.buttonContainer.innerHTML = '';
-        this.textInputContainer.style.display = 'none'; // Hide input when showing buttons
+        this.textInputContainer.style.display = 'none';
         
         buttons.forEach((button, index) => {
             const buttonElement = document.createElement('button');
@@ -283,13 +330,10 @@ class EcommerceBotUI {
     async handleButtonClick(action) {
         console.log('[DEBUG] Button clicked:', action);
         
-        // Display user's choice as a message
         const clickedButton = event.target;
         this.displayUserMessage(clickedButton.textContent);
         
-        // Clear buttons immediately after click
         this.buttonContainer.innerHTML = '';
-        
         this.showLoading(true);
         this.showTypingIndicator();
         
@@ -309,7 +353,6 @@ class EcommerceBotUI {
             
             const data = await response.json();
             
-            // Update context if needed
             if (action.startsWith('machine_')) {
                 this.currentContext = 'product_search';
                 this.searchMode = true;
@@ -321,30 +364,24 @@ class EcommerceBotUI {
             }
             
             if (data.reply) {
-                // Simulate typing delay
                 setTimeout(() => {
                     this.displayBotMessage(data.reply);
                 }, 500);
             }
         } catch (error) {
             console.error('[ERROR] Button action failed:', error);
-            this.showError('Wystąpił błąd podczas przetwarzania akcji. Spróbuj ponownie.');
+            this.showError('Wystąpił błąd.');
         } finally {
             this.showLoading(false);
         }
     }
-    
     async sendTextMessage() {
         const message = this.userInput.value.trim();
         if (!message) return;
         
-        // Display user message
         this.displayUserMessage(message);
-        
-        // Clear input
         this.userInput.value = '';
         
-        // Show typing indicator
         this.showTypingIndicator();
         this.showLoading(true);
         
@@ -364,14 +401,13 @@ class EcommerceBotUI {
             
             const data = await response.json();
             if (data.reply) {
-                // Simulate typing delay
                 setTimeout(() => {
                     this.displayBotMessage(data.reply);
-                }, 300 + Math.random() * 700); // Random delay between 300-1000ms
+                }, 300 + Math.random() * 700);
             }
         } catch (error) {
             console.error('[ERROR] Message send failed:', error);
-            this.showError('Nie udało się wysłać wiadomości. Sprawdź połączenie internetowe.');
+            this.showError('Nie udało się wysłać wiadomości.');
         } finally {
             this.showLoading(false);
         }
@@ -389,7 +425,6 @@ class EcommerceBotUI {
         `;
         this.messagesContainer.appendChild(messageElement);
         
-        // Fade in animation
         setTimeout(() => {
             messageElement.style.opacity = '1';
         }, 50);
@@ -397,110 +432,101 @@ class EcommerceBotUI {
         this.scrollToBottom();
     }
     
-    // W funkcji performSearch(), po linii 332, dodaj:
-
-async performSearch(query) {
-    if (!query) return;
-    
-    const searchType = this.faqMode ? 'faq' : 'products';
-    
-    try {
-        const response = await fetch('/search-suggestions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ 
-                query: query,
-                type: searchType 
-            })
-        });
+    async performSearch(query) {
+        if (!query) return;
         
-        if (!response.ok) {
-            throw new Error(`Search failed with status: ${response.status}`);
-        }
+        const searchType = this.faqMode ? 'faq' : 'products';
         
-        const data = await response.json();
-        console.log('[DEBUG] Suggestions received:', data);
-        
-        // Track search
-        this.trackEvent('search_performed', {
-            search_term: query,
-            search_type: searchType,
-            results_count: data.suggestions ? data.suggestions.length : 0
-        });
-        
-        // *** DODAJ TEN KOD - TRACKING PUSTYCH WYNIKÓW ***
-        // Check if no results found and query length > 2
-        if ((!data.suggestions || data.suggestions.length === 0) && query.length > 2) {
-            // Track no results event in GA4
-            this.trackEvent('search_no_results', {
-                search_term: query,
-                search_type: searchType,
-                query_length: query.length
+        try {
+            const response = await fetch('/search-suggestions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ 
+                    query: query,
+                    type: searchType 
+                })
             });
             
-            // Also send to backend GA4 Measurement Protocol
-            try {
-                await fetch('/track-no-results', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        query: query,
-                        search_type: searchType
-                    })
-                });
-            } catch (trackingError) {
-                console.warn('[WARNING] Backend tracking failed:', trackingError);
+            if (!response.ok) {
+                throw new Error(`Search failed: ${response.status}`);
             }
+            
+            const data = await response.json();
+            console.log('[SEARCH] Results:', data);
+            
+            this.lastConfidenceLevel = data.confidence_level || 'HIGH';
+            
+            if (this.lastConfidenceLevel === 'NO_MATCH') {
+                console.log('[LOST DEMAND DETECTED] Product not found:', query);
+                this.trackEvent('search_lost_demand_realtime', {
+                    search_term: query,
+                    search_type: searchType
+                });
+            }
+            
+            if (data.suggestions && data.suggestions.length > 0) {
+                this.displaySearchSuggestions(data.suggestions, this.lastConfidenceLevel, searchType);
+            } else {
+                this.displayNoSuggestions(query, searchType, this.lastConfidenceLevel);
+            }
+            
+        } catch (error) {
+            console.error('[ERROR] Search failed:', error);
+            this.hideSuggestions();
         }
-        // *** KONIEC DODANEGO KODU ***
-        
-        if (data.suggestions && data.suggestions.length > 0) {
-            this.displaySearchSuggestions(data.suggestions);
-        } else {
-            this.displayNoSuggestions(query, searchType);
-        }
-    } catch (error) {
-        console.error('[ERROR] Search failed:', error);
-        this.hideSuggestions();
-        this.trackEvent('search_error', {
-            search_term: query,
-            error: error.message
-        });
     }
-}
     
-    displaySearchSuggestions(suggestions) {
-        // Clear and prepare dropdown
+    displaySearchSuggestions(suggestions, confidenceLevel, searchType) {
         this.suggestionsDropdown.innerHTML = '';
         this.suggestionsDropdown.className = 'suggestions-dropdown';
         
+        const confidenceConfig = this.CONFIDENCE_MESSAGES[confidenceLevel] || this.CONFIDENCE_MESSAGES.HIGH;
+        
+        if (confidenceLevel !== 'HIGH') {
+            const header = document.createElement('div');
+            header.className = `suggestions-header ${confidenceConfig.class}`;
+            header.innerHTML = `
+                <span class="confidence-icon">${confidenceConfig.icon}</span>
+                <span class="confidence-message">${confidenceConfig.prefix}:</span>
+            `;
+            this.suggestionsDropdown.appendChild(header);
+        }
+        
         suggestions.forEach(item => {
             const suggestionElement = document.createElement('div');
-            suggestionElement.className = 'suggestion-item';
+            suggestionElement.className = `suggestion-item ${confidenceConfig.class}`;
             
             if (item.type === 'faq') {
-                // FAQ suggestion
                 suggestionElement.classList.add('faq-suggestion');
                 suggestionElement.innerHTML = `
                     <div class="suggestion-item-header">
                         <div class="suggestion-product-info">
                             <div class="suggestion-product-name">
-                                ❓ ${item.text}
+                                ❓ ${item.text || item.question}
                             </div>
                             <div class="suggestion-product-details">
                                 <span class="suggestion-match-score">Dopasowanie: ${item.score}%</span>
+                                <span style="color: #d1d5db;">|</span>
+                                <span class="suggestion-category">${item.category || 'FAQ'}</span>
                             </div>
                         </div>
                     </div>
                 `;
+                
+                suggestionElement.addEventListener('click', () => {
+                    this.userInput.value = item.text || item.question;
+                    this.hideSuggestions();
+                    this.trackAnalytics('faq_suggestion_accepted', {
+                        question: item.text,
+                        score: item.score
+                    });
+                    setTimeout(() => this.sendTextMessage(), 100);
+                });
+                
             } else {
-                // Product suggestion
                 let stockBadge = '';
                 if (item.stock_status === 'available') {
                     stockBadge = `<span class="suggestion-stock-indicator stock-available">✅ ${item.stock} szt.</span>`;
@@ -510,6 +536,10 @@ async performSearch(query) {
                     stockBadge = `<span class="suggestion-stock-indicator stock-out">❌ Brak</span>`;
                 }
                 
+                let scoreClass = 'score-high';
+                if (confidenceLevel === 'MEDIUM') scoreClass = 'score-medium';
+                if (confidenceLevel === 'LOW') scoreClass = 'score-low';
+                
                 suggestionElement.innerHTML = `
                     <div class="suggestion-item-header">
                         <div class="suggestion-product-info">
@@ -518,11 +548,8 @@ async performSearch(query) {
                                 <span class="suggestion-product-code">${item.id}</span>
                                 <span style="color: #d1d5db;">|</span>
                                 <span class="suggestion-product-brand">${item.brand}</span>
-                                <span class="suggestion-product-brand">${item.brand}</span>
-<span style="color: #d1d5db;">|</span>
-<span class="suggestion-score score-${item.score >= 80 ? 'high' : item.score >= 60 ? 'medium' : 'low'}">${item.score}%</span>
-<span style="color: #d1d5db;">|</span>
-${stockBadge}
+                                <span style="color: #d1d5db;">|</span>
+                                <span class="suggestion-score ${scoreClass}">${item.score}%</span>
                                 <span style="color: #d1d5db;">|</span>
                                 ${stockBadge}
                             </div>
@@ -533,97 +560,93 @@ ${stockBadge}
                         </div>
                     </div>
                 `;
+                
+                suggestionElement.addEventListener('click', () => {
+                    this.userInput.value = item.text;
+                    this.hideSuggestions();
+                    this.trackAnalytics('product_suggestion_accepted', {
+                        suggestion: item.text,
+                        confidence_level: confidenceLevel,
+                        original_query: this.lastQuery,
+                        score: item.score
+                    });
+                    if (confidenceLevel === 'MEDIUM') {
+                        this.trackEvent('typo_correction_accepted', {
+                            original: this.lastQuery,
+                            corrected: item.text
+                        });
+                    }
+                    setTimeout(() => this.sendTextMessage(), 100);
+                });
             }
-            
-            // Click handler
-            suggestionElement.addEventListener('click', () => {
-                this.userInput.value = item.text;
-                this.hideSuggestions();
-                // Optionally send the message immediately
-                setTimeout(() => this.sendTextMessage(), 100);
-            });
             
             this.suggestionsDropdown.appendChild(suggestionElement);
         });
         
+        if (confidenceLevel === 'MEDIUM' && confidenceConfig.suffix) {
+            const footer = document.createElement('div');
+            footer.className = 'suggestions-footer';
+            footer.innerHTML = `<small>${confidenceConfig.suffix}</small>`;
+            this.suggestionsDropdown.appendChild(footer);
+        }
+        
         this.positionDropdown();
     }
     
-    displayNoSuggestions(query, searchType) {
+    displayNoSuggestions(query, searchType, confidenceLevel) {
         this.suggestionsDropdown.innerHTML = '';
         this.suggestionsDropdown.className = 'suggestions-dropdown';
         
         const message = document.createElement('div');
         message.className = 'no-results-message';
         
-        const icon = searchType === 'faq' ? '❓' : '🔍';
-        const text = searchType === 'faq' ? 
-            'Nie znaleziono pytań' : 
-            'Nie znaleziono produktów';
+        const confidenceConfig = this.CONFIDENCE_MESSAGES[confidenceLevel] || this.CONFIDENCE_MESSAGES.NO_MATCH;
         
-        message.innerHTML = `
-            <div class="no-results-icon">${icon}</div>
-            <div class="no-results-text">
-                ${text} dla "<strong>${this.escapeHtml(query)}</strong>"
-            </div>
-            <div class="no-results-tips">
-                <div class="no-results-tips-title">
-                    🤖 System automatycznie poprawia błędy!
+        if (confidenceLevel === 'LOW') {
+            message.innerHTML = `
+                <div class="no-results-icon">${confidenceConfig.icon}</div>
+                <div class="no-results-text">
+                    ${confidenceConfig.prefix}: "<strong>${this.escapeHtml(query)}</strong>"
                 </div>
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 8px;">
-                    Kontynuuj pisanie - znajdziemy to czego szukasz
-                </p>
-            </div>
-        `;
-        
-        this.suggestionsDropdown.appendChild(message);
-        this.positionDropdown();
-    }
-    
-    displaySuggestions(suggestions) {
-        // This method is now replaced by displaySearchSuggestions
-        this.displaySearchSuggestions(suggestions);
-    }
-    
-    displayNoResults(query, searchType = 'products') {
-        this.suggestionsDropdown.innerHTML = '';
-        this.suggestionsDropdown.className = 'suggestions-dropdown';
-        
-        const message = document.createElement('div');
-        message.className = 'no-results-message';
-        
-        if (searchType === 'faq') {
+                <div class="no-results-tips">
+                    <p>${confidenceConfig.helper}</p>
+                    <ul>
+                        <li>Sprawdź pisownię</li>
+                        <li>Użyj innych słów</li>
+                        <li>Spróbuj prostszego zapytania</li>
+                    </ul>
+                </div>
+            `;
+        } else if (confidenceLevel === 'NO_MATCH') {
+            message.innerHTML = `
+                <div class="no-results-icon">${confidenceConfig.icon}</div>
+                <div class="no-results-text">
+                    ${confidenceConfig.prefix}: "<strong>${this.escapeHtml(query)}</strong>"
+                </div>
+                <div class="no-results-cta">
+                    <p>${confidenceConfig.cta}</p>
+                    <button onclick="window.botUI.reportMissingProduct('${this.escapeHtml(query).replace(/'/g, "\\'")}')" 
+                            class="report-missing-btn">
+                        📧 Zgłoś brakujący produkt
+                    </button>
+                </div>
+            `;
+            console.log('[LOST DEMAND UI] Missing product:', query);
+        } else if (searchType === 'faq') {
             message.innerHTML = `
                 <div class="no-results-icon">❓</div>
                 <div class="no-results-text">
-                    Nie znaleziono odpowiedzi dla "<strong>${this.escapeHtml(query)}</strong>"
+                    Brak odpowiedzi na pytanie: "<strong>${this.escapeHtml(query)}</strong>"
                 </div>
                 <div class="no-results-tips">
-                    <div class="no-results-tips-title">
-                        💡 Spróbuj
-                    </div>
-                    <ul>
-                        <li>Użyć innych słów kluczowych</li>
-                        <li>Zadać pytanie inaczej</li>
-                        <li>Skontaktować się z nami</li>
-                    </ul>
+                    <p>Spróbuj zadać pytanie inaczej lub skontaktuj się z nami</p>
                 </div>
             `;
         } else {
             message.innerHTML = `
                 <div class="no-results-icon">🔍</div>
                 <div class="no-results-text">
-                    Brak wyników dla "<strong>${this.escapeHtml(query)}</strong>"
-                </div>
-                <div class="no-results-tips">
-                    <div class="no-results-tips-title">
-                        System automatycznie poprawia literówki!
-                    </div>
-                    <ul>
-                        <li>Spróbuj innych słów</li>
-                        <li>Użyj numeru katalogowego</li>
-                        <li>Wpisz markę lub model</li>
-                    </ul>
+                    Brak wyników dla: "<strong>${this.escapeHtml(query)}</strong>"
                 </div>
             `;
         }
@@ -632,23 +655,50 @@ ${stockBadge}
         this.positionDropdown();
     }
     
+    async reportMissingProduct(query) {
+        try {
+            const response = await fetch('/report-lost-demand', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    query: query,
+                    email: '',
+                    notify: false
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                this.showNotification('✅ Dziękujemy! Produkt został zgłoszony.');
+                this.hideSuggestions();
+                this.trackEvent('lost_demand_user_confirmed', {
+                    product_query: query
+                });
+            }
+        } catch (error) {
+            console.error('[ERROR] Failed to report:', error);
+            this.showNotification('❌ Wystąpił błąd.');
+        }
+    }
+    
     positionDropdown() {
-        // Position dropdown ABOVE the input
         const inputGroup = document.getElementById('message-form');
+        if (!inputGroup) return;
         
-        // Ensure input group is relatively positioned
         inputGroup.style.position = 'relative';
         
-        // Append dropdown to the form
         if (this.suggestionsDropdown.parentElement !== inputGroup) {
             inputGroup.appendChild(this.suggestionsDropdown);
         }
         
-        // Set dropdown styles to appear above input
         this.suggestionsDropdown.style.position = 'absolute';
         this.suggestionsDropdown.style.left = '0';
         this.suggestionsDropdown.style.right = '0';
-        this.suggestionsDropdown.style.bottom = '100%'; 
+        this.suggestionsDropdown.style.bottom = '100%';
         this.suggestionsDropdown.style.marginBottom = '4px';
         this.suggestionsDropdown.style.display = 'block';
     }
@@ -665,11 +715,14 @@ ${stockBadge}
             this.cartCount = 0;
             this.updateCartCounter();
             this.searchMode = false;
+            this.faqMode = false;
             this.currentContext = null;
+            this.lastConfidenceLevel = 'NONE';
+            this.lastQuery = '';
             await this.startBot();
         } catch (error) {
             console.error('[ERROR] Reset failed:', error);
-            this.showError('Nie udało się zresetować sesji. Odśwież stronę.');
+            this.showError('Nie udało się zresetować sesji.');
         } finally {
             this.showLoading(false);
         }
@@ -730,8 +783,6 @@ ${stockBadge}
     updateCartCounter() {
         if (this.cartCounter) {
             this.cartCounter.textContent = `🛒 Koszyk: ${this.cartCount}`;
-            
-            // Animate cart update
             this.cartCounter.style.transform = 'scale(1.2)';
             setTimeout(() => {
                 this.cartCounter.style.transform = 'scale(1)';
@@ -776,66 +827,29 @@ ${stockBadge}
     }
 }
 
-// Add necessary CSS for animations
-const style = document.createElement('style');
-style.textContent = `
-    .typing-dots {
-        display: inline-flex;
-        gap: 4px;
-    }
-    
-    .typing-dots span {
-        width: 8px;
-        height: 8px;
-        background: var(--gray-500);
-        border-radius: 50%;
-        animation: typing 1.4s infinite;
-    }
-    
-    .typing-dots span:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-    
-    .typing-dots span:nth-child(3) {
-        animation-delay: 0.4s;
-    }
-    
-    @keyframes typing {
-        0%, 60%, 100% {
-            transform: translateY(0);
-            opacity: 0.5;
-        }
-        30% {
-            transform: translateY(-10px);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes fadeOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(20px); }
-    }
-    
-    .action-btn {
-        animation: slideUp 0.3s ease backwards;
-    }
-    
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-`;
-document.head.appendChild(style);
+// Initialize bot when DOM is ready
+window.botUI = null;
 
-// Initialize the bot UI when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Universal Soldier Bot - Initializing...');
-    new EcommerceBotUI();
-    console.log('✅ Universal Soldier Bot - Ready for action!');
+    console.log('=====================================');
+    console.log('🚀 Universal Soldier Bot v5.0 FIXED');
+    console.log('=====================================');
+    console.log('🎯 Intent Analysis: CALIBRATED');
+    console.log('📊 Lost Demand: PRECISION TRACKING');
+    console.log('🔍 Confidence: FIXED THRESHOLDS');
+    console.log('✨ Precision Reward: ACTIVE');
+    console.log('🏎️ Luxury Brands: DETECTED');
+    console.log('=====================================');
+    console.log('Confidence Levels:');
+    console.log('  HIGH: Normal results (≥75%)');
+    console.log('  MEDIUM: Typo correction (45-74%)');
+    console.log('  LOW: Nonsense (<30% validity)');
+    console.log('  NO_MATCH: LOST DEMAND (≥60% validity, <40% match)');
+    console.log('=====================================');
+    
+    window.botUI = new EcommerceBotUI();
+    
+    console.log('✅ System operational');
+    console.log('📈 Tracking lost demand');
+    console.log('=====================================');
 });

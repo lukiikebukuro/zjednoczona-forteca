@@ -1,0 +1,45 @@
+timestamp,query,email,notify,machine_filter
+2025-09-02T13:21:54.042618,xy,,False,osobowy
+2025-09-02T13:21:54.697630,xyz1,,False,osobowy
+2025-09-02T13:22:05.412307,tarcza t,,False,osobowy
+2025-09-02T13:22:07.315786,tarcza do f,,False,osobowy
+2025-09-02T13:27:13.399490,opon,,False,osobowy
+2025-09-02T13:27:13.656889,opony,,False,osobowy
+2025-09-02T13:27:16.055398,opony,,False,osobowy
+2025-09-02T13:27:16.415099,opony zi,,False,osobowy
+2025-09-02T14:38:58.053595,ko,,False,osobowy
+2025-09-02T14:39:11.119935,bu,,False,osobowy
+2025-09-02T14:39:11.492833,buł,,False,osobowy
+2025-09-02T20:29:59.337948,xy,,False,osobowy
+2025-09-03T16:34:07.156177,kl,,False,osobowy
+2025-09-03T16:34:09.989894,klocki g,,False,osobowy
+2025-09-03T16:34:30.786171,kl,,False,osobowy
+2025-09-03T16:34:31.868742,klocki g,,False,osobowy
+2025-09-03T16:34:32.575466,klocki gl,,False,osobowy
+2025-09-03T16:34:41.602449,opony,,False,osobowy
+2025-09-03T16:34:51.428449,amortyzator f,,False,osobowy
+2025-09-03T16:34:52.795107,amortyzator fe,,False,osobowy
+2025-09-03T16:34:55.203655,amortyzator fer,,False,osobowy
+2025-09-03T16:34:55.848202,amortyzator ferrari,,False,osobowy
+2025-09-03T16:43:45.076437,jak,,False,
+2025-09-23T20:39:18.882391,kl,,False,osobowy
+2025-09-23T20:39:32.720025,klocki b,,False,osobowy
+2025-09-23T20:40:27.053554,opon,,False,osobowy
+2025-09-23T20:40:27.308735,opony,,False,osobowy
+2025-09-23T20:40:32.754665,opon,,False,osobowy
+2025-09-23T20:40:40.144123,ferrar,,False,osobowy
+2025-09-23T20:40:41.476074,ferrari,,False,osobowy
+2025-09-23T20:40:42.105036,ferrar,,False,osobowy
+2025-09-23T20:40:49.836436,ka,,False,osobowy
+2025-09-23T20:40:53.359214,kawasaki,,False,osobowy
+2025-09-23T21:17:26.786974,kl,,False,osobowy
+2025-09-23T21:17:41.348303,klocki b,,False,osobowy
+2025-09-23T21:18:00.611026,klocki bmw n12,,False,osobowy
+2025-09-23T21:23:47.883235,"""filtr 0986494999",,False,osobowy
+2025-09-23T21:23:51.756817,filtr 0986494999,,False,osobowy
+2025-09-23T21:24:58.653501,filtr 0986494999,,False,osobowy
+2025-09-23T21:25:14.265064,klocki e46,,False,osobowy
+2025-09-23T21:25:25.518266,klocki do 100,,False,osobowy
+2025-09-23T21:25:36.010461,klocki ferrari,,False,osobowy
+2025-09-23T21:33:15.703741,123456789,,False,osobowy
+2025-09-23T21:33:24.023189,klocki BMW E90 320i 2.0 TDI N47 przód oryginał OE,,False,osobowy
