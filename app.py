@@ -1053,7 +1053,7 @@ def stop_simulator():
         simulator.thread.join(timeout=2)
 
 # === MAIN APPLICATION STARTUP ===
-if __name__ == '__main__':
+
     with app.app_context():
         # Initialize bot data
         bot.initialize_data()
@@ -1084,32 +1084,8 @@ if __name__ == '__main__':
         print("🏢 Features enabled:")
         print("   🌐 Wizytówka: /")
         print("   🤖 Motobot: /motobot-prototype")
-        print("   📊 Dashboard: /dashboard") 
+        print("   📊 Dashboard: /dashboard")
         print("   🎮 Demo (Bot + Dashboard): /demo")
-        print("   🛒 E-commerce Bot v5.0 FIXED - ACTIVE")
-        print("   📊 Lost Demand Tracking - ENABLED")
-        print("   🔄 Real-time Dashboard - ENABLED")
-        print("   ⚡ WebSocket Communication - ACTIVE")
-        print("   🎯 Battle Simulator - RUNNING")
         print("=" * 70)
         print("✅ Unified system started!")
-        print("📍 Wizytówka: http://localhost:5000/")
-        print("🤖 Bot: http://localhost:5000/motobot-prototype")
-        print("📊 Dashboard: http://localhost:5000/dashboard")
-        print("🎮 Demo Split-Screen: http://localhost:5000/demo")
         print("=" * 70)
-    
-    try:
-        # Uruchom aplikację Flask z SocketIO
-        port = int(os.environ.get('PORT', 5000))
-        socketio.run(
-            app, 
-            host='0.0.0.0', 
-            port=port,
-            debug=False
-        )
-  
-    except KeyboardInterrupt:
-        print("\n[SHUTDOWN] Stopping unified application...")
-        stop_simulator()
-        print("[SHUTDOWN] Application stopped")
