@@ -171,19 +171,100 @@ class EcommerceBot:
         
         # Kompletna baza FAQ
         self.faq_database = [
+            # DOSTAWA
             {
                 'id': 'FAQ001',
-                'keywords': ['dostawa', 'wysyłka', 'kiedy', 'czas dostawy'],
+                'keywords': ['dostawa', 'wysyłka', 'kiedy', 'czas dostawy', 'kurier', 'paczka'],
                 'question': 'Jaki jest czas dostawy części samochodowych?',
-                'answer': '🚚 Dostawa kurierem: 24h dla produktów na stanie',
+                'answer': '🚚 Dostawa kurierem: 24h dla produktów na stanie\n📦 Paczkomaty: 1-2 dni robocze\n🌍 Dostawa zagraniczna: 3-5 dni',
                 'category': 'dostawa'
             },
             {
                 'id': 'FAQ002',
+                'keywords': ['koszt dostawy', 'ile kosztuje', 'darmowa', 'przesyłka'],
+                'question': 'Ile kosztuje dostawa?',
+                'answer': '💰 Standardowa dostawa: 15 zł\n🎁 Darmowa dostawa od 300 zł\n📦 Paczkomaty: 12 zł',
+                'category': 'dostawa'
+            },
+            
+            # ZWROTY
+            {
+                'id': 'FAQ003',
                 'keywords': ['zwrot', 'reklamacja', 'wymiana', 'gwarancja'],
                 'question': 'Jak zwrócić lub wymienić część?',
-                'answer': '↩️ 14 dni na zwrot, 24 miesiące gwarancji',
+                'answer': '↩️ 14 dni na zwrot bez podania przyczyny\n🔄 Darmowa wymiana na inną część\n📝 24 miesiące gwarancji producenta',
                 'category': 'zwroty'
+            },
+            {
+                'id': 'FAQ004',
+                'keywords': ['uszkodzony', 'wadliwy', 'nie działa', 'zepsuty'],
+                'question': 'Co zrobić gdy część jest uszkodzona?',
+                'answer': '📞 Zgłoś w ciągu 24h od otrzymania\n📸 Wyślij zdjęcia uszkodzenia\n🚚 Odbierzemy i wyślemy nową część gratis',
+                'category': 'zwroty'
+            },
+            
+            # PŁATNOŚCI
+            {
+                'id': 'FAQ005',
+                'keywords': ['płatność', 'jak zapłacić', 'przelew', 'karta', 'blik'],
+                'question': 'Jakie formy płatności są dostępne?',
+                'answer': '💳 Karta płatnicza\n📱 BLIK\n🏦 Przelew tradycyjny\n📦 Płatność przy odbiorze (+5 zł)',
+                'category': 'platnosci'
+            },
+            {
+                'id': 'FAQ006',
+                'keywords': ['faktura', 'vat', 'paragon', 'firma'],
+                'question': 'Czy wystawiacie faktury VAT?',
+                'answer': '✅ Tak, wystawiamy faktury VAT\n📧 Faktura wysyłana emailem automatycznie\n🏢 Możliwość zakupu na firmę',
+                'category': 'platnosci'
+            },
+            
+            # PRODUKTY
+            {
+                'id': 'FAQ007',
+                'keywords': ['pasuje', 'dopasowanie', 'czy pasuje', 'VIN', 'model'],
+                'question': 'Jak sprawdzić czy część pasuje do mojego auta?',
+                'answer': '🔍 Wpisz model auta w wyszukiwarkę\n🚗 Podaj VIN - sprawdzimy za Cię\n📞 Zadzwoń - doradzimy: 123-456-789',
+                'category': 'produkty'
+            },
+            {
+                'id': 'FAQ008',
+                'keywords': ['oryginał', 'zamiennik', 'jakość', 'OEM', 'OE'],
+                'question': 'Czy części są oryginalne?',
+                'answer': '✅ Tylko sprawdzeni producenci\n🏭 Części OEM i OES jakości oryginalnej\n📜 Certyfikaty i atesty producenta',
+                'category': 'produkty'
+            },
+            {
+                'id': 'FAQ009',
+                'keywords': ['brak', 'niedostępny', 'out of stock', 'kiedy będzie'],
+                'question': 'Co gdy części nie ma w magazynie?',
+                'answer': '📧 System powiadomi Cię gdy będzie dostępna\n🚚 Możliwość zamówienia z dłuższym czasem (3-5 dni)\n💬 Zaproponujemy alternatywną część',
+                'category': 'produkty'
+            },
+            
+            # MONTAŻ
+            {
+                'id': 'FAQ010',
+                'keywords': ['montaż', 'wymiana', 'instalacja', 'warsztat'],
+                'question': 'Czy oferujecie montaż części?',
+                'answer': '🔧 Współpracujemy z siecią warsztatów\n📍 Pomożemy znaleźć warsztat w Twojej okolicy\n💰 Zniżka na montaż dla naszych klientów',
+                'category': 'montaz'
+            },
+            
+            # KONTAKT
+            {
+                'id': 'FAQ011',
+                'keywords': ['kontakt', 'telefon', 'email', 'napisać', 'chat'],
+                'question': 'Jak się z Wami skontaktować?',
+                'answer': '📞 Telefon: 123-456-789 (Pn-Pt 8-18)\n📧 Email: kontakt@autoparts.pl\n💬 Chat na stronie',
+                'category': 'kontakt'
+            },
+            {
+                'id': 'FAQ012',
+                'keywords': ['godziny', 'otwarcie', 'kiedy otwarte', 'sklep'],
+                'question': 'Jakie są godziny otwarcia?',
+                'answer': '🕐 Pn-Pt: 8:00-18:00\n🕐 Sobota: 9:00-14:00\n❌ Niedziela: nieczynne\n🌐 Sklep online 24/7',
+                'category': 'kontakt'
             }
         ]
         
@@ -835,6 +916,10 @@ Zadaj pytanie:""",
         elif action.startswith('faq_'):
             return self.handle_faq(action)
         
+        elif action.startswith('show_full_card_'):
+            product_id = action.replace('show_full_card_', '')
+            return self.show_full_product_card(product_id)
+        
         elif action.startswith('product_details_'):
             product_id = action.replace('product_details_', '')
             return self.show_product_details(product_id)
@@ -990,14 +1075,15 @@ Jeśli wiele osób szuka tego produktu, dodamy go do naszej oferty.
         }
     
     def create_product_buttons(self, products: List[Tuple]) -> List[Dict]:
-        """Tworzy przyciski dla produktów"""
+        """Tworzy przyciski dla produktów - BEZPOŚREDNIO DO PEŁNEJ KARTY"""
         buttons = []
         for item in products[:3]:
             if isinstance(item, tuple):
                 product, score = item
+                # Usuń score, kieruj bezpośrednio do pełnej karty
                 buttons.append({
-                    'text': f"🛒 {product['name'][:25]}... ({score}%)",
-                    'action': f"product_details_{product['id']}"
+                    'text': f"🛒 {product['name'][:45]}...",
+                    'action': f"show_full_card_{product['id']}"
                 })
         
         buttons.extend([
@@ -1028,6 +1114,31 @@ Jeśli wiele osób szuka tego produktu, dodamy go do naszej oferty.
 📦 **Stan:** {product['stock']} szt.""",
             'buttons': [
                 {'text': f"🛒 Dodaj do koszyka", 'action': f"add_to_cart_{product['id']}"},
+                {'text': '🔍 Szukaj dalej', 'action': 'search_product'},
+                {'text': '🏠 Menu główne', 'action': 'main_menu'}
+            ]
+        }
+    def show_full_product_card(self, product_id: str) -> Dict:
+        """Pokazuje pełną kartę produktu bez pośrednich kroków"""
+        product = None
+        for p in self.product_database['products']:
+            if p['id'] == product_id:
+                product = p
+                break
+        
+        if not product:
+            return {
+                'text_message': 'Produkt nie znaleziony.',
+                'buttons': [{'text': '↩️ Menu główne', 'action': 'main_menu'}]
+            }
+        
+        return {
+            'text_message': f"""🔧 {product['name']}
+
+💰 Cena: {product['price']:.2f} zł netto
+📦 Stan: {product['stock']} szt.""",
+            'buttons': [
+                {'text': '🛒 Dodaj do koszyka', 'action': f"add_to_cart_{product['id']}"},
                 {'text': '🔍 Szukaj dalej', 'action': 'search_product'},
                 {'text': '🏠 Menu główne', 'action': 'main_menu'}
             ]
