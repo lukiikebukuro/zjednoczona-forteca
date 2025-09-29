@@ -275,35 +275,16 @@ this.socket = io(socketURL, {
      * Load initial data from API
      */
     async loadInitialData() {
-        try {
-            const response = await fetch('/api/initial_data');
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                // Update metrics
-                this.updateMetricsFromStats(data.data.today_statistics);
-                
-                // Populate live feed with recent events
-                this.populateLiveFeed(data.data.recent_events);
-                
-                // Update missing products
-                this.updateMissingProducts(data.data.top_missing_products);
-                
-                console.log('📊 Initial data loaded successfully');
-            } else {
-                throw new Error(data.message || 'API returned error status');
-            }
-            
-        } catch (error) {
-            console.error('❌ Failed to load initial data:', error);
-            this.showToast('Nie udało się załadować danych początkowych', 'error');
-        }
+    try {
+        // Skip API call - use empty initial state
+        console.log('📊 Using empty initial state');
+        this.updateMetricsFromStats({});
+        this.populateLiveFeed([]);
+        this.updateMissingProducts([]);
+    } catch (error) {
+        console.error('❌ Failed to load initial data:', error);
     }
+}
     
     /**
      * Handle new event from WebSocket
