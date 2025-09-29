@@ -1029,7 +1029,7 @@ def battle_simulator():
             }
             
             # Wyślij przez WebSocket do wszystkich klientów
-            socketio.emit('new_event', event_data)
+            socketio.emit('new_event', event_data, namespace='/')
             
             print(f"[SIMULATOR] Generated: {scenario['query']} -> {scenario['decision']}")
             
