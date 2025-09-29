@@ -1,5 +1,8 @@
 Flask
-gunicorn
-fuzzywuzzy
+flask-socketio
 requests
+fuzzywuzzy
 python-Levenshtein
+gunicorn
+gevent
+gevent-websocket

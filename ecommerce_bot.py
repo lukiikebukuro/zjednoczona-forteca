@@ -282,6 +282,91 @@ class EcommerceBot:
             previous_row = current_row
         
         return previous_row[-1]
+    
+    
+    
+    
+    
+    
+    
+    
+    def is_obvious_nonsense(self, tokens: List[str], token_validity: float) -> bool:
+        """NAPRAWIONA - Wykrywa oczywisty nonsens ale pozwala na prefiksy słów"""
+        
+        # NOWE: Sprawdź czy zawiera potencjalne kody produktów
+        for token in tokens:
+            # Wzorce kodów produktów (litery + cyfry, min 3 znaki)
+            if (len(token) >= 3 and 
+                any(c.isdigit() for c in token) and 
+                any(c.isalpha() for c in token)):
+                return False  # To może być kod produktu, nie nonsens
+            
+            # Tylko cyfry, min 4 znaki (kody numeryczne)
+            if len(token) >= 4 and token.isdigit():
+                return False  # To może być kod numeryczny
+        
+        # Wielosłowne zapytania rzadko są nonsensem
+        if len(tokens) != 1:
+            return False
+            
+        token = tokens[0].lower()
+        
+        # ZMIENIONE: Podstawowe filtry długości - bardziej permisywne
+        if len(token) < 2 or len(token) > 25:
+            return True
+        
+        # NOWE: Sprawdź czy token może być prefiksem znanego słowa automotive
+        all_known_words = (
+            self.AUTOMOTIVE_DICTIONARY['brands'] +
+            self.AUTOMOTIVE_DICTIONARY['luxury_brands'] +
+            self.AUTOMOTIVE_DICTIONARY['categories'] +
+            self.AUTOMOTIVE_DICTIONARY['car_models'] +
+            self.AUTOMOTIVE_DICTIONARY['common_terms'] +
+            list(self.POLISH_DICTIONARY)
+        )
+        
+        # Jeśli token jest prefiksem jakiegokolwiek znanego słowa - NIE jest nonsensem
+        for known_word in all_known_words:
+            # Normalizacja polskich znaków
+            token_norm = token.replace('ł', 'l').replace('ć', 'c').replace('ń', 'n').replace('ą', 'a').replace('ę', 'e').replace('ś', 's').replace('ż', 'z').replace('ź', 'z')
+            known_norm = known_word.replace('ł', 'l').replace('ć', 'c').replace('ń', 'n').replace('ą', 'a').replace('ę', 'e').replace('ś', 's').replace('ż', 'z').replace('ź', 'z')
+            
+            if (known_word.startswith(token) or known_norm.startswith(token_norm)) and len(token) >= 2:
+                return False  # To może być prefix, pozwól na dalsze przetwarzanie
+        
+        # ZMIENIONE: Bardzo krótkie tokeny - tylko jeśli bardzo niska validacja
+        if len(token) <= 3 and token_validity < 10:  # Zmienione z 20 na 10
+            return True
+        
+        # Oczywiste wzorce klawiaturowe
+        keyboard_patterns = ['qwerty', 'qwertyui', 'asdf', 'asdfgh', 'qwe', 'asd', 'zxc', 'hjkl', 'uiop']
+        if any(pattern in token for pattern in keyboard_patterns):
+            return True
+        
+        # Powtarzające się sekwencje (asdasd, abcabc) - bez zmian
+        if len(token) >= 6:
+            for i in range(2, len(token)//2 + 1):
+                pattern = token[:i]
+                if token == pattern * (len(token)//i) and len(token) >= i*2:
+                    return True
+        
+        # Bardzo mała różnorodność znaków w długim słowie
+        unique_chars = len(set(token))
+        if len(token) > 6 and unique_chars <= 3:
+            return True
+            
+        # ZMIENIONE: Brak samogłosek - bardziej permisywne
+        polish_vowels = set('aeiouąęy')
+        if len(token) > 6 and not any(c in polish_vowels for c in token):  # Zmienione z 5 na 6
+            return True
+        
+        # ZMIENIONE: Kombinacja niskiej entropii i niskiej valid - bardziej permisywne
+        unique_ratio = unique_chars / len(token) if len(token) > 0 else 0
+        if unique_ratio < 0.3 and token_validity < 25:  # Zmienione z 0.4 i 35
+            return True
+            
+        return False
+
     def analyze_query_intent(self, query: str) -> Dict:
         """FINALNA WERSJA - Analizuje intencję z wykrywaniem kodów produktów"""
         query_lower = query.lower().strip()
@@ -331,10 +416,16 @@ class EcommerceBot:
         matches = self.get_fuzzy_product_matches_internal(query_lower)
         best_match_score = matches[0][1] if matches else 0
         
-        # NOWA KLASYFIKACJA Z PRIORYTETEM DLA KODÓW
+        # NOWA KLASYFIKACJA Z CHIRURGICZNĄ NAPRAWĄ
+        
+        # 0. NOWY WARUNEK - Detekcja oczywistego nonsensu (NAJWYŻSZY PRIORYTET)
+        if self.is_obvious_nonsense(query_tokens, token_validity):
+            confidence_level = 'LOW'
+            suggestion_type = 'nonsensical'
+            ga4_event = 'search_failure'
         
         # 1. Jeśli wykryto nieistniejący kod produktu = UTRACONY POPYT
-        if has_nonexistent_code and token_validity >= 50:
+        elif has_nonexistent_code and token_validity >= 50:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'product_code_missing'
             ga4_event = 'search_lost_demand'
@@ -363,8 +454,8 @@ class EcommerceBot:
             suggestion_type = 'typo_correction'
             ga4_event = 'search_typo_corrected'
         
-        # 6. Niski token validity = nonsens
-        elif token_validity < 30:
+        # 6. Niski token validity = nonsens (POZOSTAŁE PRZYPADKI)
+        elif token_validity < 35:  # Zmienione z 30 na 35 dla bezpieczeństwa
             confidence_level = 'LOW'
             suggestion_type = 'nonsensical'
             ga4_event = 'search_failure'
@@ -379,13 +470,14 @@ class EcommerceBot:
             suggestion_type = 'unclear'
             ga4_event = 'search_failure'
         
-        # Debug output
+        # Debug output - DODANE INFORMACJE O NONSENSE CHECK
         print(f"[ANALYSIS] Query: '{query}'")
         print(f"  Token validity: {token_validity:.1f}")
         print(f"  Best match: {best_match_score:.1f}")
         print(f"  Has luxury: {has_luxury_brand}")
         print(f"  Has code: {bool(potential_product_codes)}")
         print(f"  Nonexistent code: {has_nonexistent_code}")
+        print(f"  Nonsense check: {self.is_obvious_nonsense(query_tokens, token_validity)}")
         print(f"  Decision: {confidence_level} → {ga4_event}")
         
         return {
@@ -398,6 +490,7 @@ class EcommerceBot:
             'ga4_event': ga4_event,
             'has_luxury_brand': has_luxury_brand,
             'has_product_code': bool(potential_product_codes),
+            'is_nonsense': self.is_obvious_nonsense(query_tokens, token_validity),
             'matches': matches[:6] if matches else []
         }
     

@@ -1,6 +1,9 @@
 // Universal Soldier E-commerce Bot v5.0 FIXED - Naprawiony UI
 class EcommerceBotUI {
     constructor() {
+        this.API_PREFIX = '/motobot-prototype';  // DODAJ TO TUTAJ
+        this.cartCount = 0;
+        this.chatInterface = document.getElementById('chat-interface');
         this.cartCount = 0;
         this.chatInterface = document.getElementById('chat-interface');
         this.messagesContainer = document.getElementById('messages-container');
@@ -75,7 +78,7 @@ class EcommerceBotUI {
     
     async trackAnalytics(eventType, eventData) {
         try {
-            await fetch('/track-analytics', {
+            await fetch(this.API_PREFIX + '/track-analytics', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -161,7 +164,7 @@ class EcommerceBotUI {
         this.textInputContainer.style.display = 'none';
         
         try {
-            const response = await fetch('/bot/start', {
+            const response = await fetch(this.API_PREFIX + '/bot/start', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -280,7 +283,7 @@ class EcommerceBotUI {
         const query = this.lastQuery || this.userInput.value;
         
         try {
-            const response = await fetch('/report-lost-demand', {
+            const response = await fetch(this.API_PREFIX + '/report-lost-demand', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -338,7 +341,7 @@ class EcommerceBotUI {
         this.showTypingIndicator();
         
         try {
-            const response = await fetch('/bot/send', {
+            const response = await fetch(this.API_PREFIX + '/bot/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -386,7 +389,7 @@ class EcommerceBotUI {
         this.showLoading(true);
         
         try {
-            const response = await fetch('/bot/send', {
+            const response = await fetch(this.API_PREFIX + '/bot/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -438,7 +441,7 @@ class EcommerceBotUI {
         const searchType = this.faqMode ? 'faq' : 'products';
         
         try {
-            const response = await fetch('/search-suggestions', {
+            const response = await fetch(this.API_PREFIX + '/search-suggestions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -657,7 +660,7 @@ class EcommerceBotUI {
     
     async reportMissingProduct(query) {
         try {
-            const response = await fetch('/report-lost-demand', {
+            const response = await fetch(this.API_PREFIX + '/report-lost-demand', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
