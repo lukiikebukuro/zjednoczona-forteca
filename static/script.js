@@ -565,8 +565,8 @@ class EcommerceBotUI {
                 `;
                 
                 suggestionElement.addEventListener('click', () => {
-                    this.userInput.value = item.text;
                     this.hideSuggestions();
+                    // Tracking
                     this.trackAnalytics('product_suggestion_accepted', {
                         suggestion: item.text,
                         confidence_level: confidenceLevel,
@@ -579,7 +579,8 @@ class EcommerceBotUI {
                             corrected: item.text
                         });
                     }
-                    setTimeout(() => this.sendTextMessage(), 100);
+                    // Bezpośrednio do pełnej karty produktu
+                    this.handleButtonClick(`show_full_card_${item.id}`);
                 });
             }
             

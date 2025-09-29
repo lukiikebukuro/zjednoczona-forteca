@@ -749,7 +749,7 @@ class EcommerceBot:
                     if keyword_score > 85:
                         final_score = max(final_score, keyword_score + 5)
             
-            if final_score >= 40:
+            if final_score >= 20:
                 matches.append((faq, final_score))
         
         matches.sort(key=lambda x: x[1], reverse=True)
