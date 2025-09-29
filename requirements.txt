@@ -4,5 +4,4 @@ requests
 fuzzywuzzy
 python-Levenshtein
 gunicorn
-gevent
-gevent-websocket
+eventlet
