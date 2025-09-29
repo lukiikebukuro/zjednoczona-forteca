@@ -195,13 +195,21 @@ class TacticalDashboard {
         return new Promise((resolve, reject) => {
             try {
                 // Connect to Flask-SocketIO server
-                this.socket = io(window.location.origin, {
-                    transports: ['websocket', 'polling'],
-                    reconnection: true,
-                    reconnectionDelay: 1000,
-                    reconnectionAttempts: 5,
-                    timeout: 10000
-                });
+                // Automatycznie wykryj środowisko
+const socketURL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000' 
+    : window.location.origin;
+
+this.socket = io(socketURL, {
+    transports: ['polling', 'websocket'], // Polling FIRST dla Render
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 5,
+    timeout: 20000, // Zwiększony timeout
+    path: '/socket.io/',
+    secure: true,
+    rejectUnauthorized: false
+});
                 
                 // Connection events
                 this.socket.on('connect', () => {

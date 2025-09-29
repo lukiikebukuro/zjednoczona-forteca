@@ -24,7 +24,14 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_PERMANENT'] = False
 
 # Initialize SocketIO for dashboard
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, 
+    cors_allowed_origins="*", 
+    async_mode='threading',
+    logger=True,
+    engineio_logger=True,
+    ping_timeout=60,
+    ping_interval=25
+)
 
 # Initialize bot
 bot = EcommerceBot()
