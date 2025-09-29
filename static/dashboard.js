@@ -123,8 +123,8 @@ class TacticalDashboard {
      * Setup input focus listeners for auto-pause functionality
      */
     setupInputFocusListeners() {
-        // Monitor all text inputs, textareas, and contenteditable elements
-        const inputSelectors = 'input[type="text"], input[type="search"], textarea, [contenteditable="true"]';
+    // Monitor ONLY bot interface inputs (not dashboard inputs)
+    const inputSelectors = '.bot-column input[type="text"], .bot-column input[type="search"], .bot-column textarea, .bot-column [contenteditable="true"]';
         
         // Use event delegation to catch dynamically added inputs
         document.addEventListener('focusin', (event) => {
@@ -173,11 +173,16 @@ class TacticalDashboard {
      * Pause simulator when user starts typing
      */
     pauseSimulatorForTyping() {
-        if (this.socket && this.socket.connected) {
-            console.log('⏸️ Auto-pausing simulator - user typing');
-            this.socket.emit('pause_simulator');
-        }
+    if (this.socket && this.socket.connected) {
+        const el = document.activeElement;
+        console.log('⏸️ Auto-pausing - element:', el);
+        console.log('  - tagName:', el.tagName);
+        console.log('  - id:', el.id);
+        console.log('  - className:', el.className);
+        console.log('  - parent:', el.parentElement?.className);
+        this.socket.emit('pause_simulator');
     }
+}
     
     /**
      * Resume simulator when user stops typing
