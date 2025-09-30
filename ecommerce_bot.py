@@ -725,32 +725,44 @@ class EcommerceBot:
             return matches[:limit]
     
     def get_fuzzy_faq_matches(self, query: str, limit: int = 5) -> List[Tuple]:
-        """Dopasowanie FAQ"""
-        query = self.normalize_query(query)
+        """FAQ z predykcją znak-po-znaku + progresywny scoring"""
+        query = self.normalize_query(query).lower()
+        
+        if len(query) < 2:
+            return []
+        
         matches = []
         
         for faq in self.faq_database:
-            question = faq['question'].lower()
-            keywords = [k.lower() for k in faq['keywords']]
+            question_lower = faq['question'].lower()
+            keywords_lower = [k.lower() for k in faq['keywords']]
             
-            final_score = 0
+            best_score = 0
             
-            if query == question:
-                final_score = 100
-            elif query in keywords:
-                final_score = 95
-            else:
-                question_score = fuzz.ratio(query, question)
-                if question_score > 80:
-                    final_score = question_score
-                
-                for keyword in keywords:
-                    keyword_score = fuzz.ratio(query, keyword)
-                    if keyword_score > 85:
-                        final_score = max(final_score, keyword_score + 5)
+            if query in question_lower:
+                base = (len(query) / len(question_lower)) * 100
+                if question_lower.startswith(query):
+                    best_score = min(100, base + 30)
+                else:
+                    best_score = min(100, base + 15)
             
-            if final_score >= 20:
-                matches.append((faq, final_score))
+            for keyword in keywords_lower:
+                if query in keyword:
+                    base = (len(query) / len(keyword)) * 100
+                    if keyword.startswith(query):
+                        score = min(95, base + 25)
+                    else:
+                        score = min(90, base + 10)
+                    best_score = max(best_score, score)
+            
+            if best_score == 0:
+                if len(query) >= 4:
+                    question_score = fuzz.partial_ratio(query, question_lower)
+                    if question_score > 65:
+                        best_score = question_score * 0.85
+            
+            if best_score >= 35:
+                matches.append((faq, round(best_score)))
         
         matches.sort(key=lambda x: x[1], reverse=True)
         return matches[:limit]
