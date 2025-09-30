@@ -3481,3 +3481,55 @@ body {
         overflow: hidden;
     }
 }
+
+
+.trust-section {
+    background: #f0f9ff;
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 3rem 0;
+}
+
+.trust-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.trust-item {
+    text-align: center;
+}
+
+.trust-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.roi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #10b981, #34d399);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    margin-top: 1rem;
+    font-size: 1.1rem;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+}
+
+.expand-btn:hover {
+    text-decoration: underline;
+}

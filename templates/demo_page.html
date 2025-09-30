@@ -315,60 +315,81 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- ARGUMENTY SPRZEDAŻOWE - POD GŁÓWNYM KONTENEREM -->
-    <section class="sales-arguments">
-    <div class="arguments-container">
-        <div class="arguments-header">
-            <h2>To Więcej Niż Bot. To Partnerstwo Strategiczne.</h2>
-        </div>
-        
-        <div class="advantage-grid">
-    <div class="advantage-item">
-        <div class="advantage-icon">🧠</div>
-        <div class="advantage-content">
-            <h4>System Analityczny, a nie Bot-Zabawka</h4>
-            <p>Każde "brak wyników" w Twojej wyszukiwarce to klient, który właśnie wychodzi do konkurencji. Nasz system, w przeciwieństwie do zabawek no-code, precyzyjnie odróżnia przypadkową literówkę lub nonsens od sygnału, że w Twojej ofercie brakuje produktu wartego tysiące złotych. I robi to w czasie rzeczywistym, bez wciskania 'Enter'.</p>
-        </div>
-    </div>
-
-    <div class="advantage-item">
-    <div class="advantage-icon">💰</div>
+    <!-- Argument 1 -->
+<div class="advantage-item">
+    <div class="advantage-icon">🧠</div>
     <div class="advantage-content">
-        <h4>Wywiad Rynkowy, a nie Zwykły Raport</h4>
-        <p>Nasz system dostarcza bezcennych danych o "echu" Twojego rynku. To dopiero <strong>wersja 1.0</strong> – inteligencja rośnie z każdym zbiorem danych. <strong>Im szybciej podłączysz, tym szybciej zobaczysz pieniądze na podłodze</strong>, które omijałeś. Stały abonament, który nie karze za sukces.</p>
+        <h4>System Analityczny, a nie Bot-Zabawka</h4>
+        <p class="advantage-summary">Każde "brak wyników" = klient u konkurencji. W przeciwieństwie do no-code, odróżniamy literówkę od produktu wartego tysiące zł. W czasie rzeczywistym.</p>
+        <div class="advantage-details" style="display: none;">
+            <p>Platformy no-code dają Ci tylko chaos – listę błędów, z którą nie wiesz co zrobić. Nasz silnik, jak prawdziwy analityk wywiadu, precyzyjnie odróżnia przypadkową literówkę (uratowana sprzedaż) od nonsensu (szum do zignorowania) i, co najważniejsze, od prawdziwej, wartej tysiące złotych szansy rynkowej.</p>
+        </div>
+        <button class="expand-btn" onclick="toggleDetails(this)">Dowiedz się więcej ▾</button>
     </div>
 </div>
 
-    <div class="advantage-item">
-        <div class="advantage-icon">🛠️</div>
-        <div class="advantage-content">
-            <h4>Nieskończone Możliwości, a nie Zamknięte Pudełko</h4>
-            <p>Platformy no-code są zamknięte w swoim pudełku. My jesteśmy Twoim zewnętrznym działem R&D. Potrzebujesz bota, który **nauczy się technicznego żargonu Twojej branży**? A może takiego, który **sprawdzi na żywo stan magazynowy i sam zaproponuje klientowi dostępny zamiennik**? Z nami Twoja wyobraźnia jest jedynym ograniczeniem.</p>
+<!-- Argument 2 -->
+<div class="advantage-item">
+    <div class="advantage-icon">💰</div>
+    <div class="advantage-content">
+        <h4>Wywiad Rynkowy, a nie Zwykły Raport</h4>
+        <p class="advantage-summary">Im szybciej podłączysz, tym szybciej system nauczy się TWOICH danych. To dopiero v1.0 - inteligencja rośnie z każdym dniem. Stały abonament, bez kar za sukces.</p>
+        <div class="advantage-details" style="display: none;">
+            <p>Każdy dzień zwłoki to stracone dane o zachowaniach TWOICH klientów. System uczy się specyfiki Twojego rynku - które literówki są typowe, jakie produkty szukają razem, kiedy rośnie popyt. Platformy no-code liczą każde zapytanie i rosną w cenę wraz z Twoim sukcesem. My - stała, przewidywalna cena.</p>
         </div>
+        <button class="expand-btn" onclick="toggleDetails(this)">Dowiedz się więcej ▾</button>
     </div>
+</div>
 
-    <div class="advantage-item">
-        <div class="advantage-icon">👨‍💻</div>
-        <div class="advantage-content">
-            <h4>Bezpośredni Kontakt z Architektem</h4>
-            <p>Nie rozmawiasz z działem wsparcia. Masz bezpośredni dostęp do mnie – architekta, który zna każdą linijkę kodu. Modyfikacje i nowe pomysły wdrażamy w godzinach, a nie tygodniach.</p>
+<!-- Argument 3 -->
+<div class="advantage-item">
+    <div class="advantage-icon">🛠️</div>
+    <div class="advantage-content">
+        <h4>Nieskończone Możliwości, a nie Zamknięte Pudełko</h4>
+        <p class="advantage-summary">Platformy no-code = zamknięte pudełko. My = Twój dział R&D. Nauczymy bota żargonu TWOJEJ branży. Jedyne ograniczenie to wyobraźnia.</p>
+        <div class="advantage-details" style="display: none;">
+            <p>Potrzebujesz bota który rozumie że "golfik" to Golf, a "beemka" to BMW? Który wie, że "klocki" w Twojej branży to hamulce? Który sprawdzi na żywo stan magazynu i zaproponuje zamiennik? Z nami to wszystko możliwe. Platformy no-code dają Ci szablon. My dajemy Ci broń skrojoną na miarę.</p>
         </div>
+        <button class="expand-btn" onclick="toggleDetails(this)">Dowiedz się więcej ▾</button>
     </div>
+</div>
 
-    <div class="advantage-item">
-        <div class="advantage-icon">💸</div>
-        <div class="advantage-content">
-            <h4>Miażdżąca Przewaga Kosztowa</h4>
-            <p>Pracownik obsługi klienta to koszt 50-72k zł rocznie. Nasz system, w ofercie pionierskiej, to 15k zł rocznie. Pracuje 24/7/365, nigdy nie bierze urlopu i dodatkowo dostarcza Ci danych o wartości dziesiątek tysięcy złotych. Oszczędność jest prosta: ponad 70% niższe koszty przy 300% lepszej analizie.</p>
+<!-- Argument 4 -->
+<div class="advantage-item">
+    <div class="advantage-icon">👨‍💻</div>
+    <div class="advantage-content">
+        <h4>Bezpośredni Kontakt z Architektem</h4>
+        <p class="advantage-summary">Nie rozmawiasz z supportem. Masz dostęp do architekta systemu. Modyfikacje w godzinach, nie tygodniach.</p>
+        <div class="advantage-details" style="display: none;">
+            <p>Znasz to uczucie gdy support mówi "przekażę to do działu technicznego"? U nas nie ma pośredników. Rozmawiasz bezpośrednio ze mną - osobą która napisała każdą linijkę kodu. Potrzebujesz zmiany? Robię ją tego samego dnia.</p>
         </div>
+        <button class="expand-btn" onclick="toggleDetails(this)">Dowiedz się więcej ▾</button>
     </div>
+</div>
 
-    <div class="advantage-item">
-        <div class="advantage-icon">🔮</div>
-        <div class="advantage-content">
-            <h4>Przyszłość: Machine Learning + Predykcja</h4>
-            <p>To dopiero początek. Naszym następnym celem jest wprowadzenie Machine Learningu do predykcji przyszłego popytu. Twoje dane historyczne staną się Twoją ostateczną przewagą konkurencyjną – będziemy przewidywać trendy, zanim zobaczy je rynek.</p>
+<!-- Argument 5 -->
+<div class="advantage-item">
+    <div class="advantage-icon">💸</div>
+    <div class="advantage-content">
+        <h4>Miażdżąca Przewaga Kosztowa</h4>
+        <p class="advantage-summary">Pracownik: 50-72k zł/rok. Nasz system: 15k zł/rok. Pracuje 24/7, nigdy nie bierze L4, dodatkowo dostarcza dane o wartości dziesiątek tysięcy.</p>
+        <div class="advantage-details" style="display: none;">
+            <p>Jeden pracownik obsługi = 4200-6000 zł/miesiąc. Nasz system = 750 zł/miesiąc. Ale to nie wszystko - system jednocześnie analizuje dane, których żaden pracownik by nie zebrał. To jak zatrudnić analityka, sprzedawcę i stratega w cenie kawy dziennie.</p>
         </div>
+        <button class="expand-btn" onclick="toggleDetails(this)">Dowiedz się więcej ▾</button>
+    </div>
+</div>
+
+<!-- Argument 6 -->
+<div class="advantage-item">
+    <div class="advantage-icon">🔮</div>
+    <div class="advantage-content">
+        <h4>Przyszłość: Machine Learning + Predykcja</h4>
+        <p class="advantage-summary">To początek. Następny cel: ML do predykcji przyszłego popytu. Będziemy przewidywać trendy zanim zobaczy je rynek.</p>
+        <div class="advantage-details" style="display: none;">
+            <p>Wyobraź sobie: system mówi Ci w lutym, że w maju wzrośnie popyt na konkretny produkt. Zamawiasz z wyprzedzeniem, gdy konkurencja śpi. To nie sci-fi - to nasza roadmapa na 2025. Klienci którzy wejdą teraz, dostaną wszystkie przyszłe funkcje bez dopłat.</p>
+        </div>
+        <button class="expand-btn" onclick="toggleDetails(this)">Dowiedz się więcej ▾</button>
     </div>
 </div>
 
@@ -473,35 +494,43 @@
             
     
     <div class="pricing-content">
-        <div class="pricing-comparison">
-            <div class="pricing-before">
-                <h4>Standardowa cena:</h4>
-                <div class="price-item">
-                    <span class="price-label">Wdrożenie:</span>
-                    <span class="price-old">12 000 zł</span>
-                </div>
-                <div class="price-item">
-                    <span class="price-label">Miesięcznie:</span>
-                    <span class="price-old">1 500 zł</span>
-                </div>
+    <div class="pricing-comparison">
+        <div class="pricing-before">
+            <h4>Standardowa cena:</h4>
+            <div class="price-item">
+                <span class="price-label">Wdrożenie:</span>
+                <span class="price-old">12 000 zł</span>
             </div>
-            
-            <div class="pricing-arrow">→</div>
-            
-            <div class="pricing-after">
-                <h4>Dla pierwszego klienta:</h4>
-                <div class="price-item">
-                    <span class="price-label">Wdrożenie:</span>
-                    <span class="price-new">6 000 zł</span>
-                    <span class="price-discount">-50%</span>
-                </div>
-                <div class="price-item">
-                    <span class="price-label">Miesięcznie:</span>
-                    <span class="price-new">750 zł</span>
-                    <span class="price-discount">-50%</span>
-                </div>
+            <div class="price-item">
+                <span class="price-label">Miesięcznie:</span>
+                <span class="price-old">1 500 zł</span>
             </div>
         </div>
+        
+        <div class="pricing-arrow">→</div>
+        
+        <div class="pricing-after">
+            <h4>Dla pierwszego klienta:</h4>
+            <div class="price-item">
+                <span class="price-label">Wdrożenie:</span>
+                <span class="price-new">6 000 zł</span>
+                <span class="price-discount">-50%</span>
+            </div>
+            <div class="price-item">
+                <span class="price-label">Miesięcznie:</span>
+                <span class="price-new">750 zł</span>
+                <span class="price-discount">-50%</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ROI BADGE TUTAJ - PO CAŁYM PORÓWNANIU -->
+    <div class="roi-badge">
+        <span class="roi-icon">📊</span>
+        <span class="roi-text">Średni ROI: <strong>3,333%</strong> w pierwszym miesiącu</span>
+        <span class="roi-details">(50 produktów × 500 zł marży ÷ 750 zł kosztu)</span>
+    </div>
+</div>
         
         <div class="pricing-summary">
             <p><strong>Oszczędność w pierwszym roku: 15 000 zł</strong></p>
@@ -510,6 +539,28 @@
         
         <div class="pricing-urgency">
             <p>⚠️ Oferta ważna tylko dla pierwszego wdrożenia. Kolejni klienci płacą pełną cenę.</p>
+            
+        </div>
+    </div>
+</div>
+<!-- TUTAJ DODAJ TRUST SECTION -->
+<div class="trust-section">
+    <h3>🛡️ GWARANCJA BEZPIECZEŃSTWA</h3>
+    <div class="trust-grid">
+        <div class="trust-item">
+            <span class="trust-icon">✅</span>
+            <strong>30 dni testu za 0 zł</strong>
+            <p>Najpierw wyniki, potem decyzja</p>
+        </div>
+        <div class="trust-item">
+            <span class="trust-icon">✅</span>
+            <strong>Gwarancja zwrotu</strong>
+            <p>Nie działa? Zwracamy 100% kosztu</p>
+        </div>
+        <div class="trust-item">
+            <span class="trust-icon">✅</span>
+            <strong>Bezpośredni kontakt</strong>
+            <p>Rozmawiasz z twórcą, nie z supportem</p>
         </div>
     </div>
 </div>
@@ -635,6 +686,18 @@
             });
         }
     });
+    function toggleDetails(button) {
+        const details = button.previousElementSibling;
+        const isOpen = details.style.display === 'block';
+        
+        if (isOpen) {
+            details.style.display = 'none';
+            button.textContent = 'Dowiedz się więcej ▾';
+        } else {
+            details.style.display = 'block';
+            button.textContent = 'Zwiń ▴';
+        }
+    }
 </script>
 </body>
 </html>
