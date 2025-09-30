@@ -1,0 +1,352 @@
+timestamp,query,email,notify,machine_filter
+2025-09-02T13:21:54.042618,xy,,False,osobowy
+2025-09-02T13:21:54.697630,xyz1,,False,osobowy
+2025-09-02T13:22:05.412307,tarcza t,,False,osobowy
+2025-09-02T13:22:07.315786,tarcza do f,,False,osobowy
+2025-09-02T13:27:13.399490,opon,,False,osobowy
+2025-09-02T13:27:13.656889,opony,,False,osobowy
+2025-09-02T13:27:16.055398,opony,,False,osobowy
+2025-09-02T13:27:16.415099,opony zi,,False,osobowy
+2025-09-02T14:38:58.053595,ko,,False,osobowy
+2025-09-02T14:39:11.119935,bu,,False,osobowy
+2025-09-02T14:39:11.492833,buł,,False,osobowy
+2025-09-02T20:29:59.337948,xy,,False,osobowy
+2025-09-03T16:34:07.156177,kl,,False,osobowy
+2025-09-03T16:34:09.989894,klocki g,,False,osobowy
+2025-09-03T16:34:30.786171,kl,,False,osobowy
+2025-09-03T16:34:31.868742,klocki g,,False,osobowy
+2025-09-03T16:34:32.575466,klocki gl,,False,osobowy
+2025-09-03T16:34:41.602449,opony,,False,osobowy
+2025-09-03T16:34:51.428449,amortyzator f,,False,osobowy
+2025-09-03T16:34:52.795107,amortyzator fe,,False,osobowy
+2025-09-03T16:34:55.203655,amortyzator fer,,False,osobowy
+2025-09-03T16:34:55.848202,amortyzator ferrari,,False,osobowy
+2025-09-03T16:43:45.076437,jak,,False,
+2025-09-23T20:39:18.882391,kl,,False,osobowy
+2025-09-23T20:39:32.720025,klocki b,,False,osobowy
+2025-09-23T20:40:27.053554,opon,,False,osobowy
+2025-09-23T20:40:27.308735,opony,,False,osobowy
+2025-09-23T20:40:32.754665,opon,,False,osobowy
+2025-09-23T20:40:40.144123,ferrar,,False,osobowy
+2025-09-23T20:40:41.476074,ferrari,,False,osobowy
+2025-09-23T20:40:42.105036,ferrar,,False,osobowy
+2025-09-23T20:40:49.836436,ka,,False,osobowy
+2025-09-23T20:40:53.359214,kawasaki,,False,osobowy
+2025-09-23T21:17:26.786974,kl,,False,osobowy
+2025-09-23T21:17:41.348303,klocki b,,False,osobowy
+2025-09-23T21:18:00.611026,klocki bmw n12,,False,osobowy
+2025-09-23T21:23:47.883235,"""filtr 0986494999",,False,osobowy
+2025-09-23T21:23:51.756817,filtr 0986494999,,False,osobowy
+2025-09-23T21:24:58.653501,filtr 0986494999,,False,osobowy
+2025-09-23T21:25:14.265064,klocki e46,,False,osobowy
+2025-09-23T21:25:25.518266,klocki do 100,,False,osobowy
+2025-09-23T21:25:36.010461,klocki ferrari,,False,osobowy
+2025-09-23T21:33:15.703741,123456789,,False,osobowy
+2025-09-23T21:33:24.023189,klocki BMW E90 320i 2.0 TDI N47 przód oryginał OE,,False,osobowy
+2025-09-25T22:08:35.362712,kl,,False,osobowy
+2025-09-25T22:08:43.299959,klocki x,,False,osobowy
+2025-09-25T22:08:45.993026,klocki x-,,False,osobowy
+2025-09-25T22:08:46.258175,klocki x-5,,False,osobowy
+2025-09-25T22:09:06.629458,klocki x-,,False,osobowy
+2025-09-25T22:29:06.598507,klocki do,,False,osobowy
+2025-09-25T22:29:08.502355,klocki do he,,False,osobowy
+2025-09-25T22:29:09.269820,klocki do hel,,False,osobowy
+2025-09-25T22:29:09.847696,klocki do heli,,False,osobowy
+2025-09-25T22:29:10.086265,klocki do helik,,False,osobowy
+2025-09-25T23:03:32.277393,klocki do he,,False,osobowy
+2025-09-25T23:03:32.777171,klocki do hel,,False,osobowy
+2025-09-25T23:03:33.031850,klocki do heli,,False,osobowy
+2025-09-25T23:03:33.343605,klocki do helik,,False,osobowy
+2025-09-25T23:34:00.850069,ford mondeo,,False,osobowy
+2025-09-26T00:48:38.891555,kl,,False,osobowy
+2025-09-26T00:50:16.469628,13232133123123,,False,osobowy
+2025-09-26T11:34:11.010284,klocki sk,,False,osobowy
+2025-09-26T11:34:11.531967,klocki sko,,False,osobowy
+2025-09-26T11:34:11.791551,klocki skoda,,False,osobowy
+2025-09-26T12:31:06.271673,kl,,False,osobowy
+2025-09-26T12:31:09.665803,kl,,False,osobowy
+2025-09-26T12:31:28.250508,f0,,False,osobowy
+2025-09-26T12:31:29.350296,f02,,False,osobowy
+2025-09-26T12:33:53.900819,F0,,False,osobowy
+2025-09-26T12:33:59.063050,f0,,False,osobowy
+2025-09-26T12:33:59.550235,f02,,False,osobowy
+2025-09-26T17:12:27.723736,filtr f022,,False,osobowy
+2025-09-26T17:12:56.495701,f0,,False,osobowy
+2025-09-26T17:12:59.367053,f02,,False,osobowy
+2025-09-26T22:26:03.820112,ko,,False,osobowy
+2025-09-26T22:27:24.409559,f0,,False,osobowy
+2025-09-26T22:27:28.745880,f02,,False,osobowy
+2025-09-26T22:31:03.870435,f0,,False,osobowy
+2025-09-26T22:31:04.169585,f02,,False,osobowy
+2025-09-26T22:52:11.726967,ko,,False,osobowy
+2025-09-26T22:52:12.911716,kol,,False,osobowy
+2025-09-26T22:52:15.659369,kolc,,False,osobowy
+2025-09-26T22:52:29.658145,amo,,False,osobowy
+2025-09-26T22:54:12.327940,kl,,False,osobowy
+2025-09-26T23:12:51.889130,ko,,False,osobowy
+2025-09-26T23:12:54.704810,kol,,False,osobowy
+2025-09-26T23:12:55.433097,kolc,,False,osobowy
+2025-09-26T23:12:56.878305,kolcki,,False,osobowy
+2025-09-26T23:13:00.539029,kolcki,,False,osobowy
+2025-09-26T23:13:05.714590,kolcki,,False,osobowy
+2025-09-26T23:13:10.210454,kl,,False,osobowy
+2025-09-26T23:13:10.904711,kloc,,False,osobowy
+2025-09-26T23:13:22.469998,bm,,False,osobowy
+2025-09-26T23:13:22.716770,bmw,,False,osobowy
+2025-09-26T23:13:26.574987,bm,,False,osobowy
+2025-09-26T23:15:23.394275,ko,,False,osobowy
+2025-09-26T23:15:33.440135,f2,,False,osobowy
+2025-09-26T23:15:33.933877,f26,,False,osobowy
+2025-09-26T23:15:35.612894,f2,,False,osobowy
+2025-09-26T23:15:36.690843,f0,,False,osobowy
+2025-09-26T23:15:37.256783,f02,,False,osobowy
+2025-09-26T23:15:39.193354,f02,,False,osobowy
+2025-09-26T23:16:09.922681,bmw e98,,False,osobowy
+2025-09-26T23:16:49.082630,bmw d,,False,osobowy
+2025-09-26T23:16:49.085220,bmw d3,,False,osobowy
+2025-09-26T23:16:50.082999,bmw d,,False,osobowy
+2025-09-26T23:16:56.106664,kl,,False,osobowy
+2025-09-26T23:16:58.116518,ko,,False,osobowy
+2025-09-26T23:17:07.384262,ko,,False,osobowy
+2025-09-26T23:17:09.030450,ko,,False,osobowy
+2025-09-26T23:17:44.781868,swieca i,,False,osobowy
+2025-09-26T23:19:03.077606,swieca 1,,False,osobowy
+2025-09-26T23:19:05.668682,swieca 1.2,,False,osobowy
+2025-09-26T23:23:08.334045,kl,,False,osobowy
+2025-09-26T23:23:11.109547,klocki ferraru,,False,osobowy
+2025-09-26T23:23:13.022619,klocki ferrar,,False,osobowy
+2025-09-26T23:23:13.280907,klocki ferrari,,False,osobowy
+2025-09-26T23:25:31.594646,swieca 1,,False,osobowy
+2025-09-26T23:25:31.603996,swieca 1.,,False,osobowy
+2025-09-26T23:25:32.860681,swieca 1.1,,False,osobowy
+2025-09-26T23:30:41.978017,kl,,False,osobowy
+2025-09-26T23:30:44.121080,klocki f,,False,osobowy
+2025-09-26T23:30:44.648074,klocki ferr,,False,osobowy
+2025-09-26T23:30:44.882198,klocki ferra,,False,osobowy
+2025-09-26T23:30:45.109706,klocki ferrar,,False,osobowy
+2025-09-26T23:30:48.049760,klocki ferra,,False,osobowy
+2025-09-26T23:30:52.097537,amortyzatory la,,False,osobowy
+2025-09-26T23:30:52.209973,amortyzatory lam,,False,osobowy
+2025-09-26T23:30:52.859410,amortyzatory lamb,,False,osobowy
+2025-09-26T23:30:53.585661,amortyzatory lambo,,False,osobowy
+2025-09-26T23:30:54.365033,amortyzatory lambor,,False,osobowy
+2025-09-26T23:30:55.681620,amortyzatory lambo,,False,osobowy
+2025-09-26T23:31:00.938260,klocki bmw n52,,False,osobowy
+2025-09-26T23:31:15.933071,filtr 09864949,,False,osobowy
+2025-09-26T23:31:16.523630,filtr 098649499,,False,osobowy
+2025-09-26T23:31:17.196249,filtr 0986494999,,False,osobowy
+2025-09-26T23:31:18.768227,filtr 098649499,,False,osobowy
+2025-09-26T23:31:21.840148,opon,,False,osobowy
+2025-09-26T23:31:21.946959,opony,,False,osobowy
+2025-09-26T23:31:22.525154,opony zi,,False,osobowy
+2025-09-26T23:31:22.975546,opony zimowe,,False,osobowy
+2025-09-26T23:31:23.835825,opony zimow,,False,osobowy
+2025-09-26T23:31:26.474615,felgi bm,,False,osobowy
+2025-09-26T23:31:26.721052,felgi bmw,,False,osobowy
+2025-09-26T23:31:27.222594,felgi bm,,False,osobowy
+2025-09-26T23:31:41.665754,klocki audi rs6,,False,osobowy
+2025-09-26T23:33:01.210081,amortyztor b,,False,osobowy
+2025-09-26T23:33:13.308428,swice ng,,False,osobowy
+2025-09-26T23:33:15.653300,ak,,False,osobowy
+2025-09-26T23:33:17.975441,akumulator v,,False,osobowy
+2025-09-26T23:39:22.350470,akumulator vatadads,,False,osobowy
+2025-09-26T23:39:26.214735,akumulator vatadad,,False,osobowy
+2025-09-26T23:39:50.265984,ko,,False,osobowy
+2025-09-27T00:07:11.211741,ko,,False,osobowy
+2025-09-27T00:07:36.353480,ru,,False,osobowy
+2025-09-27T00:09:54.502955,kl,,False,osobowy
+2025-09-27T00:10:52.997949,oe,,False,osobowy
+2025-09-27T00:18:50.723728,k;,,False,osobowy
+2025-09-27T00:18:51.651387,kl,,False,osobowy
+2025-09-27T00:19:10.629089,bmw e3,,False,osobowy
+2025-09-27T00:19:11.155132,bmw e32,,False,osobowy
+2025-09-27T00:19:12.592541,bmw e3,,False,osobowy
+2025-09-27T00:26:32.097629,klocki f,,False,osobowy
+2025-09-27T00:26:32.471819,klocki ferr,,False,osobowy
+2025-09-27T00:26:35.227391,klocki ferra,,False,osobowy
+2025-09-27T00:26:35.485718,klocki ferrar,,False,osobowy
+2025-09-27T00:26:35.613875,klocki ferrari,,False,osobowy
+2025-09-27T16:55:20.195714,kl,,False,osobowy
+2025-09-27T16:55:23.088248,klocki b,,False,osobowy
+2025-09-27T16:55:28.995901,klocki bmw n12,,False,osobowy
+2025-09-27T16:55:29.742692,klocki bmw n123,,False,osobowy
+2025-09-27T16:55:31.502036,klocki bmw n12,,False,osobowy
+2025-09-27T16:56:00.030202,f2,,False,osobowy
+2025-09-27T16:56:00.694912,f20,,False,osobowy
+2025-09-27T16:56:08.573174,amortyzatory ferraru,,False,osobowy
+2025-09-27T16:56:12.616861,amortyzatory ferrar,,False,osobowy
+2025-09-27T16:56:13.311937,amortyzatory ferrari,,False,osobowy
+2025-09-27T17:01:28.591327,amortyzator p,,False,osobowy
+2025-09-27T17:01:28.950689,amortyzator po,,False,osobowy
+2025-09-27T17:01:29.170101,amortyzator por,,False,osobowy
+2025-09-27T17:01:30.324180,amortyzator pors,,False,osobowy
+2025-09-27T17:01:31.022658,amortyzator porsche,,False,osobowy
+2025-09-27T17:01:34.701037,amortyzator porsch,,False,osobowy
+2025-09-27T17:01:38.304482,ferrari,,False,osobowy
+2025-09-27T17:01:40.499430,ferrari,,False,osobowy
+2025-09-27T17:01:44.751617,ferrari,,False,osobowy
+2025-09-27T17:01:52.570625,f0,,False,osobowy
+2025-09-27T17:01:53.478214,f02,,False,osobowy
+2025-09-27T17:02:03.370864,f0264023,,False,osobowy
+2025-09-27T17:45:13.678409,kl,,False,osobowy
+2025-09-27T17:45:27.012149,klocki f,,False,osobowy
+2025-09-27T17:45:28.030246,klocki ferr,,False,osobowy
+2025-09-27T17:45:28.264729,klocki ferra,,False,osobowy
+2025-09-27T17:45:28.328225,klocki ferrar,,False,osobowy
+2025-09-27T17:45:28.607812,klocki ferrari,,False,osobowy
+2025-09-27T17:46:07.081849,kl,,False,osobowy
+2025-09-27T17:46:11.647065,kl,,False,osobowy
+2025-09-27T17:46:13.642891,klocki f,,False,osobowy
+2025-09-27T17:46:14.908410,klocki ferr,,False,osobowy
+2025-09-27T17:46:15.035698,klocki ferra,,False,osobowy
+2025-09-27T17:46:15.655416,klocki ferrar,,False,osobowy
+2025-09-27T17:46:16.463064,klocki ferrari,,False,osobowy
+2025-09-27T17:46:29.423454,klocki ferrar,,False,osobowy
+2025-09-27T17:47:33.870453,kl,,False,osobowy
+2025-09-27T17:47:42.803252,klocki f,,False,osobowy
+2025-09-27T17:47:45.726139,klocki ferr,,False,osobowy
+2025-09-27T17:47:45.997469,klocki ferra,,False,osobowy
+2025-09-27T17:47:46.394359,klocki ferrar,,False,osobowy
+2025-09-27T17:47:47.339392,klocki ferrari,,False,osobowy
+2025-09-27T17:49:23.376733,kl,,False,osobowy
+2025-09-27T18:35:54.200907,kl,,False,osobowy
+2025-09-27T18:35:59.043347,klocki f,,False,osobowy
+2025-09-27T18:36:01.043031,klocki ferr,,False,osobowy
+2025-09-27T18:36:01.292265,klocki ferrr,,False,osobowy
+2025-09-27T18:36:01.441315,klocki ferrra,,False,osobowy
+2025-09-27T18:36:01.750580,klocki ferrrar,,False,osobowy
+2025-09-27T18:36:02.302377,klocki ferrrari,,False,osobowy
+2025-09-27T18:36:19.325837,qe,,False,osobowy
+2025-09-27T18:41:56.903743,rf,,False,osobowy
+2025-09-27T18:42:13.407735,swieca b,,False,osobowy
+2025-09-27T18:42:35.276074,klocki 3,,False,osobowy
+2025-09-27T18:42:35.384593,klocki 390,,False,osobowy
+2025-09-27T18:42:38.081506,klocki 39,,False,osobowy
+2025-09-27T18:42:58.632285,bmw tarcza ate m23,,False,osobowy
+2025-09-27T18:43:02.857806,bmw tarcza ate m02,,False,osobowy
+2025-09-27T18:43:04.596322,bmw tarcza ate m-2,,False,osobowy
+2025-09-27T19:43:02.621902,kl,,False,osobowy
+2025-09-27T19:43:07.378178,klocki f,,False,osobowy
+2025-09-27T19:43:08.722544,klocki ferr,,False,osobowy
+2025-09-27T19:43:09.018120,klocki ferra,,False,osobowy
+2025-09-27T19:43:09.241765,klocki ferrar,,False,osobowy
+2025-09-27T19:43:09.471501,klocki ferrari,,False,osobowy
+2025-09-27T19:43:11.321010,klocki ferrar,,False,osobowy
+2025-09-27T19:43:11.588571,klocki ferra,,False,osobowy
+2025-09-27T19:43:11.858049,klocki ferr,,False,osobowy
+2025-09-27T19:43:12.421145,klocki f,,False,osobowy
+2025-09-27T19:43:22.254146,klocki bosch e904,,False,osobowy
+2025-09-27T19:43:49.333790,bmw 1,,False,osobowy
+2025-09-27T19:43:49.706720,bmw 12,,False,osobowy
+2025-09-27T19:43:50.488577,bmw 123,,False,osobowy
+2025-09-27T22:17:51.005912,kl,,False,osobowy
+2025-09-27T22:17:52.104952,klocki f,,False,osobowy
+2025-09-27T22:17:53.354805,klocki ferr,,False,osobowy
+2025-09-27T22:17:53.590127,klocki ferra,,False,osobowy
+2025-09-27T22:17:53.840373,klocki ferrar,,False,osobowy
+2025-09-27T22:17:54.044009,klocki ferrari,,False,osobowy
+2025-09-27T22:18:05.702864,klocki b,,False,osobowy
+2025-09-27T22:18:11.686566,klocki bosch b23,,False,osobowy
+2025-09-27T22:18:39.701542,opon,,False,osobowy
+2025-09-27T22:18:40.356385,opony,,False,osobowy
+2025-09-27T22:18:41.922225,opon,,False,osobowy
+2025-09-28T15:00:33.141716,kl,,False,osobowy
+2025-09-28T15:00:59.587161,klocki f,,False,osobowy
+2025-09-28T15:01:00.580325,klocki ferr,,False,osobowy
+2025-09-28T15:01:00.994195,klocki ferra,,False,osobowy
+2025-09-28T15:01:01.402943,klocki ferrar,,False,osobowy
+2025-09-28T15:01:03.451425,klocki ferrari,,False,osobowy
+2025-09-28T15:01:22.908509,kl,,False,osobowy
+2025-09-28T15:01:31.611798,klocki g,,False,osobowy
+2025-09-28T15:01:33.873959,klocki g,,False,osobowy
+2025-09-28T15:01:34.375857,klocki f,,False,osobowy
+2025-09-28T15:01:35.298517,klocki ferr,,False,osobowy
+2025-09-28T15:01:35.604724,klocki ferra,,False,osobowy
+2025-09-28T15:01:35.911797,klocki ferrar,,False,osobowy
+2025-09-28T15:01:36.219232,klocki ferrari,,False,osobowy
+2025-09-28T15:01:40.008643,klocki ferrar,,False,osobowy
+2025-09-28T15:01:41.338845,klocki b,,False,osobowy
+2025-09-28T15:02:04.941640,klocki bmw e86,,False,osobowy
+2025-09-28T15:02:10.932229,klocki bmw e86,,False,osobowy
+2025-09-28T15:04:21.184980,klocki b,,False,osobowy
+2025-09-28T15:04:26.509063,klocki bmw e62,,False,osobowy
+2025-09-28T20:49:22.809630,kl,,False,osobowy
+2025-09-28T20:49:31.410363,klocki b,,False,osobowy
+2025-09-28T20:49:49.227728,klocki b,,False,osobowy
+2025-09-28T20:49:51.581773,kl,,False,osobowy
+2025-09-28T20:49:52.913647,kl,,False,osobowy
+2025-09-28T20:49:56.292167,klocki f,,False,osobowy
+2025-09-28T20:49:57.317828,klocki ferr,,False,osobowy
+2025-09-28T20:49:57.623695,klocki ferra,,False,osobowy
+2025-09-28T20:49:57.931757,klocki ferrar,,False,osobowy
+2025-09-28T20:49:58.340458,klocki ferrari,,False,osobowy
+2025-09-28T20:50:01.823317,klocki b,,False,osobowy
+2025-09-28T20:50:07.556305,klocki bmw d62,,False,osobowy
+2025-09-28T20:53:07.984724,kl,,False,osobowy
+2025-09-28T20:53:10.851436,klocki b,,False,osobowy
+2025-09-28T20:53:19.247431,klocki bmw e62,,False,osobowy
+2025-09-28T20:53:26.928109,klocki bmw d-1,,False,osobowy
+2025-09-28T20:56:27.361692,opon,,False,osobowy
+2025-09-28T20:56:27.559967,opony,,False,osobowy
+2025-09-28T20:56:32.578014,opon,,False,osobowy
+2025-09-28T20:56:35.551154,kl,,False,osobowy
+2025-09-28T20:56:37.596054,klocki b,,False,osobowy
+2025-09-28T20:56:46.509563,klocki bmw e62,,False,osobowy
+2025-09-28T20:56:49.986858,klocki bmw d12,,False,osobowy
+2025-09-28T20:56:50.093231,klocki bmw d123,,False,osobowy
+2025-09-28T20:56:51.725994,klocki bmw d12,,False,osobowy
+2025-09-28T21:00:15.706342,kl,,False,osobowy
+2025-09-28T21:00:20.324298,klocki b,,False,osobowy
+2025-09-28T21:00:24.409562,klocki bmw d62,,False,osobowy
+2025-09-28T21:00:30.758259,klocki bmw e62,,False,osobowy
+2025-09-28T21:46:08.983543,amortyzator b,,False,osobowy
+2025-09-28T21:46:09.188261,amortyzator b3,,False,osobowy
+2025-09-28T21:46:11.338053,amortyzator b,,False,osobowy
+2025-09-28T21:46:13.591712,amortyzator b,,False,osobowy
+2025-09-28T21:46:13.795960,amortyzator b8,,False,osobowy
+2025-09-28T21:46:15.128094,amortyzator b,,False,osobowy
+2025-09-28T21:46:18.609943,amortyzator k,,False,osobowy
+2025-09-28T21:46:18.915815,amortyzator ko,,False,osobowy
+2025-09-28T21:46:20.349677,amortyzator k,,False,osobowy
+2025-09-28T21:48:42.276698,opon,,False,osobowy
+2025-09-28T21:48:44.323159,opony,,False,osobowy
+2025-09-28T21:48:46.268584,opon,,False,osobowy
+2025-09-28T21:49:51.907235,opona,,False,osobowy
+2025-09-28T21:49:52.828783,opon,,False,osobowy
+2025-09-28T21:50:02.556902,sz,,False,osobowy
+2025-09-28T21:50:02.864214,szy,,False,osobowy
+2025-09-28T21:50:03.170666,szyb,,False,osobowy
+2025-09-28T21:50:03.478546,szyba,,False,osobowy
+2025-09-28T21:50:05.832498,szyb,,False,osobowy
+2025-09-28T21:50:07.984196,sz,,False,osobowy
+2025-09-28T21:50:08.293986,szy,,False,osobowy
+2025-09-28T21:50:08.700027,szyb,,False,osobowy
+2025-09-28T21:50:08.904911,szyba,,False,osobowy
+2025-09-28T21:50:09.314386,szyb,,False,osobowy
+2025-09-28T21:50:09.826998,sz,,False,osobowy
+2025-09-28T21:50:15.355724,mask,,False,osobowy
+2025-09-28T21:50:15.664304,maska,,False,osobowy
+2025-09-28T21:50:17.097088,mask,,False,osobowy
+2025-09-28T21:50:20.168600,maska,,False,osobowy
+2025-09-28T21:50:23.650060,mask,,False,osobowy
+2025-09-28T22:54:46.991277,kl,,False,osobowy
+2025-09-28T22:54:56.515370,klocki f,,False,osobowy
+2025-09-28T22:54:57.435733,klocki ferr,,False,osobowy
+2025-09-28T22:54:57.640199,klocki ferra,,False,osobowy
+2025-09-28T22:54:57.847728,klocki ferrar,,False,osobowy
+2025-09-28T22:54:59.279982,klocki ferrari,,False,osobowy
+2025-09-28T22:55:01.941003,klocki ferra,,False,osobowy
+2025-09-28T22:55:03.067534,klocki b,,False,osobowy
+2025-09-28T22:55:06.549423,klocki bmwe6,,False,osobowy
+2025-09-28T22:55:11.464499,klocki bmw e62,,False,osobowy
+2025-09-28T22:55:15.560650,klocki bmw n123,,False,osobowy
+2025-09-28T22:56:07.169925,f0,,False,osobowy
+2025-09-28T22:56:07.886851,f02,,False,osobowy
+2025-09-28T22:57:31.711419,f0,,False,osobowy
+2025-09-28T22:57:32.777704,f02,,False,osobowy
+2025-09-28T22:57:34.722617,f024,,False,osobowy
+2025-09-28T22:57:37.796388,f02,,False,osobowy
+2025-09-28T22:57:38.823314,f0265,,False,osobowy
+2025-09-28T22:59:37.293388,filtr mann hu4,,False,osobowy
+2025-09-28T22:59:42.003440,filtr mann hu43,,False,osobowy
+2025-09-28T22:59:43.027617,filtr mann hu4,,False,osobowy

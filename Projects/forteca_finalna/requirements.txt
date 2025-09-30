@@ -1,0 +1,7 @@
+Flask
+flask-socketio
+requests
+fuzzywuzzy
+python-Levenshtein
+gunicorn
+eventlet
