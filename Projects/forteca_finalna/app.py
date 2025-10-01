@@ -587,7 +587,7 @@ def search_suggestions():
         return jsonify({'suggestions': [], 'error': str(e)}), 200
 
 # === NOWY ENDPOINT - FINALNA ANALIZA DLA TCD ===
-@app.route('/api/analyze_query', methods=['POST'])
+@app.route('/motobot-prototype/api/analyze_query', methods=['POST'])
 def analyze_query():
     """
     NOWY ENDPOINT - Doktryna Cierpliwego Nasłuchu
@@ -710,7 +710,7 @@ def get_initial_data():
         print(f"[API ERROR] {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/api/reset_demo')
+@app.route('/api/reset_demo', methods=['POST'])  # DODAJ TO
 def reset_demo():
     """Resetuje demo - czyści bazę i restartuje symulację"""
     try:
