@@ -1,7 +1,9 @@
-// Universal Soldier E-commerce Bot v5.0 - Patient Listener v2.0
+// Universal Soldier E-commerce Bot v5.0 FIXED - Naprawiony UI
 class EcommerceBotUI {
     constructor() {
-        this.API_PREFIX = '/motobot-prototype';
+        this.API_PREFIX = '/motobot-prototype';  // DODAJ TO TUTAJ
+        this.cartCount = 0;
+        this.chatInterface = document.getElementById('chat-interface');
         this.cartCount = 0;
         this.chatInterface = document.getElementById('chat-interface');
         this.messagesContainer = document.getElementById('messages-container');
@@ -12,6 +14,7 @@ class EcommerceBotUI {
         this.loadingOverlay = document.getElementById('loading-overlay');
         this.cartCounter = document.getElementById('cart-counter');
         
+        // NAPRAWIONE confidence messages
         this.CONFIDENCE_MESSAGES = {
             HIGH: {
                 icon: '✅',
@@ -43,20 +46,17 @@ class EcommerceBotUI {
             }
         };
         
+        // Initialize GA4 session
         this.trackEvent('session_initialized', {
             timestamp: new Date().toISOString(),
-            version: '5.0-patient-listener-v2'
+            version: '5.0-fixed'
         });
         
+        // Search state
         this.searchMode = false;
         this.faqMode = false;
         this.currentContext = null;
-        
-        // Dwa osobne timery dla rozdzielonej logiki
-        this.quickSearchTimeout = null;    // 100ms - sugestie + Live Feed
-        this.deepAnalysisTimeout = null;   // 800ms - tylko liczniki
-        this.lastAnalyzedQuery = '';
-        
+        this.searchTimeout = null;
         this.suggestionsDropdown = null;
         this.lastConfidenceLevel = 'NONE';
         this.lastQuery = '';
@@ -70,7 +70,7 @@ class EcommerceBotUI {
         if (typeof gtag === 'function') {
             gtag('event', eventName, {
                 ...params,
-                source: 'universal_soldier_bot_patient_listener',
+                source: 'universal_soldier_bot_fixed',
                 timestamp: new Date().toISOString()
             });
         }
@@ -125,22 +125,18 @@ class EcommerceBotUI {
                 }
             });
             
-            // ROZDZIELONA LOGIKA: Quick + Deep
+            // Real-time search with FIXED intent analysis
             this.userInput.addEventListener('input', (e) => {
                 const query = e.target.value.trim();
                 this.lastQuery = query;
                 
-                if (this.quickSearchTimeout) {
-                    clearTimeout(this.quickSearchTimeout);
-                }
-                if (this.deepAnalysisTimeout) {
-                    clearTimeout(this.deepAnalysisTimeout);
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
                 }
                 
                 if (query.length < 2) {
                     this.hideSuggestions();
                     this.lastConfidenceLevel = 'NONE';
-                    this.lastAnalyzedQuery = '';
                     return;
                 }
                 
@@ -148,15 +144,9 @@ class EcommerceBotUI {
                     return;
                 }
                 
-                // FUNKCJA A: Quick (100ms) - sugestie + Live Feed
-                this.quickSearchTimeout = setTimeout(() => {
-                    this.performQuickSearch(query);
-                }, 100);
-                
-                // FUNKCJA B: Deep (800ms) - tylko liczniki
-                this.deepAnalysisTimeout = setTimeout(() => {
-                    this.performDeepAnalysis(query);
-                }, 800);
+                this.searchTimeout = setTimeout(() => {
+                    this.performSearch(query);
+                }, 200);
             });
             
             this.userInput.addEventListener('blur', () => {
@@ -166,7 +156,7 @@ class EcommerceBotUI {
     }
     
     async startBot() {
-        console.log('[DEBUG] Starting Patient Listener v2.0');
+        console.log('[DEBUG] Starting Universal Soldier bot v5.0 FIXED');
         this.showLoading(true);
         
         this.messagesContainer.innerHTML = '';
@@ -223,6 +213,7 @@ class EcommerceBotUI {
             <div class="message-content">
         `;
         
+        // Handle lost demand special case
         if (reply.lost_demand) {
             messageContent += this.createLostDemandForm(reply.text_message);
         } else if (reply.text_message) {
@@ -338,7 +329,8 @@ class EcommerceBotUI {
             this.buttonContainer.appendChild(buttonElement);
         });
     }
-async handleButtonClick(action) {
+    
+    async handleButtonClick(action) {
         console.log('[DEBUG] Button clicked:', action);
         
         const clickedButton = event.target;
@@ -386,7 +378,6 @@ async handleButtonClick(action) {
             this.showLoading(false);
         }
     }
-    
     async sendTextMessage() {
         const message = this.userInput.value.trim();
         if (!message) return;
@@ -444,21 +435,17 @@ async handleButtonClick(action) {
         this.scrollToBottom();
     }
     
-    async performQuickSearch(query) {
-        /**
-         * FUNKCJA A: Quick Search - sugestie wizualne + Live Feed
-         * Wywoływana co 100ms podczas pisania
-         */
+    async performSearch(query) {
         if (!query) return;
         
         const searchType = this.faqMode ? 'faq' : 'products';
         
         try {
-            console.log('[QUICK SEARCH] Fetching suggestions + sending to Live Feed:', query);
-            
-            const response = await fetch(this.API_PREFIX + '/quick-suggestions', {
+            const response = await fetch(this.API_PREFIX + '/search-suggestions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 credentials: 'include',
                 body: JSON.stringify({ 
                     query: query,
@@ -467,62 +454,31 @@ async handleButtonClick(action) {
             });
             
             if (!response.ok) {
-                throw new Error(`Quick search failed: ${response.status}`);
+                throw new Error(`Search failed: ${response.status}`);
             }
             
             const data = await response.json();
+            console.log('[SEARCH] Results:', data);
+            
+            this.lastConfidenceLevel = data.confidence_level || 'HIGH';
+            
+            if (this.lastConfidenceLevel === 'NO_MATCH') {
+                console.log('[LOST DEMAND DETECTED] Product not found:', query);
+                this.trackEvent('search_lost_demand_realtime', {
+                    search_term: query,
+                    search_type: searchType
+                });
+            }
             
             if (data.suggestions && data.suggestions.length > 0) {
-                this.displaySearchSuggestions(data.suggestions, 'HIGH', searchType);
+                this.displaySearchSuggestions(data.suggestions, this.lastConfidenceLevel, searchType);
             } else {
-                this.displayNoSuggestions(query, searchType, 'NONE');
+                this.displayNoSuggestions(query, searchType, this.lastConfidenceLevel);
             }
             
         } catch (error) {
-            console.error('[QUICK SEARCH ERROR]', error);
+            console.error('[ERROR] Search failed:', error);
             this.hideSuggestions();
-        }
-    }
-    
-    async performDeepAnalysis(query) {
-        /**
-         * FUNKCJA B: Deep Analysis - tylko aktualizacja liczników
-         * Wywoływana TYLKO raz po 800ms pauzy
-         */
-        if (query === this.lastAnalyzedQuery) {
-            console.log('[DEEP ANALYSIS] Skipped duplicate:', query);
-            return;
-        }
-        
-        this.lastAnalyzedQuery = query;
-        const searchType = this.faqMode ? 'faq' : 'products';
-        
-        try {
-            console.log('[DEEP ANALYSIS] Updating metrics only (NO Live Feed):', query);
-            
-            const response = await fetch(this.API_PREFIX + '/analyze-and-track', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ 
-                    query: query,
-                    type: searchType 
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Deep analysis failed: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data.confidence_level) {
-                this.lastConfidenceLevel = data.confidence_level;
-                console.log('[DEEP ANALYSIS] Metrics updated:', data.confidence_level);
-            }
-            
-        } catch (error) {
-            console.error('[DEEP ANALYSIS ERROR]', error);
         }
     }
     
@@ -610,6 +566,7 @@ async handleButtonClick(action) {
                 
                 suggestionElement.addEventListener('click', () => {
                     this.hideSuggestions();
+                    // Tracking
                     this.trackAnalytics('product_suggestion_accepted', {
                         suggestion: item.text,
                         confidence_level: confidenceLevel,
@@ -622,6 +579,7 @@ async handleButtonClick(action) {
                             corrected: item.text
                         });
                     }
+                    // Bezpośrednio do pełnej karty produktu
                     this.handleButtonClick(`show_full_card_${item.id}`);
                 });
             }
@@ -677,6 +635,7 @@ async handleButtonClick(action) {
                     </button>
                 </div>
             `;
+            console.log('[LOST DEMAND UI] Missing product:', query);
         } else if (searchType === 'faq') {
             message.innerHTML = `
                 <div class="no-results-icon">❓</div>
@@ -764,7 +723,6 @@ async handleButtonClick(action) {
             this.currentContext = null;
             this.lastConfidenceLevel = 'NONE';
             this.lastQuery = '';
-            this.lastAnalyzedQuery = '';
             await this.startBot();
         } catch (error) {
             console.error('[ERROR] Reset failed:', error);
@@ -873,20 +831,29 @@ async handleButtonClick(action) {
     }
 }
 
+// Initialize bot when DOM is ready
 window.botUI = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('=====================================');
-    console.log('🚀 Patient Listener v2.0');
+    console.log('🚀 Universal Soldier Bot v5.0 FIXED');
     console.log('=====================================');
-    console.log('⚡ Quick: 100ms → Sugestie + Live Feed');
-    console.log('🎯 Deep: 800ms → Liczniki TYLKO');
-    console.log('📊 Live Feed: Wszystkie keystroke');
-    console.log('📈 Metrics: Jeden event po pauzie');
+    console.log('🎯 Intent Analysis: CALIBRATED');
+    console.log('📊 Lost Demand: PRECISION TRACKING');
+    console.log('🔍 Confidence: FIXED THRESHOLDS');
+    console.log('✨ Precision Reward: ACTIVE');
+    console.log('🏎️ Luxury Brands: DETECTED');
+    console.log('=====================================');
+    console.log('Confidence Levels:');
+    console.log('  HIGH: Normal results (≥75%)');
+    console.log('  MEDIUM: Typo correction (45-74%)');
+    console.log('  LOW: Nonsense (<30% validity)');
+    console.log('  NO_MATCH: LOST DEMAND (≥60% validity, <40% match)');
     console.log('=====================================');
     
     window.botUI = new EcommerceBotUI();
     
     console.log('✅ System operational');
+    console.log('📈 Tracking lost demand');
     console.log('=====================================');
-});    
+});
