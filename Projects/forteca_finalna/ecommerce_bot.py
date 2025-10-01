@@ -34,7 +34,7 @@ class EcommerceBot:
                 'varta', 'exide', 'yuasa', 'castrol', 'mobil', 'shell', 'total',
                 'motul', 'liqui moly', 'mahle', 'continental', 'zimmermann',
                 'ebc', 'hiflo', 'kn', 'bmc', 'did', 'rk', 'regina', 'galfer',
-                'delphi', 'beru', 'lucas', 'hella', 'valeo', 'luk', 'schaeffler'
+                'delphi', 'beru', 'lucas', 'hella', 'valeo', 'luk', 'schaeffler',
                 'bmw'
             ],
             'luxury_brands': [
