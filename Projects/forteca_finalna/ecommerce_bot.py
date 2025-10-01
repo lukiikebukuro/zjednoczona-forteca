@@ -35,6 +35,7 @@ class EcommerceBot:
                 'motul', 'liqui moly', 'mahle', 'continental', 'zimmermann',
                 'ebc', 'hiflo', 'kn', 'bmc', 'did', 'rk', 'regina', 'galfer',
                 'delphi', 'beru', 'lucas', 'hella', 'valeo', 'luk', 'schaeffler'
+                'bmw'
             ],
             'luxury_brands': [
                 'ferrari', 'lamborghini', 'porsche', 'bentley', 'rolls-royce',
@@ -305,15 +306,19 @@ class EcommerceBot:
         has_category = False
         has_unknown_brand = False
         
+        print(f"[STRUCTURAL DEBUG] Tokens: {tokens}")
+        
         # Sprawdź czy zawiera znaną kategorię
         for token in tokens:
             if token.lower() in self.AUTOMOTIVE_DICTIONARY['categories']:
                 has_category = True
+                print(f"[STRUCTURAL DEBUG] Found category: {token}")
                 break
         
         # Sprawdź czy zawiera nieznane słowo (potencjalna marka)
         for token in tokens:
             token_lower = token.lower()
+            print(f"[STRUCTURAL DEBUG] Checking token: {token_lower}")
             
             # Skip znane słowa
             if (token_lower in self.AUTOMOTIVE_DICTIONARY['brands'] or
@@ -321,20 +326,25 @@ class EcommerceBot:
                 token_lower in self.AUTOMOTIVE_DICTIONARY['categories'] or
                 token_lower in self.AUTOMOTIVE_DICTIONARY['common_terms'] or
                 token_lower in self.POLISH_DICTIONARY):
+                print(f"[STRUCTURAL DEBUG] Skipping known word: {token_lower}")
                 continue
             
             # NAPRAWKA: Skip model codes - nie traktuj ich jako nieznane marki
             if any(re.match(pattern, token.upper()) for pattern in self.AUTOMOTIVE_DICTIONARY['model_codes']):
+                print(f"[STRUCTURAL DEBUG] Skipping model code: {token_lower}")
                 continue
                 
             # Jeśli słowo wygląda sensownie (bez cyfr, przyzwoita długość)
             if (len(token) >= 3 and len(token) <= 15 and 
                 token.isalpha() and
                 not any(pattern in token_lower for pattern in ['qwer', 'asdf', 'zxcv'])):
+                print(f"[STRUCTURAL DEBUG] Found unknown brand: {token_lower}")
                 has_unknown_brand = True
                 break
         
-        return has_category and has_unknown_brand
+        result = has_category and has_unknown_brand
+        print(f"[STRUCTURAL DEBUG] Result: category={has_category}, unknown={has_unknown_brand}, structural={result}")
+        return result
     
     def is_obvious_nonsense(self, tokens: List[str], token_validity: float) -> bool:
         """NAPRAWIONA - Wykrywa oczywisty nonsens ale pozwala na prefiksy słów"""
@@ -618,7 +628,7 @@ class EcommerceBot:
             ga4_event = 'search_lost_demand'
         
         # 5. Wysokie dopasowanie = normalne wyniki
-        elif best_match_score >= 75:
+        elif best_match_score >= 85:
             confidence_level = 'HIGH'
             suggestion_type = 'exact_match'
             ga4_event = None
