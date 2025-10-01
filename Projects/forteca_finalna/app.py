@@ -26,7 +26,7 @@ app.config['SESSION_PERMANENT'] = False
 # Initialize SocketIO for dashboard
 socketio = SocketIO(app, 
     cors_allowed_origins="*", 
-    async_mode='eventlet',  # ZMIENIONE z 'threading'
+    async_mode='eventlet',
     logger=True,
     engineio_logger=True,
     ping_timeout=60,
@@ -216,40 +216,38 @@ class TacticalDataSimulator:
                 'explanation': 'System rozpoznał części motocyklowe'
             },
             # BŁĘDY WYSZUKIWANIA - Demonstracja inteligencji
-{
-    'query': 'asdasdasd',
-    'decision': 'ODFILTROWANE',
-    'details': 'Nonsensowne zapytanie',
-    'category': 'inne',
-    'brand_type': 'standard',
-    'explanation': 'System rozpoznał nonsensowne zapytanie'
-},
-{
-    'query': 'qwerty123',
-    'decision': 'ODFILTROWANE',
-    'details': 'Wzorzec klawiaturowy',
-    'category': 'inne',
-    'brand_type': 'standard',
-    'explanation': 'Wykryto wzorzec klawiaturowy'
-},
-{
-    'query': 'xyzxyzxyz',
-    'decision': 'ODFILTROWANE',
-    'details': 'Powtarzający się wzorzec',
-    'category': 'inne',
-    'brand_type': 'standard',
-    'explanation': 'Powtarzające się sekwencje znaków'
-},
-{
-    'query': 'hjklhjkl',
-    'decision': 'ODFILTROWANE',
-    'details': 'Losowe znaki',
-    'category': 'inne',
-    'brand_type': 'standard',
-    'explanation': 'Brak sensownej struktury językowej'
-}
-            
-            
+            {
+                'query': 'asdasdasd',
+                'decision': 'ODFILTROWANE',
+                'details': 'Nonsensowne zapytanie',
+                'category': 'inne',
+                'brand_type': 'standard',
+                'explanation': 'System rozpoznał nonsensowne zapytanie'
+            },
+            {
+                'query': 'qwerty123',
+                'decision': 'ODFILTROWANE',
+                'details': 'Wzorzec klawiaturowy',
+                'category': 'inne',
+                'brand_type': 'standard',
+                'explanation': 'Wykryto wzorzec klawiaturowy'
+            },
+            {
+                'query': 'xyzxyzxyz',
+                'decision': 'ODFILTROWANE',
+                'details': 'Powtarzający się wzorzec',
+                'category': 'inne',
+                'brand_type': 'standard',
+                'explanation': 'Powtarzające się sekwencje znaków'
+            },
+            {
+                'query': 'hjklhjkl',
+                'decision': 'ODFILTROWANE',
+                'details': 'Losowe znaki',
+                'category': 'inne',
+                'brand_type': 'standard',
+                'explanation': 'Brak sensownej struktury językowej'
+            }
         ]
         
         self.running = False
@@ -355,7 +353,6 @@ class DatabaseManager:
             }
             for row in events
         ]
-    
     @staticmethod
     def get_today_statistics():
         """Pobiera statystyki z dzisiejszego dnia"""
@@ -422,10 +419,7 @@ class DatabaseManager:
 # Globalny symulator
 simulator = TacticalDataSimulator()
 
-# === KONIEC CZĘŚCI 1 ===
-# === CZĘŚĆ 2/3: FLASK ROUTES ===
-# (kontynuacja po części 1)
-
+# === FLASK ROUTES ===
 # === WIZYTÓWKA ROUTES ===
 @app.route('/')
 def home():
@@ -475,7 +469,7 @@ def bot_start():
 
 @app.route('/motobot-prototype/bot/send', methods=['POST'])
 def bot_send():
-    """Handle user messages with intelligent intent analysis + dashboard integration"""
+    """Handle user messages - BEZ integracji z TCD"""
     try:
         data = request.get_json()
         user_message = data.get('message', '')
@@ -487,12 +481,8 @@ def bot_send():
         if button_action:
             reply = bot.handle_button_action(button_action)
         elif user_message:
-            # NOWA INTEGRACJA - dodaj dane do dashboardu
+            # USUNIĘTA integracja z TCD - tylko odpowiedź bota
             reply = bot.process_message(user_message)
-            
-            # Wyślij event do dashboardu jeśli bot ma confidence_level
-            if hasattr(reply, 'get') and reply.get('confidence_level'):
-                send_event_to_dashboard_internal(user_message, reply['confidence_level'])
         else:
             return jsonify({'error': 'No message or action provided'}), 400
         
@@ -513,7 +503,7 @@ def bot_send():
 
 @app.route('/motobot-prototype/search-suggestions', methods=['POST'])
 def search_suggestions():
-    """Real-time search suggestions with intelligent analysis + dashboard integration"""
+    """Real-time search suggestions - BEZ integracji z TCD (tylko sugestie)"""
     try:
         data = request.get_json()
         query = data.get('query', '').strip()
@@ -555,8 +545,7 @@ def search_suggestions():
                 # New format with analysis
                 products, confidence_level, suggestion_type, analysis = result
                 
-                # NOWA INTEGRACJA - Wyślij do dashboardu
-                send_event_to_dashboard_internal(query, confidence_level)
+                # USUNIĘTA integracja z TCD - nie wysyłamy eventów
                 
                 # Determine GA4 event
                 ga4_event_data = bot.determine_ga4_event(analysis)
@@ -578,7 +567,7 @@ def search_suggestions():
                         'brand': product['brand']
                     })
                 
-                # Log lost demand if needed
+                # Log lost demand if needed (optional - można zostawić dla GA4)
                 if confidence_level == 'NO_MATCH':
                     log_lost_demand(query, analysis)
         
@@ -596,6 +585,104 @@ def search_suggestions():
         import traceback
         traceback.print_exc()
         return jsonify({'suggestions': [], 'error': str(e)}), 200
+
+# === NOWY ENDPOINT - FINALNA ANALIZA DLA TCD ===
+@app.route('/api/analyze_query', methods=['POST'])
+def analyze_query():
+    """
+    NOWY ENDPOINT - Doktryna Cierpliwego Nasłuchu
+    Wywołany tylko po 800ms pauzy - wysyła JEDEN event do TCD
+    """
+    try:
+        data = request.get_json()
+        query = data.get('query', '').strip()
+        search_type = data.get('type', 'products')
+        
+        print(f"[FINAL ANALYSIS] Query: '{query}' | Type: {search_type}")
+        
+        if len(query) < 2:
+            return jsonify({
+                'status': 'success',
+                'message': 'Query too short'
+            })
+        
+        # Analiza zapytania
+        machine_filter = session.get('machine_filter')
+        
+        if search_type == 'faq':
+            # FAQ - zazwyczaj HIGH confidence
+            confidence_level = 'HIGH'
+            category = 'faq'
+        else:
+            # Products - pełna analiza
+            result = bot.get_fuzzy_product_matches(
+                query, machine_filter, limit=6, analyze_intent=True
+            )
+            
+            if isinstance(result, tuple) and len(result) == 4:
+                products, confidence_level, suggestion_type, analysis = result
+                category = extract_category_from_query(query)
+            else:
+                confidence_level = 'HIGH'
+                category = 'unknown'
+        
+        # Mapowanie confidence → decision
+        decision_mapping = {
+            'HIGH': 'ZNALEZIONE PRODUKTY',
+            'MEDIUM': 'ODFILTROWANE', 
+            'NO_MATCH': 'UTRACONE OKAZJE',
+            'LOW': 'ODFILTROWANE'
+        }
+        
+        decision = decision_mapping.get(confidence_level, 'ZNALEZIONE PRODUKTY')
+        
+        # Oblicz wartość tylko dla utraconych okazji
+        potential_value = 0
+        if decision == 'UTRACONE OKAZJE':
+            potential_value = calculate_lost_value_internal(query)
+        
+        # ZAPISZ DO BAZY DANYCH
+        event_id = DatabaseManager.add_event(
+            query,
+            decision,
+            'Finalne zapytanie użytkownika',
+            category,
+            'standard',
+            potential_value,
+            f'Analiza po 800ms pauzy - confidence: {confidence_level}'
+        )
+        
+        # WYŚLIJ PRZEZ WEBSOCKET DO TCD
+        event_data = {
+            'id': event_id,
+            'timestamp': datetime.now().strftime('%H:%M:%S'),
+            'query_text': query,
+            'decision': decision,
+            'details': 'Finalne zapytanie użytkownika',
+            'category': category,
+            'potential_value': potential_value,
+            'explanation': f'Analiza po 800ms pauzy - confidence: {confidence_level}'
+        }
+        
+        socketio.emit('new_event', event_data)
+        
+        print(f"[FINAL ANALYSIS] Saved to TCD: {query} -> {decision} (value: {potential_value})")
+        
+        return jsonify({
+            'status': 'success',
+            'decision': decision,
+            'confidence_level': confidence_level,
+            'event_id': event_id
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] Final analysis error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 # === DASHBOARD API ROUTES ===
 @app.route('/dashboard')
@@ -636,7 +723,6 @@ def reset_demo():
         return jsonify({'status': 'success', 'message': 'Demo reset successfully'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
 @app.route('/api/receive_event', methods=['POST'])
 def receive_real_event():
     """Odbiera prawdziwe eventy z bota (dla integracji)"""
@@ -673,7 +759,7 @@ def receive_real_event():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-# === POZOSTAŁE ROUTES Z ORYGINALNEGO APP.PY ===
+# === POZOSTAŁE ROUTES ===
 @app.route('/motobot-prototype/report-lost-demand', methods=['POST'])
 def report_lost_demand():
     """Endpoint to collect and save lost demand reports"""
@@ -755,8 +841,8 @@ def health_check():
     """Health check endpoint with system status"""
     return jsonify({
         'status': 'OK',
-        'service': 'Universal Soldier E-commerce Bot v5.0 FIXED + Dashboard',
-        'version': '5.0-fixed-dashboard',
+        'service': 'Universal Soldier E-commerce Bot v5.0 - Doktryna Cierpliwego Nasłuchu',
+        'version': '5.1-patient-listening',
         'features': {
             'intent_analysis': True,
             'lost_demand_tracking': True,
@@ -765,56 +851,13 @@ def health_check():
             'luxury_brand_detection': True,
             'precision_reward': True,
             'dashboard_integration': True,
-            'real_time_websocket': True
+            'real_time_websocket': True,
+            'debounce_800ms': True
         },
         'session_active': 'cart' in session
     })
 
 # === HELPER FUNCTIONS ===
-def send_event_to_dashboard_internal(query, confidence_level):
-    """Wewnętrzna funkcja wysyłania eventów do dashboardu"""
-    try:
-        # NAPRAWIONE MAPOWANIE - nowe 3 kategorie
-        decision_mapping = {
-            'HIGH': 'ZNALEZIONE PRODUKTY',
-            'MEDIUM': 'ODFILTROWANE', 
-            'NO_MATCH': 'UTRACONE OKAZJE',
-            'LOW': 'ODFILTROWANE'
-        }
-        
-        decision = decision_mapping.get(confidence_level, 'ZNALEZIONE PRODUKTY')
-        category = extract_category_from_query(query)
-        potential_value = calculate_lost_value_internal(query) if 'OKAZJE' in decision else 0
-        
-        # Dodaj do bazy danych
-        event_id = DatabaseManager.add_event(
-            query,
-            decision,
-            'Integracja z botem',
-            category,
-            'standard',
-            potential_value,
-            'Prawdziwe zapytanie z bota'
-        )
-        
-        # Wyślij przez WebSocket
-        event_data = {
-            'id': event_id,
-            'timestamp': datetime.now().strftime('%H:%M:%S'),
-            'query_text': query,
-            'decision': decision,
-            'details': 'Integracja z botem',
-            'category': category,
-            'potential_value': potential_value,
-            'explanation': 'Prawdziwe zapytanie z bota'
-        }
-        
-        socketio.emit('new_event', event_data)
-        print(f"[DASHBOARD INTEGRATION] Sent: {query} -> {decision}")
-        
-    except Exception as e:
-        print(f"[DASHBOARD INTEGRATION ERROR] {e}")
-
 def extract_category_from_query(query):
     """Wyciąga kategorię z zapytania"""
     query_lower = query.lower()
@@ -854,11 +897,6 @@ def log_lost_demand(query, analysis):
     except Exception as e:
         print(f"[ERROR] Failed to log lost demand: {e}")
 
-# === KONIEC CZĘŚCI 2 ===
-
-# === CZĘŚĆ 3/3: WEBSOCKET EVENTS + SYMULATOR + MAIN ===
-# (kontynuacja po części 2)
-
 # === DEBUG ROUTES (only for development) ===
 @app.route('/motobot-prototype/debug/test-intent-analysis')
 def test_intent_analysis():
@@ -888,7 +926,7 @@ def test_intent_analysis():
             }
         
         return jsonify({
-            'test': 'Intent Analysis Test - FIXED VERSION + Dashboard',
+            'test': 'Intent Analysis Test - Patient Listening v5.1',
             'results': results,
             'interpretation': {
                 'HIGH': 'Show normal results',
@@ -984,7 +1022,7 @@ def battle_simulator():
     
     while simulator.running:
         try:
-            # Losowy interwał 2-5 sekund
+            # Losowy interwał 6-8 sekund
             time.sleep(random.uniform(6, 8))
             
             if not simulator.running:
@@ -1053,7 +1091,7 @@ def stop_simulator():
         simulator.thread.join(timeout=2)
 
 # === MAIN APPLICATION STARTUP ===
-
+if __name__ == '__main__':
     with app.app_context():
         # Initialize bot data
         bot.initialize_data()
@@ -1079,7 +1117,7 @@ def stop_simulator():
         start_simulator()
         
         print("=" * 70)
-        print("🎯 STUDIO ADEPT AI - UNIFIED APPLICATION + DASHBOARD")
+        print("🎯 STUDIO ADEPT AI - DOKTRYNA CIERPLIWEGO NASŁUCHU v5.1")
         print("=" * 70)
         print("🏢 Features enabled:")
         print("   🌐 Wizytówka: /")
@@ -1088,4 +1126,9 @@ def stop_simulator():
         print("   🎮 Demo (Bot + Dashboard): /demo")
         print("=" * 70)
         print("✅ Unified system started!")
+        print("   ⏱️  Debounce: 800ms for TCD updates")
+        print("   🎯 Live Feed: Real-time user feedback")
+        print("   📊 Metrics: Only final queries counted")
         print("=" * 70)
+    
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)    

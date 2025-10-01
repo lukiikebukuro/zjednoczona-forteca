@@ -1,9 +1,7 @@
-// Universal Soldier E-commerce Bot v5.0 FIXED - Naprawiony UI
+// Universal Soldier E-commerce Bot v5.1 - Doktryna Cierpliwego Nasłuchu
 class EcommerceBotUI {
     constructor() {
-        this.API_PREFIX = '/motobot-prototype';  // DODAJ TO TUTAJ
-        this.cartCount = 0;
-        this.chatInterface = document.getElementById('chat-interface');
+        this.API_PREFIX = '/motobot-prototype';
         this.cartCount = 0;
         this.chatInterface = document.getElementById('chat-interface');
         this.messagesContainer = document.getElementById('messages-container');
@@ -49,28 +47,36 @@ class EcommerceBotUI {
         // Initialize GA4 session
         this.trackEvent('session_initialized', {
             timestamp: new Date().toISOString(),
-            version: '5.0-fixed'
+            version: '5.1-patient-listening'
         });
         
         // Search state
         this.searchMode = false;
         this.faqMode = false;
         this.currentContext = null;
-        this.searchTimeout = null;
         this.suggestionsDropdown = null;
         this.lastConfidenceLevel = 'NONE';
         this.lastQuery = '';
         
+        // === DOKTRYNA CIERPLIWEGO NASŁUCHU - TIMERY ===
+        this.searchTimeout = null;           // 200ms - sugestie real-time
+        this.finalAnalysisTimeout = null;    // 800ms - finalna analiza do TCD
+        
         this.createSuggestionsDropdown();
         this.initializeEventListeners();
         this.startBot();
+        
+        console.log('🎯 DOKTRYNA CIERPLIWEGO NASŁUCHU v5.1');
+        console.log('   📡 Sugestie: 200ms debounce');
+        console.log('   📊 TCD Update: 800ms debounce');
+        console.log('   ✅ Jeden finał = jeden event');
     }
 
     trackEvent(eventName, params = {}) {
         if (typeof gtag === 'function') {
             gtag('event', eventName, {
                 ...params,
-                source: 'universal_soldier_bot_fixed',
+                source: 'universal_soldier_patient_listening',
                 timestamp: new Date().toISOString()
             });
         }
@@ -125,13 +131,17 @@ class EcommerceBotUI {
                 }
             });
             
-            // Real-time search with FIXED intent analysis
+            // === DOKTRYNA CIERPLIWEGO NASŁUCHU - GŁÓWNY EVENT LISTENER ===
             this.userInput.addEventListener('input', (e) => {
                 const query = e.target.value.trim();
                 this.lastQuery = query;
                 
+                // Reset obu timerów
                 if (this.searchTimeout) {
                     clearTimeout(this.searchTimeout);
+                }
+                if (this.finalAnalysisTimeout) {
+                    clearTimeout(this.finalAnalysisTimeout);
                 }
                 
                 if (query.length < 2) {
@@ -144,9 +154,15 @@ class EcommerceBotUI {
                     return;
                 }
                 
+                // WARSTWA 1: Sugestie real-time (200ms)
                 this.searchTimeout = setTimeout(() => {
                     this.performSearch(query);
                 }, 200);
+                
+                // WARSTWA 2: Finalna analiza do TCD (800ms)
+                this.finalAnalysisTimeout = setTimeout(() => {
+                    this.sendFinalAnalysis(query);
+                }, 800);
             });
             
             this.userInput.addEventListener('blur', () => {
@@ -156,7 +172,7 @@ class EcommerceBotUI {
     }
     
     async startBot() {
-        console.log('[DEBUG] Starting Universal Soldier bot v5.0 FIXED');
+        console.log('[DEBUG] Starting Universal Soldier bot v5.1 - Patient Listening');
         this.showLoading(true);
         
         this.messagesContainer.innerHTML = '';
@@ -385,10 +401,15 @@ class EcommerceBotUI {
         this.displayUserMessage(message);
         this.userInput.value = '';
         
+        // Reset timerów przy wysłaniu
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
+        if (this.finalAnalysisTimeout) clearTimeout(this.finalAnalysisTimeout);
+        
         this.showTypingIndicator();
         this.showLoading(true);
         
         try {
+            // Wyślij wiadomość do bota
             const response = await fetch(this.API_PREFIX + '/bot/send', {
                 method: 'POST',
                 headers: {
@@ -403,6 +424,12 @@ class EcommerceBotUI {
             }
             
             const data = await response.json();
+            
+            // NATYCHMIASTOWA analiza dla TCD przy Enter
+            if (this.searchMode || this.faqMode) {
+                await this.sendFinalAnalysis(message);
+            }
+            
             if (data.reply) {
                 setTimeout(() => {
                     this.displayBotMessage(data.reply);
@@ -435,6 +462,10 @@ class EcommerceBotUI {
         this.scrollToBottom();
     }
     
+    /**
+     * === WARSTWA 1: SUGESTIE REAL-TIME (200ms) ===
+     * Pokazuje sugestie użytkownikowi, NIE zapisuje do TCD
+     */
     async performSearch(query) {
         if (!query) return;
         
@@ -458,18 +489,11 @@ class EcommerceBotUI {
             }
             
             const data = await response.json();
-            console.log('[SEARCH] Results:', data);
+            console.log('[SUGGESTIONS] Results:', data);
             
             this.lastConfidenceLevel = data.confidence_level || 'HIGH';
             
-            if (this.lastConfidenceLevel === 'NO_MATCH') {
-                console.log('[LOST DEMAND DETECTED] Product not found:', query);
-                this.trackEvent('search_lost_demand_realtime', {
-                    search_term: query,
-                    search_type: searchType
-                });
-            }
-            
+            // Tylko sugestie - BEZ wysyłania do TCD
             if (data.suggestions && data.suggestions.length > 0) {
                 this.displaySearchSuggestions(data.suggestions, this.lastConfidenceLevel, searchType);
             } else {
@@ -479,6 +503,42 @@ class EcommerceBotUI {
         } catch (error) {
             console.error('[ERROR] Search failed:', error);
             this.hideSuggestions();
+        }
+    }
+    
+    /**
+     * === WARSTWA 2: FINALNA ANALIZA DO TCD (800ms) ===
+     * Wysyła JEDEN event do TCD po pauzie w pisaniu
+     */
+    async sendFinalAnalysis(query) {
+        if (!query || query.length < 2) return;
+        
+        const searchType = this.faqMode ? 'faq' : 'products';
+        
+        try {
+            console.log(`[FINAL ANALYSIS] Sending to TCD: "${query}"`);
+            
+            const response = await fetch(this.API_PREFIX + '/api/analyze_query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    query: query,
+                    type: searchType
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Analysis failed: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log(`[FINAL ANALYSIS] TCD updated: ${data.decision} (confidence: ${data.confidence_level})`);
+            
+        } catch (error) {
+            console.error('[ERROR] Final analysis failed:', error);
         }
     }
     
@@ -566,7 +626,6 @@ class EcommerceBotUI {
                 
                 suggestionElement.addEventListener('click', () => {
                     this.hideSuggestions();
-                    // Tracking
                     this.trackAnalytics('product_suggestion_accepted', {
                         suggestion: item.text,
                         confidence_level: confidenceLevel,
@@ -579,7 +638,6 @@ class EcommerceBotUI {
                             corrected: item.text
                         });
                     }
-                    // Bezpośrednio do pełnej karty produktu
                     this.handleButtonClick(`show_full_card_${item.id}`);
                 });
             }
@@ -635,7 +693,6 @@ class EcommerceBotUI {
                     </button>
                 </div>
             `;
-            console.log('[LOST DEMAND UI] Missing product:', query);
         } else if (searchType === 'faq') {
             message.innerHTML = `
                 <div class="no-results-icon">❓</div>
@@ -723,6 +780,11 @@ class EcommerceBotUI {
             this.currentContext = null;
             this.lastConfidenceLevel = 'NONE';
             this.lastQuery = '';
+            
+            // Reset timerów
+            if (this.searchTimeout) clearTimeout(this.searchTimeout);
+            if (this.finalAnalysisTimeout) clearTimeout(this.finalAnalysisTimeout);
+            
             await this.startBot();
         } catch (error) {
             console.error('[ERROR] Reset failed:', error);
@@ -836,24 +898,21 @@ window.botUI = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('=====================================');
-    console.log('🚀 Universal Soldier Bot v5.0 FIXED');
+    console.log('🎯 Universal Soldier v5.1 - PATIENT LISTENING');
     console.log('=====================================');
-    console.log('🎯 Intent Analysis: CALIBRATED');
-    console.log('📊 Lost Demand: PRECISION TRACKING');
-    console.log('🔍 Confidence: FIXED THRESHOLDS');
-    console.log('✨ Precision Reward: ACTIVE');
-    console.log('🏎️ Luxury Brands: DETECTED');
+    console.log('📡 Sugestie: 200ms (real-time UX)');
+    console.log('📊 TCD Update: 800ms (jeden finał)');
+    console.log('🎯 Live Feed: Visual feedback');
+    console.log('📈 Metrics: Final queries only');
     console.log('=====================================');
-    console.log('Confidence Levels:');
-    console.log('  HIGH: Normal results (≥75%)');
-    console.log('  MEDIUM: Typo correction (45-74%)');
-    console.log('  LOW: Nonsense (<30% validity)');
-    console.log('  NO_MATCH: LOST DEMAND (≥60% validity, <40% match)');
+    console.log('Architecture:');
+    console.log('  WARSTWA 1: performSearch() → sugestie');
+    console.log('  WARSTWA 2: sendFinalAnalysis() → TCD');
+    console.log('  Separator: 800ms debounce');
     console.log('=====================================');
     
     window.botUI = new EcommerceBotUI();
     
-    console.log('✅ System operational');
-    console.log('📈 Tracking lost demand');
+    console.log('✅ Doktryna Cierpliwego Nasłuchu aktywna');
     console.log('=====================================');
 });
