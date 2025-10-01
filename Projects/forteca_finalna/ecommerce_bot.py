@@ -301,7 +301,7 @@ class EcommerceBot:
         return previous_row[-1]
     
     def is_structural_query(self, tokens: List[str]) -> bool:
-        """NOWA FUNKCJA - Wykrywa strukturalne zapytania (kategoria + nieznana marka)"""
+        """NAPRAWIONA FUNKCJA - Wykrywa strukturalne zapytania (kategoria + nieznana marka)"""
         has_category = False
         has_unknown_brand = False
         
@@ -323,6 +323,10 @@ class EcommerceBot:
                 token_lower in self.POLISH_DICTIONARY):
                 continue
             
+            # NAPRAWKA: Skip model codes - nie traktuj ich jako nieznane marki
+            if any(re.match(pattern, token.upper()) for pattern in self.AUTOMOTIVE_DICTIONARY['model_codes']):
+                continue
+                
             # Jeśli słowo wygląda sensownie (bez cyfr, przyzwoita długość)
             if (len(token) >= 3 and len(token) <= 15 and 
                 token.isalpha() and
