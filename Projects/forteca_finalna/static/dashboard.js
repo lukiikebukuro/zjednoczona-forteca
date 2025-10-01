@@ -1,6 +1,6 @@
 /**
- * ADEPT AI Dashboard - Patient Listener v2.0
- * Real-time WebSocket controller with split logic support
+ * ADEPT AI Dashboard - Real-time JavaScript Controller
+ * Handles WebSocket connections, animations, charts, and live data updates
  */
 
 class TacticalDashboard {
@@ -8,20 +8,23 @@ class TacticalDashboard {
         this.socket = null;
         this.charts = {};
         this.metrics = {
-            foundProducts: { count: 0, amount: 0 },
-            lostOpportunities: { count: 0, amount: 0 },
-            filteredOut: { count: 0, amount: 0 }
-        };
+    lostDemand: { count: 0, amount: 0 },
+    typoCorrections: { count: 0, amount: 0 },
+    preciseHits: { count: 0, amount: 0 },
+    searchFailures: { count: 0, amount: 0 }  // NOWA METRYKA
+};
         this.feedPaused = false;
         this.eventQueue = [];
         this.processingQueue = false;
         
+        // Animation configurations
         this.animationConfig = {
             duration: 1000,
             easing: 'easeOutCubic',
             stagger: 100
         };
         
+        // Initialize on DOM ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initialize());
         } else {
@@ -29,21 +32,38 @@ class TacticalDashboard {
         }
     }
     
+    /**
+     * Initialize dashboard components
+     */
     async initialize() {
-        console.log('🎯 Initializing Patient Listener Dashboard v2.0...');
+        console.log('🎯 Initializing ADEPT AI Dashboard...');
         
         try {
+            // Setup event listeners
             this.setupEventListeners();
+            
+            // Initialize WebSocket connection
             await this.initializeWebSocket();
+            
+            // Load initial data
             await this.loadInitialData();
+            
+            // Initialize charts
             this.initializeCharts();
+
             this.initializeResizer();
+            
+            // Hide loading overlay
             this.hideLoadingOverlay();
+            
+            // Show connection status
             this.updateConnectionStatus('connected');
+            
+            // Start periodic updates
             this.startPeriodicUpdates();
             
             console.log('✅ Dashboard initialized successfully');
-            this.showToast('Dashboard gotowy', 'success');
+            this.showToast('Dashboard inicjalizowany pomyślnie', 'success');
             
         } catch (error) {
             console.error('❌ Dashboard initialization failed:', error);
@@ -52,12 +72,17 @@ class TacticalDashboard {
         }
     }
     
+    /**
+     * Setup event listeners for UI interactions
+     */
     setupEventListeners() {
+        // Feed controls
         const pauseFeedBtn = document.getElementById('pauseFeed');
         const clearFeedBtn = document.getElementById('clearFeed');
         const resetDemoBtn = document.getElementById('resetDemo');
         const exportDataBtn = document.getElementById('exportData');
         
+        // Auto-pause simulator when user starts typing
         this.setupInputFocusListeners();
         
         if (pauseFeedBtn) {
@@ -76,23 +101,32 @@ class TacticalDashboard {
             exportDataBtn.addEventListener('click', () => this.exportData());
         }
         
+        // Window events
         window.addEventListener('beforeunload', () => {
             if (this.socket) {
                 this.socket.disconnect();
             }
         });
         
+        // Visibility change handling
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
+            if (document.hidden) {
+                console.log('📱 Dashboard went to background');
+            } else {
                 console.log('📱 Dashboard returned to foreground');
                 this.requestCurrentStats();
             }
         });
     }
     
+    /**
+     * Setup input focus listeners for auto-pause functionality
+     */
     setupInputFocusListeners() {
-        const inputSelectors = '.bot-column input[type="text"], .bot-column input[type="search"], .bot-column textarea';
+    // Monitor ONLY bot interface inputs (not dashboard inputs)
+    const inputSelectors = '.bot-column input[type="text"], .bot-column input[type="search"], .bot-column textarea, .bot-column [contenteditable="true"]';
         
+        // Use event delegation to catch dynamically added inputs
         document.addEventListener('focusin', (event) => {
             if (event.target.matches(inputSelectors)) {
                 this.pauseSimulatorForTyping();
@@ -101,7 +135,9 @@ class TacticalDashboard {
         
         document.addEventListener('focusout', (event) => {
             if (event.target.matches(inputSelectors)) {
+                // Small delay to avoid rapid pause/resume cycles
                 setTimeout(() => {
+                    // Check if focus moved to another input
                     const activeElement = document.activeElement;
                     if (!activeElement || !activeElement.matches(inputSelectors)) {
                         this.resumeSimulatorAfterTyping();
@@ -109,40 +145,78 @@ class TacticalDashboard {
                 }, 100);
             }
         });
+        
+        // Also listen for any input elements that might be added later
+        // (if bot interface is loaded dynamically)
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            const inputs = node.querySelectorAll?.(inputSelectors);
+                            if (inputs?.length > 0) {
+                                console.log('🎯 Detected new input fields for auto-pause');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     }
     
+    /**
+     * Pause simulator when user starts typing
+     */
     pauseSimulatorForTyping() {
-        if (this.socket && this.socket.connected) {
-            console.log('⏸️ Auto-pausing simulator');
-            this.socket.emit('pause_simulator');
-        }
+    if (this.socket && this.socket.connected) {
+        const el = document.activeElement;
+        console.log('⏸️ Auto-pausing - element:', el);
+        console.log('  - tagName:', el.tagName);
+        console.log('  - id:', el.id);
+        console.log('  - className:', el.className);
+        console.log('  - parent:', el.parentElement?.className);
+        this.socket.emit('pause_simulator');
     }
+}
     
+    /**
+     * Resume simulator when user stops typing
+     */
     resumeSimulatorAfterTyping() {
         if (this.socket && this.socket.connected) {
-            console.log('▶️ Auto-resuming simulator');
+            console.log('▶️ Auto-resuming simulator - user stopped typing');
             this.socket.emit('resume_simulator');
         }
     }
-    
+    /**
+     * Initialize WebSocket connection
+     */
     async initializeWebSocket() {
         return new Promise((resolve, reject) => {
             try {
-                const socketURL = window.location.hostname === 'localhost' 
-                    ? 'http://localhost:5000' 
-                    : window.location.origin;
+                // Connect to Flask-SocketIO server
+                // Automatycznie wykryj środowisko
+const socketURL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000' 
+    : window.location.origin;
 
-                this.socket = io(socketURL, {
-                    transports: ['polling', 'websocket'],
-                    reconnection: true,
-                    reconnectionDelay: 1000,
-                    reconnectionAttempts: 5,
-                    timeout: 20000,
-                    path: '/socket.io/',
-                    secure: true,
-                    rejectUnauthorized: false
-                });
+this.socket = io(socketURL, {
+    transports: ['polling', 'websocket'], // Polling FIRST dla Render
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 5,
+    timeout: 20000, // Zwiększony timeout
+    path: '/socket.io/',
+    secure: true,
+    rejectUnauthorized: false
+});
                 
+                // Connection events
                 this.socket.on('connect', () => {
                     console.log('🔌 WebSocket connected');
                     this.updateConnectionStatus('connected');
@@ -161,12 +235,7 @@ class TacticalDashboard {
                     reject(error);
                 });
                 
-                // === NOWY LISTENER DLA METRICS UPDATE ===
-                this.socket.on('metrics_update', (data) => {
-                    console.log('📊 Metrics update received:', data);
-                    this.handleMetricsUpdate(data);
-                });
-                
+                // Data events
                 this.socket.on('connection_confirmed', (data) => {
                     console.log('✅ Connection confirmed:', data.message);
                 });
@@ -179,6 +248,7 @@ class TacticalDashboard {
                     this.updateStatistics(data);
                 });
                 
+                // Simulator control events
                 this.socket.on('simulator_paused', (data) => {
                     console.log('🔇 Simulator paused by server');
                 });
@@ -192,6 +262,7 @@ class TacticalDashboard {
                     this.showToast('Błąd WebSocket: ' + error.message, 'error');
                 });
                 
+                // Timeout for connection
                 setTimeout(() => {
                     if (!this.socket.connected) {
                         reject(new Error('WebSocket connection timeout'));
@@ -205,58 +276,24 @@ class TacticalDashboard {
         });
     }
     
+    /**
+     * Load initial data from API
+     */
     async loadInitialData() {
-        try {
-            console.log('📊 Using empty initial state');
-            this.updateMetricsFromStats({});
-            this.populateLiveFeed([]);
-            this.updateMissingProducts([]);
-        } catch (error) {
-            console.error('❌ Failed to load initial data:', error);
-        }
+    try {
+        // Skip API call - use empty initial state
+        console.log('📊 Using empty initial state');
+        this.updateMetricsFromStats({});
+        this.populateLiveFeed([]);
+        this.updateMissingProducts([]);
+    } catch (error) {
+        console.error('❌ Failed to load initial data:', error);
     }
+}
     
-    // === NOWA FUNKCJA: OBSŁUGA METRICS UPDATE ===
-    handleMetricsUpdate(data) {
-        /**
-         * Obsługuje aktualizacje liczników BEZ dodawania do Live Feed
-         * Przychodzi TYLKO z Deep Analysis (800ms timeout)
-         */
-        console.log('[METRICS UPDATE] Processing:', data);
-        
-        const decision = data.decision;
-        const value = data.value || 0;
-        
-        switch (decision) {
-            case 'ZNALEZIONE PRODUKTY':
-                if (!this.metrics.foundProducts) this.metrics.foundProducts = { count: 0, amount: 0 };
-                this.metrics.foundProducts.count++;
-                this.animateCounter('foundProductsCount', this.metrics.foundProducts.count);
-                break;
-                
-            case 'UTRACONE OKAZJE':
-                if (!this.metrics.lostOpportunities) this.metrics.lostOpportunities = { count: 0, amount: 0 };
-                this.metrics.lostOpportunities.count++;
-                this.metrics.lostOpportunities.amount += value;
-                this.animateCounter('lostOpportunitiesCount', this.metrics.lostOpportunities.count);
-                this.animateCounter('lostOpportunitiesAmount', this.metrics.lostOpportunities.amount);
-                break;
-                
-            case 'ODFILTROWANE':
-                if (!this.metrics.filteredOut) this.metrics.filteredOut = { count: 0, amount: 0 };
-                this.metrics.filteredOut.count++;
-                this.animateCounter('filteredOutCount', this.metrics.filteredOut.count);
-                break;
-                
-            default:
-                console.warn('[METRICS UPDATE] Unknown decision:', decision);
-                break;
-        }
-        
-        this.updateAdditionalStats();
-        this.updateChartsData();
-    }
-    
+    /**
+     * Handle new event from WebSocket
+     */
     handleNewEvent(eventData) {
         if (this.feedPaused) {
             this.eventQueue.push(eventData);
@@ -265,30 +302,33 @@ class TacticalDashboard {
         
         console.log('🔔 New event received:', eventData);
         
-        // ZMIENIONE: NIE aktualizuj metryk tutaj - tylko Live Feed
-        // Metryki są aktualizowane przez handleMetricsUpdate()
-        
-        // Filtruj event PREVIEW - nie dodawaj do metryk
-        if (eventData.decision !== 'PREVIEW') {
-            this.updateMetricsFromEvent(eventData);
-        }
-        
+        // Add to live feed
         this.addEventToFeed(eventData);
+        
+        // Update metrics
+        this.updateMetricsFromEvent(eventData);
+        
+        // Update last update time
         this.updateLastUpdateTime();
         
-        // Opcjonalnie: odśwież stats po 500ms
+        // Request fresh stats
         setTimeout(() => this.requestCurrentStats(), 500);
     }
     
+    /**
+     * Add event to live feed with animation
+     */
     addEventToFeed(eventData) {
         const liveFeed = document.getElementById('liveFeed');
         if (!liveFeed) return;
         
+        // Remove placeholder if present
         const placeholder = liveFeed.querySelector('.feed-placeholder');
         if (placeholder) {
             placeholder.remove();
         }
         
+        // Create feed item
         const feedItem = document.createElement('div');
         feedItem.className = `feed-item ${this.getDecisionClass(eventData.decision)}`;
         
@@ -306,103 +346,126 @@ class TacticalDashboard {
             ${valueDisplay}
         `;
         
+        // Add tooltip with explanation
         if (eventData.explanation) {
             feedItem.title = eventData.explanation;
         }
         
+        // Insert at top with animation
         liveFeed.insertBefore(feedItem, liveFeed.firstChild);
         
-        const items = liveFeed.querySelectorAll('.feed-item');
-        if (items.length > 50) {
-            for (let i = 50; i < items.length; i++) {
-                items[i].remove();
-            }
-        }
+        // Limit number of feed items (keep last 50)
+        // Limit number of feed items (keep last 4) - DODAJ OPÓŹNIENIE
+// Limit number of feed items (keep last 50)
+const items = liveFeed.querySelectorAll('.feed-item');
+if (items.length > 50) {
+    for (let i = 50; i < items.length; i++) {
+        items[i].remove();
+    }
+}
         
+        // Scroll to top smoothly
         liveFeed.scrollTo({
             top: 0,
             behavior: 'smooth'
         });
     }
-getDecisionClass(decision) {
-        switch (decision) {
-            case 'ZNALEZIONE PRODUKTY':
-                return 'found-products';
-            case 'UTRACONE OKAZJE':
-                return 'lost-opportunities';
-            case 'ODFILTROWANE':
-                return 'filtered-out';
-            case 'PREVIEW':
-                return 'preview';
-            default:
-                return 'default';
-        }
-    }
     
+    /**
+     * Get CSS class for decision type
+     */
+    getDecisionClass(decision) {
+    switch (decision) {
+        case 'ZNALEZIONE PRODUKTY':     // Nowa kategoria
+            return 'found-products';
+        case 'UTRACONE OKAZJE':         // Zmieniona nazwa z "UTRACONY POPYT"
+            return 'lost-opportunities';
+        case 'ODFILTROWANE':            // Nowa kategoria (literówki + nonsens)
+            return 'filtered-out';
+        default:
+            return 'default';
+    }
+}
+    
+    /**
+     * Update metrics from single event
+     */
     updateMetricsFromEvent(eventData) {
-        const decision = eventData.decision;
-        const value = eventData.potential_value || 0;
-        
-        // Mapowanie starych nazw na nowe
-        let mappedDecision = decision;
-        if (decision === 'PRECYZYJNE TRAFIENIE') mappedDecision = 'ZNALEZIONE PRODUKTY';
-        if (decision === 'UTRACONY POPYT') mappedDecision = 'UTRACONE OKAZJE';
-        if (decision === 'KOREKTA LITERÓWKI' || decision === 'BŁĄD WYSZUKIWANIA') mappedDecision = 'ODFILTROWANE';
-        
-        // Ignoruj PREVIEW - nie aktualizuj metryk
-        if (mappedDecision === 'PREVIEW') {
-            return;
-        }
-        
-        switch (mappedDecision) {
-            case 'ZNALEZIONE PRODUKTY':
-                if (!this.metrics.foundProducts) this.metrics.foundProducts = { count: 0, amount: 0 };
-                this.metrics.foundProducts.count++;
-                this.animateCounter('foundProductsCount', this.metrics.foundProducts.count);
-                break;
-                
-            case 'UTRACONE OKAZJE':
-                if (!this.metrics.lostOpportunities) this.metrics.lostOpportunities = { count: 0, amount: 0 };
-                this.metrics.lostOpportunities.count++;
-                this.metrics.lostOpportunities.amount += value;
-                this.animateCounter('lostOpportunitiesCount', this.metrics.lostOpportunities.count);
-                this.animateCounter('lostOpportunitiesAmount', this.metrics.lostOpportunities.amount);
-                break;
-                
-            case 'ODFILTROWANE':
-                if (!this.metrics.filteredOut) this.metrics.filteredOut = { count: 0, amount: 0 };
-                this.metrics.filteredOut.count++;
-                this.animateCounter('filteredOutCount', this.metrics.filteredOut.count);
-                break;
-                
-            default:
-                console.warn('Unknown decision type:', decision);
-                break;
-        }
-        
-        this.updateAdditionalStats();
-        this.updateChartsData();
+    const decision = eventData.decision;
+    const value = eventData.potential_value || 0;
+    
+    // Mapowanie starych nazw na nowe (dla kompatybilności)
+    let mappedDecision = decision;
+    if (decision === 'PRECYZYJNE TRAFIENIE') mappedDecision = 'ZNALEZIONE PRODUKTY';
+    if (decision === 'UTRACONY POPYT') mappedDecision = 'UTRACONE OKAZJE';
+    if (decision === 'KOREKTA LITERÓWKI' || decision === 'BŁĄD WYSZUKIWANIA') mappedDecision = 'ODFILTROWANE';
+    
+    switch (mappedDecision) {
+        case 'ZNALEZIONE PRODUKTY':
+            if (!this.metrics.foundProducts) this.metrics.foundProducts = { count: 0, amount: 0 };
+            this.metrics.foundProducts.count++;
+            this.animateCounter('foundProductsCount', this.metrics.foundProducts.count);
+            break;
+            
+        case 'UTRACONE OKAZJE':
+            if (!this.metrics.lostOpportunities) this.metrics.lostOpportunities = { count: 0, amount: 0 };
+            this.metrics.lostOpportunities.count++;
+            this.metrics.lostOpportunities.amount += value;
+            this.animateCounter('lostOpportunitiesCount', this.metrics.lostOpportunities.count);
+            this.animateCounter('lostOpportunitiesAmount', this.metrics.lostOpportunities.amount);
+            break;
+            
+        case 'ODFILTROWANE':
+            if (!this.metrics.filteredOut) this.metrics.filteredOut = { count: 0, amount: 0 };
+            this.metrics.filteredOut.count++;
+            this.animateCounter('filteredOutCount', this.metrics.filteredOut.count);
+            break;
+            
+        default:
+            console.warn('Unknown decision type:', decision);
+            break;
     }
     
+
+this.updateAdditionalStats();
+this.updateChartsData();
+}
+    
+    /**
+     * Update metrics from statistics data
+     */
     updateMetricsFromStats(stats) {
-        const lostDemand = stats['UTRACONY POPYT'] || stats['UTRACONE OKAZJE'] || { count: 0, value: 0 };
-        this.metrics.lostOpportunities.count = lostDemand.count;
-        this.metrics.lostOpportunities.amount = lostDemand.value;
-        
-        const typoCorrections = stats['KOREKTA LITERÓWKI'] || stats['ODFILTROWANE'] || { count: 0, value: 0 };
-        this.metrics.filteredOut.count = typoCorrections.count;
-        
-        const preciseHits = stats['PRECYZYJNE TRAFIENIE'] || stats['ZNALEZIONE PRODUKTY'] || { count: 0, value: 0 };
-        this.metrics.foundProducts.count = preciseHits.count;
-        
-        this.animateCounter('lostOpportunitiesCount', this.metrics.lostOpportunities.count);
-        this.animateCounter('lostOpportunitiesAmount', this.metrics.lostOpportunities.amount);
-        this.animateCounter('filteredOutCount', this.metrics.filteredOut.count);
-        this.animateCounter('foundProductsCount', this.metrics.foundProducts.count);
-        
-        this.updateAdditionalStats();
-    }
+    // Update lost demand
+    const lostDemand = stats['UTRACONY POPYT'] || { count: 0, value: 0 };
+    this.metrics.lostDemand.count = lostDemand.count;
+    this.metrics.lostDemand.amount = lostDemand.value;
     
+    // Update typo corrections
+    const typoCorrections = stats['KOREKTA LITERÓWKI'] || { count: 0, value: 0 };
+    this.metrics.typoCorrections.count = typoCorrections.count;
+    
+    // Update precise hits
+    const preciseHits = stats['PRECYZYJNE TRAFIENIE'] || { count: 0, value: 0 };
+    this.metrics.preciseHits.count = preciseHits.count;
+    
+    // Update search failures - NOWE
+    const searchFailures = stats['BŁĄD WYSZUKIWANIA'] || { count: 0, value: 0 };
+    this.metrics.searchFailures.count = searchFailures.count;
+    
+    // Animate counters
+    this.animateCounter('lostDemandCount', this.metrics.lostDemand.count);
+    this.animateCounter('lostDemandAmount', this.metrics.lostDemand.amount);
+    this.animateCounter('typoCorrectionsCount', this.metrics.typoCorrections.count);
+    this.animateCounter('preciseHitsCount', this.metrics.preciseHits.count);
+    this.animateCounter('searchFailuresCount', this.metrics.searchFailures.count);  // NOWE
+    
+    // Update additional stats
+    this.updateAdditionalStats();
+}
+    
+    /**
+     * Animate counter with smooth count-up effect
+     */
     animateCounter(elementId, targetValue, duration = 1000) {
         const element = document.getElementById(elementId);
         if (!element) return;
@@ -414,11 +477,17 @@ getDecisionClass(decision) {
         const updateCounter = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function (ease-out-cubic)
             const easedProgress = 1 - Math.pow(1 - progress, 3);
+            
             const currentValue = Math.round(startValue + (difference * easedProgress));
+            
+            // Format number with thousand separators
             const formattedValue = currentValue.toLocaleString('pl-PL');
             element.textContent = formattedValue;
             
+            // Add scale animation on significant changes
             if (difference > 0 && progress < 0.3) {
                 element.style.transform = `scale(${1 + (0.1 * easedProgress)})`;
             } else {
@@ -433,20 +502,27 @@ getDecisionClass(decision) {
         requestAnimationFrame(updateCounter);
     }
     
+    /**
+     * Update additional statistics
+     */
     updateAdditionalStats() {
-        const totalQueries = (this.metrics.foundProducts?.count || 0) + 
-                           (this.metrics.lostOpportunities?.count || 0) + 
-                           (this.metrics.filteredOut?.count || 0);
-        
-        const lostPotential = totalQueries > 0 ? 
-            Math.round(((this.metrics.lostOpportunities?.count || 0) / totalQueries) * 100) : 0;
-        
-        const lostValue = this.metrics.lostOpportunities?.amount || 0;
-        
-        this.updateElement('successRate', lostPotential + '%');
-        this.updateElement('savedRevenue', lostValue.toLocaleString('pl-PL') + ' zł');
-    }
+    const totalQueries = (this.metrics.foundProducts?.count || 0) + 
+                       (this.metrics.lostOpportunities?.count || 0) + 
+                       (this.metrics.filteredOut?.count || 0);
     
+    const lostPotential = totalQueries > 0 ? 
+        Math.round(((this.metrics.lostOpportunities?.count || 0) / totalQueries) * 100) : 0;
+    
+    // Zmienione: liczymy utracone pieniądze zamiast uratowanych
+    const lostValue = this.metrics.lostOpportunities?.amount || 0;
+    
+    this.updateElement('successRate', lostPotential + '%');
+    this.updateElement('savedRevenue', lostValue.toLocaleString('pl-PL') + ' zł');
+}
+    
+    /**
+     * Update element text content safely
+     */
     updateElement(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
@@ -454,12 +530,17 @@ getDecisionClass(decision) {
         }
     }
     
+    /**
+     * Populate live feed with historical events
+     */
     populateLiveFeed(events) {
         const liveFeed = document.getElementById('liveFeed');
         if (!liveFeed || !events.length) return;
         
+        // Clear placeholder
         liveFeed.innerHTML = '';
         
+        // Add events (most recent first)
         events.forEach((event, index) => {
             setTimeout(() => {
                 const timestamp = new Date(event.timestamp).toLocaleTimeString('pl-PL');
@@ -467,10 +548,13 @@ getDecisionClass(decision) {
                     ...event,
                     timestamp: timestamp
                 });
-            }, index * 100);
+            }, index * 100); // Stagger animations
         });
     }
     
+    /**
+     * Update missing products list
+     */
     updateMissingProducts(products) {
         const list = document.getElementById('missingProductsList');
         if (!list) return;
@@ -497,63 +581,73 @@ getDecisionClass(decision) {
         `).join('');
     }
     
+    /**
+     * Initialize charts using Chart.js
+     */
     initializeCharts() {
         this.initializePerformanceChart();
         this.initializeTrendChart();
     }
     
+    /**
+     * Initialize performance pie chart
+     */
     initializePerformanceChart() {
-        const canvas = document.getElementById('performanceChart');
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        
-        this.charts.performance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Znalezione Produkty', 'Utracone Okazje', 'Odfiltrowane'],
-                datasets: [{
-                    data: [
-                        this.metrics.foundProducts?.count || 0,
-                        this.metrics.lostOpportunities?.count || 0,
-                        this.metrics.filteredOut?.count || 0
-                    ],
-                    backgroundColor: [
-                        'rgba(34, 197, 94, 0.8)',
-                        'rgba(239, 68, 68, 0.8)',
-                        'rgba(168, 85, 247, 0.8)'
-                    ],
-                    borderColor: [
-                        'rgba(34, 197, 94, 1)',
-                        'rgba(239, 68, 68, 1)',
-                        'rgba(168, 85, 247, 1)'
-                    ],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#b0b0b0',
-                            padding: 10,
-                            font: { size: 10 }
-                        }
+    const canvas = document.getElementById('performanceChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    this.charts.performance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Znalezione Produkty', 'Utracone Okazje', 'Odfiltrowane'],
+            datasets: [{
+                data: [
+                    this.metrics.foundProducts?.count || 0,
+                    this.metrics.lostOpportunities?.count || 0,
+                    this.metrics.filteredOut?.count || 0
+                ],
+                backgroundColor: [
+    'rgba(34, 197, 94, 0.8)',   // Zielony - znalezione
+    'rgba(239, 68, 68, 0.8)',   // Czerwony - utracone (zmienione z niebieskiego)
+    'rgba(168, 85, 247, 0.8)'   // Fioletowy - odfiltrowane
+],
+borderColor: [
+    'rgba(34, 197, 94, 1)',
+    'rgba(239, 68, 68, 1)',     // Czerwony border
+    'rgba(168, 85, 247, 1)'
+],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#b0b0b0',
+                        padding: 10,
+                        font: { size: 10 }
                     }
                 }
             }
-        });
-    }
+        }
+    });
+}
     
+    /**
+     * Initialize trend line chart
+     */
     initializeTrendChart() {
         const canvas = document.getElementById('trendChart');
         if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
         
+        // Generate dummy trend data for demonstration
         const hours = [];
         const lostDemandData = [];
         const successData = [];
@@ -623,17 +717,23 @@ getDecisionClass(decision) {
         });
     }
     
+    /**
+     * Update charts data
+     */
     updateChartsData() {
-        if (this.charts.performance) {
-            this.charts.performance.data.datasets[0].data = [
-                this.metrics.foundProducts?.count || 0,
-                this.metrics.lostOpportunities?.count || 0,
-                this.metrics.filteredOut?.count || 0
-            ];
-            this.charts.performance.update('none');
-        }
+    if (this.charts.performance) {
+        this.charts.performance.data.datasets[0].data = [
+            this.metrics.foundProducts?.count || 0,
+            this.metrics.lostOpportunities?.count || 0,
+            this.metrics.filteredOut?.count || 0
+        ];
+        this.charts.performance.update('none');
     }
+}
     
+    /**
+     * Update connection status indicator
+     */
     updateConnectionStatus(status) {
         const statusElement = document.getElementById('connectionStatus');
         if (!statusElement) return;
@@ -652,6 +752,9 @@ getDecisionClass(decision) {
         }
     }
     
+    /**
+     * Update last update timestamp
+     */
     updateLastUpdateTime() {
         const element = document.getElementById('lastUpdate');
         if (element) {
@@ -659,12 +762,18 @@ getDecisionClass(decision) {
         }
     }
     
+    /**
+     * Request current statistics from server
+     */
     requestCurrentStats() {
         if (this.socket && this.socket.connected) {
             this.socket.emit('request_current_stats');
         }
     }
     
+    /**
+     * Update statistics from WebSocket data
+     */
     updateStatistics(data) {
         if (data.today_statistics) {
             this.updateMetricsFromStats(data.today_statistics);
@@ -675,6 +784,9 @@ getDecisionClass(decision) {
         }
     }
     
+    /**
+     * Toggle feed pause state
+     */
     toggleFeedPause() {
         this.feedPaused = !this.feedPaused;
         const btn = document.getElementById('pauseFeed');
@@ -687,10 +799,15 @@ getDecisionClass(decision) {
             btn.innerHTML = '<i class="fas fa-pause"></i>';
             btn.title = 'Wstrzymaj feed';
             this.showToast('Feed wznowiony', 'success');
+            
+            // Process queued events
             this.processEventQueue();
         }
     }
     
+    /**
+     * Process queued events
+     */
     processEventQueue() {
         if (this.processingQueue || this.eventQueue.length === 0) return;
         
@@ -705,12 +822,15 @@ getDecisionClass(decision) {
             const event = this.eventQueue.shift();
             this.handleNewEvent(event);
             
-            setTimeout(processNext, 200);
+            setTimeout(processNext, 200); // Stagger processing
         };
         
         processNext();
     }
     
+    /**
+     * Clear live feed
+     */
     clearFeed() {
         const liveFeed = document.getElementById('liveFeed');
         if (liveFeed) {
@@ -722,21 +842,29 @@ getDecisionClass(decision) {
             `;
             this.showToast('Feed wyczyszczony', 'success');
         }
-    }   
-async resetDemo() {
+    }
+    
+    /**
+     * Reset demo data
+     */
+    async resetDemo() {
         try {
             const response = await fetch('/api/reset_demo');
             const data = await response.json();
             
             if (data.status === 'success') {
+                // Reset metrics
                 this.metrics = {
-                    foundProducts: { count: 0, amount: 0 },
-                    lostOpportunities: { count: 0, amount: 0 },
-                    filteredOut: { count: 0, amount: 0 }
-                };
+    foundProducts: { count: 0, amount: 0 },
+    lostOpportunities: { count: 0, amount: 0 },
+    filteredOut: { count: 0, amount: 0 }
+};
                 
+                // Update UI
                 this.updateMetricsFromStats({});
                 this.clearFeed();
+                
+                // Update charts
                 this.updateChartsData();
                 
                 this.showToast('Demo zresetowane pomyślnie', 'success');
@@ -749,6 +877,9 @@ async resetDemo() {
         }
     }
     
+    /**
+     * Export data to JSON
+     */
     exportData() {
         const data = {
             timestamp: new Date().toISOString(),
@@ -772,18 +903,26 @@ async resetDemo() {
         this.showToast('Dane wyeksportowane', 'success');
     }
     
+    /**
+     * Start periodic updates
+     */
     startPeriodicUpdates() {
+        // Request stats every 30 seconds
         setInterval(() => {
             if (this.socket && this.socket.connected) {
                 this.requestCurrentStats();
             }
         }, 30000);
         
+        // Update charts every 5 minutes
         setInterval(() => {
             this.updateChartsData();
         }, 300000);
     }
     
+    /**
+     * Hide loading overlay with animation
+     */
     hideLoadingOverlay() {
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) {
@@ -794,6 +933,9 @@ async resetDemo() {
         }
     }
     
+    /**
+     * Show toast notification
+     */
     showToast(message, type = 'info', duration = 3000) {
         const container = document.getElementById('toastContainer');
         if (!container) return;
@@ -804,6 +946,7 @@ async resetDemo() {
         
         container.appendChild(toast);
         
+        // Auto remove
         setTimeout(() => {
             toast.style.animation = 'slideInToast 0.3s ease-out reverse';
             setTimeout(() => {
@@ -813,101 +956,110 @@ async resetDemo() {
             }, 300);
         }, duration);
     }
-    
+
+    // DODAJ NOWĄ FUNKCJĘ TUTAJ:
+    /**
+     * Initialize resizable layout
+     */
     initializeResizer() {
-        const resizeHandle = document.getElementById('resizeHandle');
-        const botColumn = document.getElementById('botColumn');
-        const dashboardColumn = document.getElementById('dashboardColumn');
-        const collapseBtn = document.getElementById('collapseDashboard');
-        
-        console.log('Resizer init:', { resizeHandle, botColumn, dashboardColumn, collapseBtn });
-        
-        if (!resizeHandle || !botColumn || !dashboardColumn) {
-            console.error('Resizer elements not found');
-            return;
-        }
-        
-        let isResizing = false;
-        let startWidth = 0;
-        
-        resizeHandle.addEventListener('mousedown', (e) => {
-            console.log('Resizer mousedown');
-            isResizing = true;
-            startWidth = dashboardColumn.offsetWidth;
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-            
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-            
-            e.preventDefault();
-            e.stopPropagation();
+    const resizeHandle = document.getElementById('resizeHandle');
+    const botColumn = document.getElementById('botColumn');
+    const dashboardColumn = document.getElementById('dashboardColumn');
+    const collapseBtn = document.getElementById('collapseDashboard');
+    
+    console.log('Resizer init:', { resizeHandle, botColumn, dashboardColumn, collapseBtn });
+    
+    if (!resizeHandle || !botColumn || !dashboardColumn) {
+        console.error('Resizer elements not found:', {
+            resizeHandle: !!resizeHandle,
+            botColumn: !!botColumn, 
+            dashboardColumn: !!dashboardColumn
         });
-        
-        function handleMouseMove(e) {
-            if (!isResizing) return;
-            
-            const container = document.querySelector('.demo-container');
-            const containerRect = container.getBoundingClientRect();
-            const mouseX = e.clientX;
-            const containerRight = containerRect.right;
-            
-            const newWidth = containerRight - mouseX;
-            const constrainedWidth = Math.max(280, Math.min(700, newWidth));
-            
-            dashboardColumn.style.width = constrainedWidth + 'px';
-            
-            e.preventDefault();
-        }
-        
-        function handleMouseUp() {
-            console.log('Resizer mouseup');
-            isResizing = false;
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-            
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        }
-        
-        if (collapseBtn) {
-            collapseBtn.addEventListener('click', () => {
-                const currentWidth = parseInt(dashboardColumn.style.width) || 400;
-                console.log('Collapse clicked, current width:', currentWidth);
-                
-                if (currentWidth <= 300) {
-                    dashboardColumn.style.width = '400px';
-                    collapseBtn.textContent = '←';
-                    console.log('Expanded to 400px');
-                } else {
-                    dashboardColumn.style.width = '60px';
-                    collapseBtn.textContent = '→';
-                    console.log('Collapsed to 60px');
-                }
-            });
-        }
-        
-        console.log('Resizer initialized successfully');
+        return;
     }
+    
+    let isResizing = false;
+    let startWidth = 0;
+    
+    // Mouse down na handle
+    resizeHandle.addEventListener('mousedown', (e) => {
+        console.log('Resizer mousedown');
+        isResizing = true;
+        startWidth = dashboardColumn.offsetWidth;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        
+        // Dodaj event listeners na document
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    
+    function handleMouseMove(e) {
+        if (!isResizing) return;
+        
+        const container = document.querySelector('.demo-container');
+        const containerRect = container.getBoundingClientRect();
+        const mouseX = e.clientX;
+        const containerRight = containerRect.right;
+        
+        // Oblicz nową szerokość dashboardu
+        const newWidth = containerRight - mouseX;
+        
+        // Limity: min 280px, max 700px
+        const constrainedWidth = Math.max(280, Math.min(700, newWidth));
+        
+        // Aplikuj nową szerokość
+        dashboardColumn.style.width = constrainedWidth + 'px';
+        
+        console.log('Resizing:', { mouseX, containerRight, newWidth, constrainedWidth });
+        
+        e.preventDefault();
+    }
+    
+    function handleMouseUp() {
+        console.log('Resizer mouseup');
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        
+        // Usuń event listeners
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    }
+    
+    // Collapse/Expand functionality  
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', () => {
+            const currentWidth = parseInt(dashboardColumn.style.width) || 400;
+            console.log('Collapse clicked, current width:', currentWidth);
+            
+            if (currentWidth <= 300) {
+                // Expand
+                dashboardColumn.style.width = '400px';
+                collapseBtn.textContent = '←';
+                console.log('Expanded to 400px');
+            } else {
+                // Collapse  
+                dashboardColumn.style.width = '60px';
+                collapseBtn.textContent = '→';
+                console.log('Collapsed to 60px');
+            }
+        });
+    }
+    
+    console.log('Resizer initialized successfully');
+}
 }
 
+// Initialize dashboard when script loads
 window.tacticalDashboard = new TacticalDashboard();
-
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('=====================================');
-    console.log('📊 Patient Listener Dashboard v2.0');
-    console.log('=====================================');
-    console.log('📡 Live Feed: Wszystkie zapytania');
-    console.log('📈 Metrics: Finalne (po 800ms)');
-    console.log('🔄 Split Logic: Aktywna');
-    console.log('=====================================');
-    
-    console.log('DOM elements check:');
-    console.log('  resizeHandle:', !!document.getElementById('resizeHandle'));
-    console.log('  botColumn:', !!document.getElementById('botColumn')); 
-    console.log('  dashboardColumn:', !!document.getElementById('dashboardColumn'));
-    console.log('  collapseDashboard:', !!document.getElementById('collapseDashboard'));
-    
-    console.log('✅ Dashboard ready');
-    console.log('=====================================');
-});     
+    console.log('DOM loaded, testing elements:');
+    console.log('resizeHandle:', document.getElementById('resizeHandle'));
+    console.log('botColumn:', document.getElementById('botColumn')); 
+    console.log('dashboardColumn:', document.getElementById('dashboardColumn'));
+    console.log('collapseDashboard:', document.getElementById('collapseDashboard'));
+});
