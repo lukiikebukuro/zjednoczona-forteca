@@ -977,10 +977,11 @@ class EcommerceBot:
         return {
             'text_message': """🚗 **Witaj w Auto Parts Pro**
 
-Jestem Twoim ekspertem od części samochodowych. 
-Nasz inteligentny system rozpoznaje literówki i śledzi brakujące produkty!
-
-Co Cię interesuje?""",
+Wpisz z literówką: "kloki bosh e90"
+* Sprawdź nieistniejący model: "klocki bmw e62"
+* Przetestuj markę premium: "klocki ferrari"
+* Zobacz jak filtruję nonsens: "random tekst bez sensu"
+* ...lub wpisz własne, najtrudniejsze zapytanie.""",
             'buttons': [
                 {'text': '🔧 Znajdź część', 'action': 'search_product'},
                 {'text': '📦 Status zamówienia', 'action': 'order_status'},
