@@ -977,6 +977,7 @@ class EcommerceBot:
         return {
             'text_message': """🚗 **Witaj w Auto Parts Pro**
 
+Jestem twoim asystentem sprzedażowym zbudowanym na silniku analitycznym Adept. Przetestuj mój system:
 Wpisz z literówką: "kloki bosh e90"
 * Sprawdź nieistniejący model: "klocki bmw e62"
 * Przetestuj markę premium: "klocki ferrari"
