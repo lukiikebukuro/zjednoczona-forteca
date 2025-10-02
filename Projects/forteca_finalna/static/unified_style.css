@@ -3481,3 +3481,119 @@ body {
         overflow: hidden;
     }
 }
+
+/* ===== MOBILE RESPONSIVE DASHBOARD - NOWE ===== */
+
+/* Mobile Dashboard Toggle - ukryty na desktop */
+.mobile-dashboard-toggle {
+    display: none;
+    position: fixed;
+    top: 80px;
+    right: 15px;
+    background: var(--dash-bg-primary);
+    color: var(--dash-text-primary);
+    border: 1px solid var(--dash-accent-primary);
+    padding: 0.75rem 1rem;
+    border-radius: 25px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 9990;
+    transition: all var(--transition-smooth);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-dashboard-toggle:hover {
+    background: var(--dash-accent-primary);
+    color: var(--dash-bg-primary);
+    transform: translateY(-2px);
+}
+
+/* Mobile Dashboard Overlay - ukryty domyślnie */
+.mobile-dashboard-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mobile-dashboard-overlay.active {
+    display: block;
+}
+
+.mobile-dashboard-close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--dash-accent-danger);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 10001;
+    border: none;
+}
+
+.mobile-dashboard-content {
+    background: var(--dash-bg-primary);
+    color: var(--dash-text-primary);
+    min-height: 100vh;
+    padding: 60px 1rem 1rem;
+}
+
+/* MEDIA QUERIES - RESPONSYWNOŚĆ */
+@media (max-width: 768px) {
+    /* Pokaż przycisk toggle na mobile */
+    .mobile-dashboard-toggle {
+        display: block;
+    }
+    
+    /* Ukryj resize handle na mobile */
+    .resize-handle {
+        display: none !important;
+    }
+    
+    /* Demo container - pionowy layout */
+    .demo-container {
+        flex-direction: column !important;
+        height: auto !important;
+    }
+    
+    /* Bot column - pełna szerokość */
+    .bot-column {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        border-right: none !important;
+    }
+    
+    /* Dashboard column - ukryty na mobile */
+    .dashboard-column {
+        display: none !important;
+    }
+}
+
+/* Tablet landscape optimizations */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .mobile-dashboard-toggle {
+        display: block;
+        top: 20px;
+        right: 20px;
+    }
+    
+    .dashboard-column {
+        width: 350px !important;
+        min-width: 300px !important;
+    }
+}

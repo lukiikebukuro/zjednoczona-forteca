@@ -46,6 +46,10 @@
             <div class="bot-header">
                 🤖 Inteligentny Asystent AutoParts
             </div>
+            <!-- DODAJ TE 4 LINIJKI: -->
+<button class="mobile-dashboard-toggle" id="mobileDashboardToggle">
+    📊 Pokaż Centrum Analityczne
+</button>
             <div class="bot-content">
                 <div class="app-container">
                     <!-- Header -->
@@ -636,6 +640,13 @@
         }
     });
 </script>
+<!-- DODAJ PRZED ZAMKNIĘCIEM </body>: -->
+<div class="mobile-dashboard-overlay" id="mobileDashboardOverlay">
+    <div class="mobile-dashboard-close" id="mobileDashboardClose">✖️</div>
+    <div class="mobile-dashboard-content" id="mobileDashboardContent">
+        <!-- Dashboard content będzie tutaj kopiowany przez JS -->
+    </div>
+</div>
 </body>
 </html>
 

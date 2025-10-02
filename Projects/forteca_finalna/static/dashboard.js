@@ -51,6 +51,10 @@ class TacticalDashboard {
             // Initialize charts
             this.initializeCharts();
 
+// Initialize mobile responsiveness
+this.initializeMobileSupport();
+            
+
             this.initializeResizer();
             
             // Hide loading overlay
@@ -1051,6 +1055,37 @@ borderColor: [
     }
     
     console.log('Resizer initialized successfully');
+}
+/**
+ * Initialize mobile support for dashboard
+ */
+initializeMobileSupport() {
+    // Detect mobile and adjust chart sizing
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // Apply mobile optimizations to charts
+        Object.values(this.charts).forEach(chart => {
+            if (chart && chart.options) {
+                chart.options.maintainAspectRatio = false;
+                chart.options.responsive = true;
+                chart.update('none');
+            }
+        });
+    }
+    
+    // Handle window resize for charts
+    window.addEventListener('resize', () => {
+        setTimeout(() => {
+            Object.values(this.charts).forEach(chart => {
+                if (chart && chart.resize) {
+                    chart.resize();
+                }
+            });
+        }, 100);
+    });
+    
+    console.log('📱 Mobile dashboard support initialized');
 }
 }
 

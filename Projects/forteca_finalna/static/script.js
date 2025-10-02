@@ -57,6 +57,9 @@ class EcommerceBotUI {
         this.suggestionsDropdown = null;
         this.lastConfidenceLevel = 'NONE';
         this.lastQuery = '';
+        // Mobile responsiveness
+this.isMobile = window.innerWidth <= 768;
+this.dashboardOverlay = null;
         
         // === DOKTRYNA CIERPLIWEGO NASŁUCHU - TIMERY ===
         this.searchTimeout = null;           // 200ms - sugestie real-time
@@ -891,6 +894,36 @@ class EcommerceBotUI {
         };
         return text.replace(/[&<>"']/g, m => map[m]);
     }
+    /**
+ * Toggle mobile dashboard overlay
+ */
+toggleMobileDashboard() {
+    if (!this.dashboardOverlay) {
+        this.dashboardOverlay = document.getElementById('mobileDashboardOverlay');
+    }
+    
+    const overlay = this.dashboardOverlay;
+    const content = document.getElementById('mobileDashboardContent');
+    const originalDashboard = document.getElementById('dashboardColumn');
+    const toggleBtn = document.getElementById('mobileDashboardToggle');
+    
+    if (!overlay || !content || !originalDashboard) return;
+    
+    if (overlay.classList.contains('active')) {
+        // Ukryj overlay
+        overlay.classList.remove('active');
+        content.innerHTML = '';
+        toggleBtn.innerHTML = '📊 Pokaż Centrum Analityczne';
+    } else {
+        // Pokaż overlay
+        overlay.classList.add('active');
+        content.innerHTML = originalDashboard.innerHTML;
+        toggleBtn.innerHTML = '📊 Dashboard Otwarty';
+        
+        // Scroll to top overlay
+        overlay.scrollTop = 0;
+    }
+}
 }
 
 // Initialize bot when DOM is ready
@@ -915,4 +948,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('✅ Doktryna Cierpliwego Nasłuchu aktywna');
     console.log('=====================================');
+    // Mobile dashboard toggle handler
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'mobileDashboardToggle') {
+        window.botUI.toggleMobileDashboard();
+    }
+    if (e.target.id === 'mobileDashboardClose') {
+        window.botUI.toggleMobileDashboard();
+    }
+});
+
+// Window resize handler
+window.addEventListener('resize', () => {
+    if (window.botUI) {
+        window.botUI.isMobile = window.innerWidth <= 768;
+    }
+});
 });
