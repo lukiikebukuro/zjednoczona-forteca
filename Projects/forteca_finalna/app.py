@@ -868,13 +868,36 @@ def extract_category_from_query(query):
     return 'inne'
 
 def calculate_lost_value_internal(query):
-    """Szacuje wartość utraconego popytu"""
+    """Szacuje wartość utraconego popytu - NAPRAWIONA wersja z losowymi wartościami 500-1000"""
+    import random
+    
     category = extract_category_from_query(query)
-    base_values = {
-        'klocki': 200, 'filtry': 80, 'amortyzatory': 450,
-        'świece': 50, 'akumulatory': 350, 'oleje': 120
+    
+    # Nowe zakresy 500-1000 z bonusami dla kategorii
+    base_ranges = {
+        'klocki': (600, 1000),      # Popularna kategoria
+        'filtry': (500, 800),       # Tańsze części  
+        'amortyzatory': (800, 1200), # Drogie części
+        'świece': (500, 700),       # Małe części
+        'akumulatory': (700, 1100), # Średnio drogie
+        'oleje': (600, 900),        # Płyny
+        'tarcze': (700, 1000),      # Duże części
+        'łańcuchy': (600, 900)      # Motocykle
     }
-    return base_values.get(category, 150)
+    
+    # Pobierz zakres dla kategorii lub użyj domyślny
+    min_val, max_val = base_ranges.get(category, (500, 1000))
+    
+    # Sprawdź czy to marka luksusowa (bonus +200-400)
+    query_lower = query.lower()
+    luxury_brands = ['ferrari', 'lamborghini', 'porsche', 'bentley', 'maserati', 'aston martin']
+    
+    if any(brand in query_lower for brand in luxury_brands):
+        min_val += 300
+        max_val += 500
+    
+    # Zwróć losową wartość z zakresu
+    return random.randint(min_val, max_val)
 
 def log_lost_demand(query, analysis):
     """Helper function to log lost demand"""

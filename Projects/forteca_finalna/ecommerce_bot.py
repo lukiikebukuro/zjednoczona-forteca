@@ -382,6 +382,17 @@ class EcommerceBot:
     def is_obvious_nonsense(self, tokens: List[str], token_validity: float) -> bool:
         """NAPRAWIONA - Wykrywa oczywisty nonsens ale NIGDY nie blokuje zapytań z wartościowymi tokenami biznesowymi"""
         
+        # === NOWY FILTR - BRAK TERMINÓW PRODUKTOWYCH ===
+        has_product_term = any(
+            token.lower() in self.AUTOMOTIVE_DICTIONARY['brands'] or
+            token.lower() in self.AUTOMOTIVE_DICTIONARY['categories'] or
+            token.lower() in self.AUTOMOTIVE_DICTIONARY['car_models']
+            for token in tokens
+        )
+        
+        if not has_product_term:
+            return True  # Brak terminów produktowych = odfiltrowane
+        
         # === PANCERNA OCHRONA PRZED FAŁSZYWYMI ALARMAMI ===
         # Jeśli zapytanie zawiera JAKIKOLWIEK wartościowy token biznesowy - NIE JEST nonsensem
         business_value_tokens = 0
@@ -576,7 +587,7 @@ class EcommerceBot:
         return matches
 
     def analyze_query_intent(self, query: str) -> Dict:
-        """NAPRAWIONA WERSJA - Detekcja krótkich nieistniejących kodów"""
+        """OSTATECZNA NAPRAWA - Nonsens sprawdzany przed token_validity >= 35"""
         query_lower = query.lower().strip()
         query_tokens = query_lower.split()
         
@@ -656,73 +667,73 @@ class EcommerceBot:
         matches = self.get_fuzzy_product_matches_internal(query_lower)
         best_match_score = matches[0][1] if matches else 0
         
-        # === NAPRAWIONA KLASYFIKACJA ===
+        # === OSTATECZNA NAPRAWA KLASYFIKACJI ===
         
-        # 1. Oczywisty nonsens (najwyższy priorytet)
-        if self.is_obvious_nonsense(query_tokens, token_validity):
-            confidence_level = 'LOW'
-            suggestion_type = 'nonsensical'
-            ga4_event = 'search_failure'
-        
-        # 2. Bardzo wysokie dopasowanie = dokładne trafienie
-        elif best_match_score >= 90:
+        # 1. Bardzo wysokie dopasowanie = dokładne trafienie
+        if best_match_score >= 90:
             confidence_level = 'HIGH'
             suggestion_type = 'exact_match'
             ga4_event = None
         
-        # 3. NOWY: Zapytanie strukturalne (kategoria + nieznana marka)
+        # 2. NOWY: Zapytanie strukturalne (kategoria + nieznana marka)
         elif is_structural:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'structural_missing'
             ga4_event = 'search_lost_demand'
         
-        # 4. Nieistniejący kod produktu (długi)
+        # 3. Nieistniejący kod produktu (długi)
         elif has_nonexistent_code and token_validity >= 40:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'product_code_missing'
             ga4_event = 'search_lost_demand'
         
-        # 5. NOWE: Nieistniejący krótki kod (a1, 55, x1, itp.)
+        # 4. NOWE: Nieistniejący krótki kod (a1, 55, x1, itp.)
         elif has_nonexistent_short_code and token_validity >= 70:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'short_code_missing'
             ga4_event = 'search_lost_demand'
         
-        # 6. Istniejący kod ale średnie dopasowanie - uznaj za trafienie
+        # 5. Istniejący kod ale średnie dopasowanie - uznaj za trafienie
         elif potential_product_codes and best_match_score >= 40:
             confidence_level = 'MEDIUM'
             suggestion_type = 'code_found'
             ga4_event = 'search_typo_corrected'
         
-        # 7. Marka luksusowa bez produktów
+        # 6. Marka luksusowa bez produktów
         elif has_luxury_brand and best_match_score < 60:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'luxury_brand_missing'
             ga4_event = 'search_lost_demand'
         
-        # 8. Wysokie dopasowanie
+        # 7. Wysokie dopasowanie
         elif best_match_score >= 80:
             confidence_level = 'HIGH'
             suggestion_type = 'good_match'
             ga4_event = None
         
-        # 9. Średnie dopasowanie + sensowne słowa = literówka
+        # 8. Średnie dopasowanie + sensowne słowa = literówka
         elif best_match_score >= 70 and token_validity >= 50:
             confidence_level = 'MEDIUM'
             suggestion_type = 'typo_correction'
             ga4_event = 'search_typo_corrected'
         
-        # 10. Model missing (wielosłowne + wysokie validity + słabe dopasowanie)
+        # 9. Model missing (wielosłowne + wysokie validity + słabe dopasowanie)
         elif (len(query_tokens) >= 2 and 
               token_validity >= 70 and 
               best_match_score < 70 and
               not potential_product_codes and
-              not short_codes):  # POPRAWKA: tylko jeśli NIE MA żadnych kodów
+              not short_codes):
             confidence_level = 'NO_MATCH'
             suggestion_type = 'model_missing'
             ga4_event = 'search_lost_demand'
         
-        # 11. Sensowne słowa ale brak dopasowania
+        # 10. KRYTYCZNE - Oczywisty nonsens PRZED sprawdzaniem token_validity
+        elif self.is_obvious_nonsense(query_tokens, token_validity):
+            confidence_level = 'LOW'
+            suggestion_type = 'nonsensical'
+            ga4_event = 'search_failure'
+        
+        # 11. Sensowne słowa ale brak dopasowania (DOPIERO PO nonsens check)
         elif token_validity >= 35:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'product_missing'
@@ -734,7 +745,7 @@ class EcommerceBot:
             suggestion_type = 'unknown_brand'
             ga4_event = 'search_lost_demand'
         
-        # 13. Rzeczywisty nonsens
+        # 13. Fallback
         else:
             confidence_level = 'LOW'
             suggestion_type = 'nonsensical'
