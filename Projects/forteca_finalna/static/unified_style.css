@@ -3757,3 +3757,159 @@ pricing-main {
         font-size: 0.9rem;
     }
 }
+
+
+/* ===== POPRAWKI KONTRASTU DLA SEKCJI SPRZEDAŻOWEJ ===== */
+
+/* Główne tytuły w advantage cards - jasniejsze i bardziej kontrastowe */
+.advantage-content h4 {
+    color: #e0e7ff !important; /* Jasny fiolet zamiast białego */
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important; /* Cień dla lepszej czytelności */
+    margin-bottom: 1rem !important;
+}
+
+/* Tekst opisowy - ghostwhite zamiast czystej bieli */
+.advantage-content p {
+    color: #f8f8ff !important; /* ghostwhite */
+    font-size: 1rem !important;
+    line-height: 1.7 !important;
+    opacity: 1 !important; /* Usunięcie przezroczystości */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Wyróżnienie ważnych fraz złotym kolorem */
+.advantage-content p span[style*="color: #FFD700"] {
+    font-weight: 600 !important;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important; /* Złota poświata */
+}
+
+/* Pogrubienia - lepiej widoczne */
+.advantage-content p strong {
+    color: #fff !important;
+    font-weight: 700 !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Tytuł sekcji PANCERNA INFRASTRUKTURA */
+.security-section h3 {
+    color: #e0e7ff !important; /* Jasny fiolet */
+    font-size: 1.8rem !important;
+    font-weight: 800 !important;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5) !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Treść sekcji bezpieczeństwa */
+.security-content {
+    background: rgba(139, 92, 246, 0.15) !important; /* Lekko jaśniejsze tło */
+    border: 2px solid rgba(139, 92, 246, 0.4) !important;
+    border-left: 5px solid #8b5cf6 !important;
+}
+
+.security-content p {
+    color: #f8f8ff !important; /* ghostwhite */
+    font-size: 1.05rem !important;
+    line-height: 1.7 !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Pogrubienia w sekcji bezpieczeństwa */
+.security-content p strong {
+    color: #c7d2fe !important; /* Bardzo jasny fiolet */
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Tytuły w tabeli porównawczej */
+.battle-comparison h3 {
+    color: #e0e7ff !important;
+    font-size: 1.8rem !important;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Nagłówki kolumn w tabeli */
+.table-header > div {
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important; /* Gradient fioletowy */
+    color: #fff !important;
+    font-weight: 700 !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Kolumna features w tabeli */
+.feature-col strong {
+    color: #c7d2fe !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Sekcja cenowa */
+.pricing-section h3 {
+    color: #e0e7ff !important;
+    font-size: 1.8rem !important;
+    font-weight: 800 !important;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Sekcja dowodów */
+.proof-section h3 {
+    color: #e0e7ff !important;
+    font-size: 1.8rem !important;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5) !important;
+}
+
+.proof-item {
+    background: rgba(34, 197, 94, 0.15) !important; /* Jaśniejsze tło */
+    border: 1px solid rgba(34, 197, 94, 0.3) !important;
+}
+
+.proof-item strong {
+    color: #c7d2fe !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* CTA sekcja */
+.arguments-cta h3 {
+    color: #fff !important;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5) !important;
+}
+
+.arguments-cta p {
+    color: #f8f8ff !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Dodatkowe ulepszenia dla czytelności */
+/* Hover efekty dla lepszej interakcji */
+.advantage-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Poprawki dla mobile */
+@media (max-width: 768px) {
+    .advantage-content h4 {
+        font-size: 1.3rem !important;
+    }
+    
+    .advantage-content p {
+        font-size: 0.95rem !important;
+    }
+    
+    .security-section h3,
+    .pricing-section h3,
+    .proof-section h3,
+    .battle-comparison h3 {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* Dodatkowy kontrast dla ikony w advantage cards */
+.advantage-icon {
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5)) !important;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    padding: 10px;
+    border-radius: 50%;
+}
