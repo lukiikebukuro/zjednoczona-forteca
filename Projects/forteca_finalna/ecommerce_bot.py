@@ -975,14 +975,21 @@ class EcommerceBot:
     def get_initial_greeting(self) -> Dict:
         """Powitanie"""
         return {
-            'text_message': """🚗 **Witaj w Auto Parts Pro**
+            'text_message': """🚗 Witaj w Auto Parts Pro
 
-Jestem twoim asystentem sprzedażowym zbudowanym na silniku analitycznym Adept. Przetestuj mój system:
-Wpisz z literówką: "kloki bosh e90"
-* Sprawdź nieistniejący model: "klocki bmw e62"
-* Przetestuj markę premium: "klocki ferrari"
-* Zobacz jak filtruję nonsens: "random tekst bez sensu"
-* ...lub wpisz własne, najtrudniejsze zapytanie.""",
+Jestem asystentem sprzedażowym zbudowanym na silniku analitycznym Adept, który widzi więcej niż zwykła wyszukiwarka.
+
+Rzuć mi wyzwanie. Przetestuj moją inteligencję:
+
+Sprawdź, jak radzę sobie z literówką: wpisz "kloki bosh e90"
+
+Zobacz, jak identyfikuję utracony popyt: wpisz "klocki bmw e62" lub "klocki ferrari"
+
+Przetestuj mój filtr antyszumowy: wpisz "asdfgh jkl"
+
+A teraz wpisz własną, skomplikowaną nazwę części i obserwuj na żywo, jak klasyfikuję Twoje intencje na dashboardzie po prawej stronie.
+
+""",
             'buttons': [
                 {'text': '🔧 Znajdź część', 'action': 'search_product'},
                 {'text': '📦 Status zamówienia', 'action': 'order_status'},
