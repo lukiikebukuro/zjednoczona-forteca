@@ -1,4 +1,3 @@
-
 """
 Uniwersalny Żołnierz - Silnik bota e-commerce v5.1 SURGERY FIXED
 System Inteligentnego Śledzenia Utraconego Popytu - NAPRAWIONA KALIBRACJA
@@ -518,6 +517,46 @@ class EcommerceBot:
         
         return previous_row[-1]
     
+    def has_automotive_context(self, tokens: List[str]) -> bool:
+        """
+        NAPRAWIONA - z rozszerzonym słownikiem części samochodowych
+        """
+        for token in tokens:
+            token_lower = token.lower()
+            
+            # Sprawdź w istniejących słownikach
+            if (token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] or
+                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands'] or
+                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['luxury_brands'] or
+                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] or
+                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_models'] or
+                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_models'] or
+                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['technical_terms']):
+                return True
+            
+            # ROZSZERZONY słownik części karoseryjnych
+            karoseria_parts = {
+                'drzwi', 'klapka', 'klapa', 'maska', 'zderzak', 'błotnik', 'próg', 'słupek',
+                'dach', 'podłoga', 'rama', 'chassis', 'nadwozie', 'karoseria', 'boczek',
+                'rant', 'listwy', 'nakładki', 'osłony', 'panele', 'elementy'
+            }
+            
+            if token_lower in karoseria_parts:
+                return True
+            
+            # Sprawdź znane literówki
+            if token_lower in {'kloki', 'swica', 'swieca', 'akumlator', 'filetr', 'amortyztor', 'olel'}:
+                return True
+            
+            # Fuzzy match dla głównych kategorii
+            main_categories = ['klocki', 'filtr', 'amortyzator', 'świeca', 'akumulator', 'olej', 'opony']
+            for category in main_categories:
+                if len(token) >= 4 and fuzz.ratio(token_lower, category) >= 85:
+                    return True
+        
+        return False
+    
+    
     def is_structural_query(self, tokens: List[str]) -> bool:
         """
         STRATEGIA 50/50 - TRZECIA BRAMKA
@@ -914,24 +953,21 @@ class EcommerceBot:
     
     def is_obvious_nonsense(self, tokens: List[str], token_validity: float) -> bool:
         """
-        NAPRAWIONA - WZMOCNIONY FILTR NONSENSU
-        ABSOLUTNY PRIORYTET - uruchamiany PIERWSZY w analyze_query_intent
-        NAPRAWKA: Nie blokuj literówek kategorii
+        NAPRAWIONA - KOMPLETNY FILTR NONSENSU
+        Z ORYGINALNĄ LOGIKĄ + NOWYM FILTREM KONTEKSTU MOTORYZACYJNEGO
         """
-        
         if not tokens:
             return True
         
         query_text = ' '.join(tokens).lower()
         
-        # KRYTYCZNA NAPRAWKA: Wyklucz kody techniczne oleju
+        # KROK 1: Wyklucz kody techniczne oleju
         technical_codes = ['5w30', '0w40', '5w40', '10w40', '0w30', '15w40', 'w30', 'w40', 'w50']
         if any(code in query_text for code in technical_codes):
-            return False  # NIE filtruj zapytań z kodami oleju
+            return False
         
-        # NOWA LOGIKA: Sprawdź czy to nie prawdziwa kategoria przed filtrowaniem
-        has_real_auto_category = False
-        has_auto_category_typo = False
+        # NOWA LOGIKA: Sprawdź kontekst motoryzacyjny PRZED filtrowaniem
+        has_auto_context = self.has_automotive_context(tokens)
         
         # Słownik znanych literówek kategorii
         category_typos = {
@@ -950,28 +986,15 @@ class EcommerceBot:
             'swiec': 'świeca',
             'sprężyny': 'sprężyna',
             'sprężyn': 'sprężyna',
-            'amortyzatory': 'amortyzator'
+            'amortyzatory': 'amortyzator',
+            'tarzca': 'tarcza'
         }
         
-        for token in tokens:
-            token_lower = token.lower()
-            
-            # Sprawdź dokładne dopasowania
-            if (token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] or
-                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] or
-                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands']):
-                has_real_auto_category = True
-                break
-            
-            # NOWE: Sprawdź znane literówki kategorii
-            if token_lower in category_typos:
-                corrected = category_typos[token_lower]
-                if corrected in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories']:
-                    has_auto_category_typo = True
-                    break
+        # Sprawdź czy ma znane literówki kategorii
+        has_auto_category_typo = any(token.lower() in category_typos for token in tokens)
         
-        # Jeśli ma prawdziwą kategorię auto lub znaną literówkę, zastosuj łagodniejsze filtry
-        if has_real_auto_category or has_auto_category_typo:
+        # Jeśli ma kontekst auto lub znaną literówkę, zastosuj łagodniejsze filtry
+        if has_auto_context or has_auto_category_typo:
             # Zastosuj tylko najostrzejsze filtry
             harsh_nonsense_patterns = [
                 'qwerty asdf', 'asdf qwerty', 'qwe asd', 'asd qwe',
@@ -993,65 +1016,70 @@ class EcommerceBot:
                 except ValueError:
                     pass
             
-            return False  # Nie filtruj jeśli ma prawdziwą kategorię lub znaną literówkę
+            return False  # Nie filtruj jeśli ma kontekst auto
         
-        # === PRIORYTET 1: KEYBOARD PATTERNS ===
+        # === PRIORYTET 1: POLSKIE STOP WORDS BEZ KONTEKSTU AUTO ===
+        polish_stopwords = {
+            'jestem', 'jest', 'to', 'na', 'w', 'do', 'z', 'i', 'a', 'o', 'że', 'się',
+            'nie', 'ale', 'jak', 'co', 'czy', 'gdzie', 'kiedy', 'dlaczego', 'bardzo',
+            'też', 'już', 'tylko', 'może', 'będzie', 'można', 'mam', 'ma'
+        }
+        
+        # Jeśli całe zapytanie to stop words
+        if all(token.lower() in polish_stopwords for token in tokens):
+            return True
+        
+        # Jeśli zapytanie składa się z samych stop words i bardzo krótkich słów
+        if all(token.lower() in polish_stopwords or len(token) <= 2 for token in tokens):
+            return True
+        
+        # === MINIMUM LENGTH CHECK ===
+        if len(query_text) < 3:
+            return True
+        
+        # === BARDZO KRÓTKIE TOKENY BEZ KONTEKSTU ===
+        very_short_tokens = [t for t in tokens if len(t) <= 2]
+        if len(very_short_tokens) >= len(tokens) // 2:
+            return True
+        
+        # === PRIORYTET 2: KEYBOARD PATTERNS ===
         keyboard_combinations = [
             'qwerty asdf', 'asdf qwerty', 'qwe asd', 'asd qwe',
             'zxc vbn', 'vbn zxc', 'dfg hjk', 'hjk dfg',
-            'asdfgh jklm', 'qwerty zxcv'  # NAPRAWKA: Dodane brakujące kombinacje
+            'asdfgh jklm', 'qwerty zxcv'
         ]
         if any(combo in query_text for combo in keyboard_combinations):
             return True
         
         # ROZSZERZONE keyboard patterns
         keyboard_patterns_extended = self.NONSENSE_DICTIONARY['keyboard_patterns'] + [
-            'jklm', 'hjkl', 'yuio', 'uiop', 'mnbv', 'lkjh'  # NAPRAWKA: Dodane brakujące wzorce
+            'jklm', 'hjkl', 'yuio', 'uiop', 'mnbv', 'lkjh'
         ]
         
         keyboard_count = sum(1 for token in tokens 
                            if any(pattern in token.lower() for pattern in keyboard_patterns_extended))
-        if keyboard_count >= 2:  # Minimum 2 keyboard tokens = nonsens
+        if keyboard_count >= 2:
             return True
         
-        # === PRIORYTET 2: MIESZANE JĘZYKI Z NONSENSEM ===
+        # === PRIORYTET 3: MIESZANE JĘZYKI Z NONSENSEM ===
         english_nonsense = ['hello', 'world', 'test', 'check', 'sample', 'demo']
-        tokens_lower = [t.lower() for t in tokens]
         
-        # Hello/world + części auto = nonsens
-        has_english_nonsense = any(word in tokens_lower for word in english_nonsense)
-        has_auto_part = any(word in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] for word in tokens_lower)
-        
-        if has_english_nonsense and has_auto_part:
+        # Hello/world bez kontekstu auto = nonsens
+        if any(word in [t.lower() for t in tokens] for word in english_nonsense):
             return True
         
-        # === PRIORYTET 3: FOOD + AUTO = ABSURD ===
+        # === PRIORYTET 4: FOOD + NONSENS ===
         food_words = ['pizza', 'hamburger', 'burger', 'food', 'eat', 'meal', 'restaurant', 'cook']
-        has_food = any(word in tokens_lower for word in food_words)
+        has_food = any(word in [t.lower() for t in tokens] for word in food_words)
         
-        # NAPRAWKA: Lepsze wykrywanie "klocki do pizzy"
-        if has_food and has_auto_part:
+        if has_food:
             return True
-            
-        # DODATKOWA NAPRAWKA: Sprawdź konstrukcję "X do Y"
-        if 'do' in tokens_lower:
-            try:
-                do_index = tokens_lower.index('do')
-                if (do_index > 0 and do_index < len(tokens_lower)-1):
-                    before_do = tokens_lower[do_index-1]
-                    after_do = tokens_lower[do_index+1]
-                    # "klocki do pizzy" = auto część + do + jedzenie
-                    if (before_do in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] and 
-                        after_do in ['pizzy', 'kawy', 'herbaty', 'chleba']):
-                        return True
-            except ValueError:
-                pass
         
-        # === PRIORYTET 4: FRAZY KONWERSACYJNE ===
+        # === PRIORYTET 5: FRAZY KONWERSACYJNE ===
         if any(phrase in query_text for phrase in self.NONSENSE_DICTIONARY['conversational_phrases']):
             return True
         
-        # === PRIORYTET 5: POWTÓRZENIA I GIBBERISH ===
+        # === PRIORYTET 6: POWTÓRZENIA I GIBBERISH ===
         for token in tokens:
             token_lower = token.lower()
             
@@ -1063,10 +1091,8 @@ class EcommerceBot:
             if any(pattern in token_lower for pattern in self.NONSENSE_DICTIONARY['gibberish_patterns']):
                 return True
         
-        # === PRIORYTET 6: SAME LICZBY BEZ KONTEKSTU ===
-        # NAPRAWKA: Ulepszone wykrywanie nonsensownych kodów
+        # === PRIORYTET 7: SAME LICZBY BEZ KONTEKSTU ===
         if len(tokens) <= 3 and all(token.isdigit() for token in tokens):
-            # Sprawdź czy to długie kody bez kontekstu motoryzacyjnego
             total_digits = sum(len(token) for token in tokens)
             if total_digits >= 8:  # Długie kody typu "123456 789"
                 return True
@@ -1184,13 +1210,13 @@ class EcommerceBot:
 
     def analyze_query_intent(self, query: str) -> Dict:
         """
-        NAPRAWIONA - FINALNA WERSJA
-        DODANO: Specjalne traktowanie literówek strukturalnych z produktami w bazie
+        NAPRAWIONA - Z FILTREM KONTEKSTU MOTORYZACYJNEGO
+        Dodano tylko jeden krok walidacji - bez łatania dziury
         """
         query_lower = query.lower().strip()
         query_tokens = query_lower.split()
         
-        # === KROK 1: ABSOLUTNY PRIORYTET - FILTR NONSENSU ===
+        # KROK 1: Filtr nonsense (bez zmian)
         if self.is_obvious_nonsense(query_tokens, 0):
             return {
                 'query': query,
@@ -1207,19 +1233,32 @@ class EcommerceBot:
                 'matches': []
             }
         
-        # === KROK 2: OBLICZ TOKEN VALIDITY ===
-        token_validity = self.calculate_token_validity(query_tokens)
+        # KROK 2: NOWY - Filtr kontekstu motoryzacyjnego
+        if not self.has_automotive_context(query_tokens):
+            return {
+                'query': query,
+                'tokens': query_tokens,
+                'token_validity': 0,
+                'best_match_score': 0,
+                'confidence_level': 'LOW',
+                'suggestion_type': 'no_automotive_context',
+                'ga4_event': 'search_failure',
+                'has_luxury_brand': False,
+                'has_product_code': False,
+                'is_structural': False,
+                'is_nonsense': True,
+                'matches': []
+            }
         
-        # === KROK 3: ANALIZA STRUKTURALNA ===
+        # KROK 3 i dalej: ORYGINALNA LOGIKA (bez zmian)
+        token_validity = self.calculate_token_validity(query_tokens)
         is_structural = self.is_structural_query(query_tokens)
         
-        # === KROK 4: MARKI LUKSUSOWE ===
         has_luxury_brand = any(
             brand in query_lower 
             for brand in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['luxury_brands']
         )
         
-        # === KROK 5: KODY PRODUKTÓW ===
         potential_product_codes = []
         short_codes = []
         nonsense_codes = []
@@ -1227,14 +1266,12 @@ class EcommerceBot:
         for token in query_tokens:
             token_upper = token.upper()
             
-            # Wykryj nonsensowne kody
             if (token.isdigit() and len(token) >= 6 and 
                 not any(brand in query_lower for brand in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands']) and
                 not any(cat in query_lower for cat in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'])):
                 nonsense_codes.append(token)
                 continue
                 
-            # Sprawdź prawdziwe kody produktu
             if (re.match(r'^[A-Z]\d{2,}', token_upper) or      
                 re.match(r'^\d{4,}', token) or                  
                 re.match(r'^[A-Z]{2,}\d{2,}', token_upper)):
@@ -1243,7 +1280,6 @@ class EcommerceBot:
                   (token.isdigit() or (token.isalnum() and any(c.isdigit() for c in token)))):
                 short_codes.append(token)
         
-        # Nonsensowne kody
         if nonsense_codes and not potential_product_codes and token_validity < 30:
             return {
                 'query': query,
@@ -1260,7 +1296,6 @@ class EcommerceBot:
                 'matches': []
             }
         
-        # === KROK 6: SPRAWDŹ CZY KODY ISTNIEJĄ ===
         has_nonexistent_code = False
         has_nonexistent_short_code = False
         
@@ -1300,14 +1335,10 @@ class EcommerceBot:
                         has_nonexistent_short_code = True
                         break
         
-        # === KROK 7: ZNAJDŹ NAJLEPSZE DOPASOWANIE ===
         matches = self.get_fuzzy_product_matches_internal(query_lower)
         best_match_score = matches[0][1] if matches else 0
         
-        # === KROK 8: NOWA LOGIKA - SPECJALNE TRAKTOWANIE LITERÓWEK STRUKTURALNYCH ===
-        # Jeśli jest strukturalne i ma literówkę kategorii, ale słaby match score
         if (is_structural and token_validity >= 70 and best_match_score < 70):
-            # Sprawdź czy to znana literówka kategorii z marką w bazie
             category_typos = {
                 'amortyztor': 'amortyzator',
                 'swica': 'świeca',
@@ -1325,7 +1356,6 @@ class EcommerceBot:
             )
             
             if has_category_typo and has_known_brand:
-                # Sprawdź czy istnieją produkty dla tej kombinacji
                 corrected_query = query_lower
                 for typo, correct in category_typos.items():
                     corrected_query = corrected_query.replace(typo, correct)
@@ -1333,7 +1363,7 @@ class EcommerceBot:
                 corrected_matches = self.get_fuzzy_product_matches_internal(corrected_query)
                 corrected_best_score = corrected_matches[0][1] if corrected_matches else 0
                 
-                if corrected_best_score >= 60:  # Jeśli po korekcji jest lepiej
+                if corrected_best_score >= 60:
                     confidence_level = 'HIGH'
                     suggestion_type = 'typo_corrected_structural'
                     ga4_event = 'search_typo_corrected'
@@ -1355,57 +1385,39 @@ class EcommerceBot:
                         'matches': matches[:6] if matches else []
                     }
         
-        # === KROK 9: ORYGINALNA KLASYFIKACJA ===
-        
-        # 1. Bardzo wysokie dopasowanie = dokładne trafienie
+        # ORYGINALNA KLASYFIKACJA (bez zmian)
         if best_match_score >= 90:
             confidence_level = 'HIGH'
             suggestion_type = 'exact_match'
             ga4_event = None
-        
-        # 2. Zapytanie strukturalne (kategoria + nieznana marka)
         elif is_structural:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'structural_missing'
             ga4_event = 'search_lost_demand'
-        
-        # 3. Nieistniejący kod produktu (długi)
         elif has_nonexistent_code and token_validity >= 40:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'product_code_missing'
             ga4_event = 'search_lost_demand'
-        
-        # 4. Nieistniejący krótki kod
         elif has_nonexistent_short_code and token_validity >= 70:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'short_code_missing'
             ga4_event = 'search_lost_demand'
-        
-        # 5. Istniejący kod ale średnie dopasowanie
         elif potential_product_codes and best_match_score >= 40:
             confidence_level = 'MEDIUM'
             suggestion_type = 'code_found'
             ga4_event = 'search_typo_corrected'
-        
-        # 6. Marka luksusowa bez produktów
         elif has_luxury_brand and best_match_score < 60:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'luxury_brand_missing'
             ga4_event = 'search_lost_demand'
-        
-        # 7. Wysokie dopasowanie
         elif best_match_score >= 80:
             confidence_level = 'HIGH'
             suggestion_type = 'good_match'
             ga4_event = None
-        
-        # 8. Średnie dopasowanie + sensowne słowa = literówka
         elif best_match_score >= 70 and token_validity >= 50:
             confidence_level = 'MEDIUM'
             suggestion_type = 'typo_correction'
             ga4_event = 'search_typo_corrected'
-        
-        # 9. Model missing
         elif (len(query_tokens) >= 2 and 
               token_validity >= 70 and 
               best_match_score < 70 and
@@ -1414,20 +1426,14 @@ class EcommerceBot:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'model_missing'
             ga4_event = 'search_lost_demand'
-        
-        # 10. Sensowne słowa ale brak dopasowania
         elif token_validity >= 35:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'product_missing'
             ga4_event = 'search_lost_demand'
-        
-        # 11. Graniczne przypadki
         elif token_validity >= 20:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'unknown_brand'
             ga4_event = 'search_lost_demand'
-        
-        # 12. Fallback
         else:
             confidence_level = 'LOW'
             suggestion_type = 'nonsensical'
@@ -1967,4 +1973,3 @@ Jeśli wiele osób szuka tego produktu, dodamy go do naszej oferty."""
                 {'text': '↩️ Menu główne', 'action': 'main_menu'}
             ]
         }
-        
