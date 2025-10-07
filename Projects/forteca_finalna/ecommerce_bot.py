@@ -519,7 +519,7 @@ class EcommerceBot:
     
     def has_automotive_context(self, tokens: List[str]) -> bool:
         """
-        NAPRAWIONA - z rozszerzonym słownikiem części samochodowych
+        NAPRAWIONA - z rozszerzonym słownikiem części samochodowych + OBSŁUGA KODÓW PRODUKTÓW
         """
         for token in tokens:
             token_lower = token.lower()
@@ -548,6 +548,55 @@ class EcommerceBot:
             if token_lower in {'kloki', 'swica', 'swieca', 'akumlator', 'filetr', 'amortyztor', 'olel'}:
                 return True
             
+            # NOWE: Sprawdź kody produktów z Twojej bazy
+            product_codes_from_database = [
+                '0986494104', '13.0460-7218', 'fdb4050', 'gdb1748', 'p83052', '2456701',
+                '13.0470-7241', 't1323', '23914.165.1', '13.0460-7265', '09.9772.11',
+                '24.0330-0184', '100.3234.20', '54877pro', 'df6123s', 'hu719/7x',
+                'ox371d', 'f026407022', 'h90w04', '25.073.00', 'f026402836', 'wk830/7',
+                '33-2990', 'c2774/1', 'lx1006', 'cuk2939', '1987432414', '22-266767',
+                '349034', '314896', '8741-1394sport', 'g8069', 'ilzkr7b11', 'fr7dpp33',
+                'psg006', 'rc9yc', 'ik20tt'
+            ]
+            
+            # Sprawdź dokładne dopasowanie kodu
+            if token_lower in [code.lower() for code in product_codes_from_database]:
+                return True
+            
+            # Sprawdź częściowe dopasowanie kodu
+            for code in product_codes_from_database:
+                if (len(token) >= 4 and 
+                    (token_lower in code.lower() or code.lower() in token_lower)):
+                    return True
+            
+            # NOWE: Sprawdź wzorce kodów produktów (regex)
+            if any(re.match(pattern, token.upper()) for pattern in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['product_code_patterns']):
+                return True
+            
+            # NOWE: Sprawdź specyfikacje techniczne
+            technical_specs = {
+                '5w30', '0w40', '5w40', '10w40', '0w30', '15w40',
+                '74ah', '60ah', '95ah', '45ah', '680a', '540a', '800a', '330a',
+                '320mm', '300mm', '312mm', '345mm', '294mm',
+                '205/55r16', '225/45r17', '195/65r15', '120/70zr17'
+            }
+            
+            if token_lower in technical_specs:
+                return True
+            
+            # Sprawdź wzorce specyfikacji (regex)
+            spec_patterns = [
+                r'^\d+w\d+$',        # 5w30, 0w40
+                r'^\d+ah$',          # 74ah, 60ah  
+                r'^\d+a$',           # 680a, 540a
+                r'^\d+mm$',          # 320mm, 300mm
+                r'^\d+/\d+r\d+$',    # 205/55r16
+                r'^\d+/\d+zr\d+$'    # 120/70zr17
+            ]
+            
+            if any(re.match(pattern, token_lower) for pattern in spec_patterns):
+                return True
+            
             # Fuzzy match dla głównych kategorii
             main_categories = ['klocki', 'filtr', 'amortyzator', 'świeca', 'akumulator', 'olej', 'opony']
             for category in main_categories:
@@ -559,78 +608,202 @@ class EcommerceBot:
     
     def is_structural_query(self, tokens: List[str]) -> bool:
         """
-        STRATEGIA 50/50 - TRZECIA BRAMKA
-        Wykorzystuje ZASÓB B do wykrywania strukturalnych zapytań (kategoria + nieznana marka)
-        NAPRAWIONE: Dodano fuzzy matching dla kategorii z literówkami
+        FINALNA NAPRAWA - Inteligentna klasyfikacja z wykluczeniem naturalnych zapytań
         """
         has_category = False
         has_unknown_brand = False
         
         print(f"[STRUCTURAL DEBUG] Tokens: {tokens}")
         
-        # ZASÓB B: Sprawdź czy zawiera znaną kategorię z rozszerzonej bazy
-        # NAPRAWKA: Dodaj fuzzy matching dla kategorii
+        # === KOMPLETNY SŁOWNIK NATURALNYCH ZAPYTAŃ KONTEKSTOWYCH ===
+        natural_context_words = {
+            # Przyimki podstawowe
+            'do', 'dla', 'na', 'w', 'z', 'ze', 'od', 'po', 'przed', 'za', 'pod', 'nad', 'przy', 'przez',
+            
+            # Pytania o kompatybilność i dopasowanie
+            'pasuje', 'pasują', 'można', 'czy', 'jakiś', 'jaki', 'jakie', 'które', 'która', 'który',
+            'dopasowanie', 'kompatybilny', 'kompatybilna', 'kompatybilne', 'pasujący', 'pasująca', 'pasujące',
+            'czy', 'może', 'będzie', 'da', 'daje', 'się', 'idealny', 'idealna', 'idealne',
+            
+            # Kontekst czasowy i sezonowy
+            'zimą', 'latem', 'sezon', 'roku', 'teraz', 'obecnie', 'jesienią', 'wiosną',
+            'zimowy', 'letni', 'jesienny', 'wiosenny', 'sezonowy', 'sezonowe', 'sezonowa',
+            
+            # Słowa określające ilość i rodzaj
+            'jeden', 'jedna', 'jedno', 'kilka', 'pare', 'parę', 'komplet', 'zestaw', 'sztuka', 'szt',
+            'dwa', 'dwie', 'trzy', 'cztery', 'pięć', 'sześć', 'wszystkie', 'każdy', 'każda', 'każde',
+            
+            # Ogólne kategorie i określenia
+            'części', 'część', 'akcesoria', 'wyposażenie', 'element', 'komponenty', 'komponent',
+            'produkt', 'produkty', 'towar', 'towary', 'rzecz', 'rzeczy', 'typ', 'rodzaj', 'model',
+            
+            # Słowa związane z zakupem i wyborem
+            'kupię', 'kupi', 'kupić', 'kupno', 'zakup', 'zakupy', 'wybór', 'wybieram', 'szukam', 'potrzebuję',
+            'potrzebny', 'potrzebna', 'potrzebne', 'chcę', 'chce', 'mam', 'ma', 'będę', 'będzie',
+            
+            # Pytania o cenę i dostępność
+            'ile', 'kosztuje', 'koszt', 'cena', 'ceny', 'tani', 'tania', 'tanie', 'drogi', 'droga', 'drogie',
+            'dostępny', 'dostępna', 'dostępne', 'jest', 'są', 'będzie', 'będą', 'mają', 'ma',
+            
+            # Słowa związane z montażem i instalacją
+            'montaż', 'montażu', 'montować', 'instalacja', 'instalować', 'wymiana', 'wymiany', 'wymienić',
+            'naprawy', 'naprawa', 'naprawić', 'serwis', 'przegląd', 'diagnostyka',
+            
+            # Określenia stanu i jakości
+            'nowy', 'nowa', 'nowe', 'używany', 'używana', 'używane', 'oryginalny', 'oryginalna', 'oryginalne',
+            'zamiennik', 'zamienniki', 'odpowiednik', 'jakość', 'dobry', 'dobra', 'dobre', 'najlepszy', 'najlepsza',
+            
+            # Lokalizacja i pozycja
+            'gdzie', 'miejsce', 'pozycja', 'strona', 'góra', 'dół', 'środek', 'bok', 'krawędź',
+            
+            # Czasowniki pomocnicze
+            'mieć', 'mam', 'ma', 'mają', 'będę', 'będzie', 'będą', 'mogę', 'może', 'można',
+            'powinien', 'powinna', 'powinno', 'musi', 'trzeba', 'należy', 'warto',
+            
+            # Słowa pytające
+            'co', 'gdzie', 'kiedy', 'jak', 'dlaczego', 'po', 'co', 'skąd', 'dokąd', 'czemu'
+        }
+        
+        # Sprawdź czy zapytanie zawiera naturalne słowa kontekstowe
+        context_words_found = [token.lower() for token in tokens if token.lower() in natural_context_words]
+        
+        # KLUCZOWA ZMIANA: Sprawdź czy są też słowa produktowe
+        has_product_context = any(
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] or
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands'] or
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['luxury_brands'] or
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] or
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_models'] or
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_models']
+            for token in tokens
+        )
+        
+        # Blokuj TYLKO jeśli są context words ALE NIE MA kontekstu produktowego
+        if context_words_found and not has_product_context:
+            print(f"[STRUCTURAL DEBUG] Found natural context words WITHOUT product context: {context_words_found}")
+            print(f"[STRUCTURAL DEBUG] This is a pure conversational query, not product search")
+            return False
+        elif context_words_found and has_product_context:
+            print(f"[STRUCTURAL DEBUG] Found context words: {context_words_found}, but also product context - allowing")
+            # Kontynuuj normalnie - to może być zapytanie typu "klocki do bmw"
+        
+        # === MEGA SŁOWNIK LITERÓWEK - ZASTOSUJ PRZED KLASYFIKACJĄ ===
+        comprehensive_typos = {
+            # Świece - wszystkie warianty
+            'swiczka': 'świeca', 'swica': 'świeca', 'swieca': 'świeca', 'swieczka': 'świeca',
+            'świczka': 'świeca', 'swiecz': 'świeca', 'swiec': 'świeca', 'świece': 'świeca',
+            'swiecy': 'świeca', 'swiecami': 'świeca', 'swieczkam': 'świeca',
+            
+            # Klocki - wszystkie warianty
+            'kloki': 'klocki', 'klocek': 'klocki', 'kloce': 'klocki', 'kloci': 'klocki',
+            'klockei': 'klocki', 'klocke': 'klocki', 'klockami': 'klocki', 'klockow': 'klocki',
+            'klocków': 'klocki', 'klocek': 'klocki',
+            
+            # Filtry - maksymalne pokrycie
+            'filetr': 'filtr', 'filtry': 'filtr', 'filtery': 'filtr', 'filet': 'filtr',
+            'filttr': 'filtr', 'filrt': 'filtr', 'flitr': 'filtr', 'fltr': 'filtr',
+            'filtrem': 'filtr', 'filtrow': 'filtr', 'filtra': 'filtr', 'filtrów': 'filtr',
+            
+            # Amortyzatory
+            'amortyztor': 'amortyzator', 'amortyzatory': 'amortyzator', 'amortyzzator': 'amortyzator',
+            'amortyzatr': 'amortyzator', 'amortyzato': 'amortyzator', 'amortyzatorow': 'amortyzator',
+            'amortyzatorów': 'amortyzator', 'amortyztory': 'amortyzator',
+            
+            # Akumulatory
+            'akumlator': 'akumulator', 'akumualtor': 'akumulator', 'akumualator': 'akumulator',
+            'akumultor': 'akumulator', 'akumultator': 'akumulator', 'bateri': 'akumulator',
+            'bateria': 'akumulator', 'batterya': 'akumulator', 'akumulatory': 'akumulator',
+            'akumulatorów': 'akumulator', 'akumulatorem': 'akumulator',
+            
+            # Hamulce
+            'hamulec': 'hamulce', 'hamulcowy': 'hamulcowe', 'hamulcwe': 'hamulcowe',
+            'hamulcow': 'hamulcowe', 'hamulcowe': 'hamulce', 'hamulcami': 'hamulce',
+            'hamulców': 'hamulce', 'hamowania': 'hamulce', 'hamulcowych': 'hamulcowe',
+            
+            # Opony
+            'opon': 'opony', 'opny': 'opony', 'opona': 'opony', 'opone': 'opony',
+            'oponami': 'opony', 'oponę': 'opony', 'opnych': 'opony', 'oponach': 'opony',
+            
+            # Marki z literówkami
+            'bosh': 'bosch', 'boach': 'bosch', 'boschem': 'bosch', 'boscha': 'bosch',
+            'sacsh': 'sachs', 'sach': 'sachs', 'sachsem': 'sachs', 'sachsa': 'sachs',
+            'bmv': 'bmw', 'bmew': 'bmw', 'bmw-em': 'bmw', 'bmw-a': 'bmw',
+            'toyoya': 'toyota', 'toyata': 'toyota', 'toyotą': 'toyota', 'toyoty': 'toyota',
+            'mercedesbenz': 'mercedes', 'mercedes-benz': 'mercedes', 'mercedesem': 'mercedes',
+            'mercedesa': 'mercedes', 'mercedesy': 'mercedes',
+            
+            # Skróty marek
+            'vw': 'volkswagen', 'volkswage': 'volkswagen', 'folkswaen': 'volkswagen',
+            'mb': 'mercedes', 'merc': 'mercedes', 'merka': 'mercedes',
+            'yam': 'yamaha', 'yamha': 'yamaha', 'yamahy': 'yamaha', 'yamahe': 'yamaha',
+            
+            # Części dodatkowe
+            'tarcze': 'tarcza', 'tarczy': 'tarcza', 'tarcy': 'tarcza', 'tarzca': 'tarcza',
+            'tarcami': 'tarcza', 'tarczami': 'tarcza', 'tarczę': 'tarcza',
+            'sprężyny': 'sprężyna', 'sprężyn': 'sprężyna', 'sprezyna': 'sprężyna',
+            'sprezyny': 'sprężyna', 'sprezyn': 'sprężyna', 'sprężynami': 'sprężyna',
+            'lanczuch': 'łańcuch', 'łancuch': 'łańcuch', 'lancuch': 'łańcuch',
+            'lancuchem': 'łańcuch', 'łańcuchem': 'łańcuch',
+            
+            # Pozycje
+            'przod': 'przód', 'przedni': 'przód', 'przednia': 'przód', 'przednie': 'przód',
+            'tylny': 'tył', 'tylni': 'tył', 'tylna': 'tył', 'tylne': 'tył',
+            'lewy': 'lewy', 'prawy': 'prawy', 'lewa': 'lewy', 'prawa': 'prawy',
+            
+            # Oleje i płyny
+            'oleju': 'olej', 'oleje': 'olej', 'olel': 'olej', 'olejow': 'olej',
+            'olejów': 'olej', 'olejami': 'olej', 'olejem': 'olej',
+            'powietza': 'powietrza', 'powietrz': 'powietrza', 'powietra': 'powietrza',
+            'powietrzem': 'powietrza', 'powietrzu': 'powietrza',
+            
+            # Sezonowe
+            'zimow': 'zimowe', 'zimowy': 'zimowe', 'zimowa': 'zimowe', 'zimowych': 'zimowe',
+            'letni': 'letnie', 'letnia': 'letnie', 'letnich': 'letnie', 'letnimi': 'letnie',
+            'letnią': 'letnie', 'zimową': 'zimowe', 'zimowymi': 'zimowe',
+            
+            # Techniczne terminy
+            'napędowy': 'napęd', 'napedowy': 'napęd', 'napędowe': 'napęd',
+            'zapłonowa': 'zapłon', 'zaplonowa': 'zapłon', 'zapłonowe': 'zapłon',
+            'silnikowy': 'olej', 'silnikowego': 'olej', 'silnikowe': 'olej',
+            'chłodzenia': 'chłodnica', 'chlodzenia': 'chłodnica', 'chłodzenie': 'chłodnica',
+            'wspomagania': 'wspomaganie', 'wspomaganie': 'kierownica'
+        }
+        
+        # Zastosuj korekcje literówek PRZED sprawdzaniem kategorii
+        corrected_tokens = []
         for token in tokens:
             token_lower = token.lower()
-            
-            # Dokładne dopasowanie
-            if (token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] or
-                token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['technical_terms']):
+            if token_lower in comprehensive_typos:
+                corrected_tokens.append(comprehensive_typos[token_lower])
+                print(f"[STRUCTURAL DEBUG] Corrected typo: {token} -> {comprehensive_typos[token_lower]}")
+            else:
+                corrected_tokens.append(token_lower)
+        
+        # === SPRAWDZENIE KATEGORII (z poprawionymi tokenami) ===
+        for token in corrected_tokens:
+            if (token in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] or
+                token in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['technical_terms']):
                 has_category = True
                 print(f"[STRUCTURAL DEBUG] Found category: {token}")
                 break
             
-            # NOWE: Sprawdź znane literówki kategorii
-            category_typos = {
-                'amortyztor': 'amortyzator',
-                'filetr': 'filtr', 
-                'filtery': 'filtr',
-                'swica': 'świeca',
-                'swieca': 'świeca',
-                'akumlator': 'akumulator',
-                'kloki': 'klocki',
-                'hamulcowy': 'hamulcowe',
-                'hamulec': 'hamulce',
-                'tarcze': 'tarcza',
-                'tarczy': 'tarcza',
-                'świece': 'świeca',
-                'swiec': 'świeca',
-                'sprężyny': 'sprężyna',
-                'sprężyn': 'sprężyna',
-                'amortyzatory': 'amortyzator'
-            }
-            
-            if token_lower in category_typos:
-                corrected = category_typos[token_lower]
-                if corrected in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories']:
-                    has_category = True
-                    print(f"[STRUCTURAL DEBUG] Found category via typo correction: {token} -> {corrected}")
-                    break
-            
-            # NOWE: Fuzzy matching dla kategorii (tylko dla słów 4+ liter)
+            # Fuzzy matching dla kategorii
             if len(token) >= 4:
-                best_category_match = 0
-                best_category = None
-                
                 for category in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories']:
-                    if len(category) >= 4:  # Tylko dla dłuższych kategorii
-                        similarity = fuzz.ratio(token_lower, category)
-                        if similarity > best_category_match:
-                            best_category_match = similarity
-                            best_category = category
-                
-                # Próg 80% dla fuzzy matching kategorii
-                if best_category_match >= 80:
-                    has_category = True
-                    print(f"[STRUCTURAL DEBUG] Found category via fuzzy match: {token} -> {best_category} ({best_category_match}%)")
+                    if len(category) >= 4:
+                        similarity = fuzz.ratio(token, category)
+                        if similarity >= 85:
+                            has_category = True
+                            print(f"[STRUCTURAL DEBUG] Found category via fuzzy: {token} -> {category} ({similarity}%)")
+                            break
+                if has_category:
                     break
         
-        # ZASÓB B: Sprawdź czy zawiera nieznane słowo (potencjalna marka)
+        # === SPRAWDZENIE NIEZNANYCH MAREK ===
         for token in tokens:
             token_lower = token.lower()
-            print(f"[STRUCTURAL DEBUG] Checking token: {token_lower}")
             
-            # Skip znane słowa z ZASOBU B
+            # Skip wszystkie znane słowa i konteksty
             if (token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] or
                 token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands'] or
                 token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['luxury_brands'] or
@@ -638,86 +811,158 @@ class EcommerceBot:
                 token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['technical_terms'] or
                 token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_models'] or
                 token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_models'] or
-                token_lower in self.POLISH_DICTIONARY):
-                print(f"[STRUCTURAL DEBUG] Skipping known word: {token_lower}")
+                token_lower in self.POLISH_DICTIONARY or
+                token_lower in comprehensive_typos or
+                token_lower in natural_context_words):
                 continue
             
-            # NOWE: Skip znane literówki kategorii
-            category_typos = {
-                'amortyztor': 'amortyzator',
-                'filetr': 'filtr', 
-                'swica': 'świeca',
-                'swieca': 'świeca',
-                'akumlator': 'akumulator',
-                'kloki': 'klocki'
-            }
-            if token_lower in category_typos:
-                print(f"[STRUCTURAL DEBUG] Skipping known category typo: {token_lower}")
-                continue
-            
-            # Skip model codes
+            # Skip kody produktów
             if any(re.match(pattern, token.upper()) for pattern in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['product_code_patterns']):
-                print(f"[STRUCTURAL DEBUG] Skipping model code: {token_lower}")
                 continue
-                
-            # Jeśli słowo wygląda sensownie (bez cyfr, przyzwoita długość)
+            
+            # Zaostrzone kryteria dla nieznanych marek
             if (len(token) >= 3 and len(token) <= 15 and 
                 token.isalpha() and
                 not any(pattern in token_lower for pattern in self.NONSENSE_DICTIONARY['keyboard_patterns']) and
-                token_lower not in self.NONSENSE_DICTIONARY['test_words']):
-                print(f"[STRUCTURAL DEBUG] Found unknown brand: {token_lower}")
+                token_lower not in self.NONSENSE_DICTIONARY['test_words'] and
+                not token_lower.endswith('ować') and
+                not token_lower.endswith('ić') and
+                not token_lower.endswith('ąć') and
+                not token_lower.endswith('nąć')):
                 has_unknown_brand = True
+                print(f"[STRUCTURAL DEBUG] Found potential unknown brand: {token}")
                 break
         
         result = has_category and has_unknown_brand
-        print(f"[STRUCTURAL DEBUG] Result: category={has_category}, unknown={has_unknown_brand}, structural={result}")
+        print(f"[STRUCTURAL DEBUG] Final result: category={has_category}, unknown_brand={has_unknown_brand}, structural={result}")
         return result
+
+    # DOKŁADNE MIEJSCE WKLEJENIA I MODYFIKACJI
+
+# 1. ZNAJDŹ METODĘ calculate_token_validity (około linii 350-450)
+# 2. ZAMIEŃ ISTNIEJĄCY SŁOWNIK common_typos NA TEN ROZSZERZONY:
 
     def calculate_token_validity(self, query_tokens: List[str]) -> float:
         """
-        NAPRAWIONA STRATEGIA 50/50 - WYKORZYSTUJE ZASÓB B
-        Oblicza wskaźnik poprawności tokenów (0-100) używając rozszerzonej bazy wiedzy
-        Z LEPSZĄ OBSŁUGĄ LITERÓWEK
+        ULEPSZONA WERSJA - Maksymalnie agresywna korekcja literówek
         """
         if not query_tokens:
             return 0
         
         validity_scores = []
         
+        # Ten sam rozszerzony słownik co w is_structural_query
+        mega_typos = {
+            # Świece
+            'swica': 'świeca', 'swieca': 'świeca', 'swiczka': 'świeca', 'swiecka': 'świeca',
+            'swieczka': 'świeca', 'swieczkia': 'świeca', 'świczka': 'świeca', 'swiecz': 'świeca',
+            'swiec': 'świeca', 'świece': 'świeca', 'swiecy': 'świeca', 'swiecami': 'świeca',
+            
+            # Klocki
+            'kloki': 'klocki', 'klocek': 'klocki', 'kloce': 'klocki', 'kloci': 'klocki',
+            'klockei': 'klocki', 'klocke': 'klocki', 'klockami': 'klocki', 'klockow': 'klocki',
+            'klocków': 'klocki',
+            
+            # Filtry
+            'filetr': 'filtr', 'filtry': 'filtr', 'filtery': 'filtr', 'filet': 'filtr',
+            'filttr': 'filtr', 'filrt': 'filtr', 'flitr': 'filtr', 'fltr': 'filtr',
+            'filtrem': 'filtr', 'filtrow': 'filtr', 'filtra': 'filtr', 'filtrów': 'filtr',
+            
+            # Amortyzatory
+            'amortyztor': 'amortyzator', 'amortyzatory': 'amortyzator', 'amortyzzator': 'amortyzator',
+            'amortyzatr': 'amortyzator', 'amortyzato': 'amortyzator', 'amortyzatorow': 'amortyzator',
+            'amortyzatorów': 'amortyzator',
+            
+            # Akumulatory
+            'akumlator': 'akumulator', 'akumualtor': 'akumulator', 'akumualator': 'akumulator',
+            'akumultor': 'akumulator', 'akumultator': 'akumulator', 'bateri': 'akumulator',
+            'bateria': 'akumulator', 'batterya': 'akumulator', 'akumulatory': 'akumulator',
+            'akumulatorów': 'akumulator',
+            
+            # Hamulce
+            'hamulec': 'hamulce', 'hamulcowy': 'hamulcowe', 'hamulcwe': 'hamulcowe',
+            'hamulcow': 'hamulcowe', 'hamulcowe': 'hamulce', 'hamulcami': 'hamulce',
+            'hamulców': 'hamulce', 'hamowania': 'hamulce',
+            
+            # Opony
+            'opon': 'opony', 'opny': 'opony', 'opona': 'opony', 'opone': 'opony',
+            'oponami': 'opony', 'oponę': 'opony', 'opnych': 'opony',
+            
+            # Marki
+            'bosh': 'bosch', 'boach': 'bosch', 'boschem': 'bosch',
+            'sacsh': 'sachs', 'sach': 'sachs', 'sachsem': 'sachs',
+            'bmv': 'bmw', 'bmew': 'bmw', 'bmw-em': 'bmw',
+            'toyoya': 'toyota', 'toyata': 'toyota', 'toyotą': 'toyota',
+            'mercedesbenz': 'mercedes', 'mercedes-benz': 'mercedes', 'mercedesem': 'mercedes',
+            'vw': 'volkswagen', 'volkswage': 'volkswagen', 'folkswaen': 'volkswagen',
+            'mb': 'mercedes', 'merc': 'mercedes',
+            'yam': 'yamaha', 'yamha': 'yamaha', 'yamahy': 'yamaha',
+            
+            # Części
+            'tarcze': 'tarcza', 'tarczy': 'tarcza', 'tarcy': 'tarcza', 'tarzca': 'tarcza',
+            'sprężyny': 'sprężyna', 'sprężyn': 'sprężyna', 'sprezyna': 'sprężyna',
+            'sprezyny': 'sprężyna', 'lanczuch': 'łańcuch', 'łancuch': 'łańcuch',
+            
+            # Pozycje
+            'przod': 'przód', 'przedni': 'przód', 'przednia': 'przód',
+            'tylny': 'tył', 'tylni': 'tył', 'tylna': 'tył',
+            
+            # Techniczne
+            'oleju': 'olej', 'oleje': 'olej', 'olel': 'olej', 'olejow': 'olej',
+            'powietza': 'powietrza', 'powietrz': 'powietrza', 'powietra': 'powietrza',
+            'zimow': 'zimowe', 'zimowy': 'zimowe', 'zimowa': 'zimowe',
+            'letni': 'letnie', 'letnia': 'letnie', 'letnich': 'letnie',
+            'napędowy': 'napęd', 'napedowy': 'napęd',
+            'zapłonowa': 'zapłon', 'zaplonowa': 'zapłon',
+            'silnikowy': 'olej', 'silnikowego': 'olej'
+        }
+        
         for token in query_tokens:
             token_lower = token.lower()
             score = 0
             
-            # ZASÓB B: Sprawdź w rozszerzonej bazie marek (waga 100)
-            if token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands']:
+            # KROK 1: AGRESYWNA KOREKCJA LITERÓWEK
+            if token_lower in mega_typos:
+                corrected_token = mega_typos[token_lower]
+                print(f"[VALIDITY DEBUG] Typo corrected: {token} -> {corrected_token}")
+                
+                if corrected_token in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories']:
+                    score = 95
+                elif corrected_token in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands']:
+                    score = 98
+                elif corrected_token in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands']:
+                    score = 96
+                elif corrected_token in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['luxury_brands']:
+                    score = 96
+                elif corrected_token in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['technical_terms']:
+                    score = 90
+                else:
+                    score = 85
+            
+            # KROK 2: DOKŁADNE DOPASOWANIA
+            elif token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands']:
                 score = 100
-            # ZASÓB B: Sprawdź marki motocyklowe (waga 95)
             elif token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands']:
-                score = 95
-            # ZASÓB B: Sprawdź marki luksusowe (waga 95)
+                score = 98
             elif token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['luxury_brands']:
-                score = 95
-            # ZASÓB B: Sprawdź w rozszerzonym słowniku kategorii (waga 90)
+                score = 98
             elif token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories']:
-                score = 90
-            # ZASÓB B: Sprawdź modele samochodów (waga 85)
+                score = 96
             elif token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_models']:
-                score = 85
-            # ZASÓB B: Sprawdź modele motocykli (waga 80)
+                score = 92
             elif token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_models']:
-                score = 80
-            # ZASÓB B: Sprawdź terminy techniczne (waga 70)
+                score = 90
             elif token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['technical_terms']:
-                score = 70
-            # ZASÓB B: Sprawdź czy pasuje do wzorca modelu (waga 60)
+                score = 88
             elif any(re.match(pattern, token.upper()) for pattern in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['product_code_patterns']):
-                score = 60
-            # Sprawdź czy to prawidłowe polskie słowo (waga 50)
+                score = 85
             elif token_lower in self.POLISH_DICTIONARY:
-                score = 50
-            # ULEPSZONE: Sprawdź literówki w markach i kategoriach
+                score = 75
+            
+            # KROK 3: FUZZY MATCHING
             else:
-                # ZASÓB B: Prioritet dla marek i kategorii (najważniejsze)
+                best_match_score = 0
+                
                 priority_words = (
                     self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] +
                     self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands'] +
@@ -725,109 +970,27 @@ class EcommerceBot:
                     self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories']
                 )
                 
-                min_distance = float('inf')
-                best_match_type = None
-                
-                # NAPRAWKA: Dodaj konkretne mapowanie literówek dla kluczowych słów
-                common_typos = {
-                    'kloki': 'klocki',
-                    'swica': 'świeca', 
-                    'swieca': 'świeca',
-                    'akumlator': 'akumulator',
-                    'filetr': 'filtr',
-                    'amortyztor': 'amortyzator',
-                    # NOWE MAPOWANIA - KATEGORIE CZĘŚCI
-                    'hamulcowy': 'hamulcowe',
-                    'hamulec': 'hamulce',
-                    'filtry': 'filtr',
-                    'filtery': 'filtr',
-                    'akumualtor': 'akumulator',
-                    'bateria': 'akumulator',
-                    'swiecka': 'świeca',
-                    'zarowka': 'żarówka',
-                    'oleje': 'olej',
-                    'oleju': 'olej',
-                    'powietrza': 'filtr',
-                    'kabinowy': 'filtr',
-                    'amortyzatory': 'amortyzator',
-                    'zawieszenie': 'amortyzator',
-                    'sprężyny': 'sprężyna',
-                    'sprężyn': 'sprężyna',
-                    'tarcze': 'tarcza',
-                    'tarczy': 'tarcza',
-                    'świece': 'świeca',
-                    'swiec': 'świeca',
-                    # MARKI Z LITERÓWKAMI
-                    'mercedesbenz': 'mercedes',
-                    'bmv': 'bmw',
-                    'volkswagen': 'vw',
-                    'toyoya': 'toyota',
-                    'reno': 'renault',
-                    'man': 'mann',
-                    'bosh': 'bosch',
-                    'sachs': 'sachs'  # już prawidłowe, ale dodane dla pewności
-                }
-                
-                # Sprawdź znane literówki
-                if token_lower in common_typos:
-                    corrected = common_typos[token_lower]
-                    if corrected in priority_words:
-                        score = 85  # Wysoki wynik dla znanych literówek
-                
-                if score == 0:  # Jeśli nie znaleziono w mapowaniu literówek
-                    # Sprawdź literówki w priorytetowych słowach
-                    for known_word in priority_words:
+                for known_word in priority_words:
+                    if len(token) >= 3 and len(known_word) >= 3:
                         distance = self.levenshtein_distance(token_lower, known_word)
-                        if distance < min_distance:
-                            min_distance = distance
-                            if known_word in (self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] + 
-                                             self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands'] + 
-                                             self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['luxury_brands']):
-                                best_match_type = 'brand'
-                            else:
-                                best_match_type = 'category'
-                    
-                    # Jeśli nie znaleziono dobrej literówki w priorytetowych, sprawdź resztę
-                    if min_distance > 2:
-                        other_words = (
-                            self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_models'] +
-                            self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_models'] +
-                            self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['technical_terms'] +
-                            list(self.POLISH_DICTIONARY)
-                        )
-                        
-                        for known_word in other_words:
-                            distance = self.levenshtein_distance(token_lower, known_word)
-                            if distance < min_distance:
-                                min_distance = distance
-                                best_match_type = 'other'
-                    
-                    # Przyznaj punkty na podstawie odległości i typu
-                    if min_distance <= 1:
-                        if best_match_type == 'brand':
-                            score = 85  # Literówka w marce
-                        elif best_match_type == 'category':
-                            score = 75  # Literówka w kategorii
-                        else:
-                            score = 60  # Literówka w innym słowie
-                    elif min_distance <= 2:
-                        if best_match_type == 'brand':
-                            score = 70  # Większa literówka w marce
-                        elif best_match_type == 'category':
-                            score = 60  # Większa literówka w kategorii
-                        else:
-                            score = 40  # Większa literówka w innym słowie
-                    elif min_distance <= 3:
-                        if best_match_type in ['brand', 'category']:
-                            score = 30  # Bardzo duża literówka ale w ważnym słowie
-                        else:
-                            score = 20
-                    else:
-                        score = 0
+                        similarity = max(0, 100 - (distance * 12))  # Bardziej tolerancyjne
+                        best_match_score = max(best_match_score, similarity)
+                
+                if best_match_score >= 75:
+                    score = min(85, best_match_score)
+                elif best_match_score >= 60:
+                    score = min(70, best_match_score)
+                elif best_match_score >= 45:
+                    score = min(55, best_match_score)
+                else:
+                    score = 0
             
             validity_scores.append(score)
+            print(f"[VALIDITY DEBUG] Token '{token}' scored: {score}")
         
-        return sum(validity_scores) / len(validity_scores)
+        final_score = sum(validity_scores) / len(validity_scores)
+        print(f"[VALIDITY DEBUG] Final average score: {final_score}")
+        return final_score
     
     
     def looks_like_product_query(self, tokens: List[str]) -> bool:
@@ -954,7 +1117,7 @@ class EcommerceBot:
     def is_obvious_nonsense(self, tokens: List[str], token_validity: float) -> bool:
         """
         NAPRAWIONA - KOMPLETNY FILTR NONSENSU
-        Z ORYGINALNĄ LOGIKĄ + NOWYM FILTREM KONTEKSTU MOTORYZACYJNEGO
+        Z ORYGINALNĄ LOGIKĄ + NOWYM FILTREM KONTEKSTU MOTORYZACYJNEGO + OBSŁUGA KODÓW PRODUKTÓW
         """
         if not tokens:
             return True
@@ -965,6 +1128,35 @@ class EcommerceBot:
         technical_codes = ['5w30', '0w40', '5w40', '10w40', '0w30', '15w40', 'w30', 'w40', 'w50']
         if any(code in query_text for code in technical_codes):
             return False
+        
+        # KROK 1.5: NOWE - Wyklucz kody produktów z Twojej bazy
+        product_codes_from_database = [
+            # Kody z Twojej bazy produktów
+            '0986494104', '13.0460-7218', 'fdb4050', 'gdb1748', 'p83052', '2456701',
+            '13.0470-7241', 't1323', '23914.165.1', '13.0460-7265', '09.9772.11',
+            '24.0330-0184', '100.3234.20', '54877pro', 'df6123s', 'hu719/7x',
+            'ox371d', 'f026407022', 'h90w04', '25.073.00', 'f026402836', 'wk830/7',
+            '33-2990', 'c2774/1', 'lx1006', 'cuk2939', '1987432414', '22-266767',
+            '349034', '314896', '8741-1394sport', 'g8069', 'ilzkr7b11', 'fr7dpp33',
+            'psg006', 'rc9yc', 'ik20tt', 'e12', 's4005', 'ea955', 'ybx3012',
+            'edge', '5w30', 'esp', '0w40', 'helix', 'ultra', 'quartz', '9000',
+            '8100', 'x-cess', 'top', 'tec', 'atf', '1200', 'ts850', 'pilot',
+            'sport', '4', 'turanza', 't005', '40760', '601023', 'fa252hh',
+            '07bb26rc', 'mcb748srq', '520vx3-114', '525xso-120', 'hf303rc',
+            'pilot', 'road', '4', '2430801', 'fdb4114', 'w712/94', 'ox254d',
+            '743049sp', 'p50086', 'rsc1', 'ru-3530', 'mmint-uni-23'
+        ]
+        
+        # Sprawdź czy zawiera kod produktu z bazy
+        for token in tokens:
+            token_lower = token.lower()
+            if any(code.lower() in token_lower or token_lower in code.lower() for code in product_codes_from_database):
+                return False
+        
+        # KROK 1.6: Sprawdź wzorce kodów produktów (regex)
+        for token in tokens:
+            if any(re.match(pattern, token.upper()) for pattern in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['product_code_patterns']):
+                return False
         
         # NOWA LOGIKA: Sprawdź kontekst motoryzacyjny PRZED filtrowaniem
         has_auto_context = self.has_automotive_context(tokens)
@@ -1091,12 +1283,13 @@ class EcommerceBot:
             if any(pattern in token_lower for pattern in self.NONSENSE_DICTIONARY['gibberish_patterns']):
                 return True
         
-        # === PRIORYTET 7: SAME LICZBY BEZ KONTEKSTU ===
+        # === PRIORYTET 7: SAME LICZBY BEZ KONTEKSTU - POPRAWIONE ===
         if len(tokens) <= 3 and all(token.isdigit() for token in tokens):
             total_digits = sum(len(token) for token in tokens)
-            if total_digits >= 8:  # Długie kody typu "123456 789"
+            # ZMIANA: Nie filtruj długich kodów produktów (mogą być OEM)
+            if total_digits >= 12:  # Tylko bardzo długie bezsensowne ciągi
                 return True
-            elif total_digits <= 6:  # Krótkie liczby = prawdopodobnie nonsens
+            elif total_digits <= 4:  # Krótkie liczby = prawdopodobnie nonsens
                 return True
         
         return False
@@ -1208,15 +1401,19 @@ class EcommerceBot:
         matches.sort(key=lambda x: x[1], reverse=True)
         return matches
 
-    def analyze_query_intent(self, query: str) -> Dict:
+    def analyze_query_intent(self, query: str, machine_filter: Optional[str] = None) -> Dict:
         """
-        NAPRAWIONA - Z FILTREM KONTEKSTU MOTORYZACYJNEGO
-        Dodano tylko jeden krok walidacji - bez łatania dziury
+        OSTATECZNA NAPRAWA - Z OBSŁUGĄ LITERÓWEK I ZAPYTAŃ KONTEKSTOWYCH
         """
         query_lower = query.lower().strip()
         query_tokens = query_lower.split()
         
-        # KROK 1: Filtr nonsense (bez zmian)
+        # DEBUG
+        print(f"[ANALYZE DEBUG] Query: '{query}', Tokens: {query_tokens}")
+        print(f"[ANALYZE DEBUG] has_automotive_context: {self.has_automotive_context(query_tokens)}")
+        print(f"[ANALYZE DEBUG] is_obvious_nonsense: {self.is_obvious_nonsense(query_tokens, 0)}")
+        
+        # KROK 1: Filtr nonsense
         if self.is_obvious_nonsense(query_tokens, 0):
             return {
                 'query': query,
@@ -1233,7 +1430,7 @@ class EcommerceBot:
                 'matches': []
             }
         
-        # KROK 2: NOWY - Filtr kontekstu motoryzacyjnego
+        # KROK 2: Filtr kontekstu motoryzacyjnego
         if not self.has_automotive_context(query_tokens):
             return {
                 'query': query,
@@ -1250,9 +1447,22 @@ class EcommerceBot:
                 'matches': []
             }
         
-        # KROK 3 i dalej: ORYGINALNA LOGIKA (bez zmian)
+        # KROK 3: Sprawdź token validity i structural
         token_validity = self.calculate_token_validity(query_tokens)
         is_structural = self.is_structural_query(query_tokens)
+        
+        # KROK 4: Sprawdź czy query zawiera znane literówki
+        known_typos = {
+            'swiczka', 'opon', 'przod', 'powietza', 'tarzca', 'sprezyny', 'bateri', 
+            'lanczuch', 'swieczka', 'kloce', 'zimow', 'fltr', 'klockei', 'świczka',
+            'amortyzzator', 'akumualtor', 'filttr', 'olel', 'amortyztor', 'filetr',
+            'swica', 'swieca', 'akumlator', 'kloki', 'hamulcwe', 'tarcze', 'tarczy',
+            'świece', 'swiec', 'sprężyny', 'sprężyn', 'opny', 'opona', 'bosh', 'sacsh',
+            'bmv', 'toyoya', 'zimowy', 'oleju', 'oleje', 'tylny', 'przedni', 'filet',
+            'filrt', 'flitr', 'hamulec', 'hamulcowy', 'hamulcow'
+        }
+        
+        query_has_typos = any(token.lower() in known_typos for token in query_tokens)
         
         has_luxury_brand = any(
             brand in query_lower 
@@ -1335,9 +1545,51 @@ class EcommerceBot:
                         has_nonexistent_short_code = True
                         break
         
-        matches = self.get_fuzzy_product_matches_internal(query_lower)
+        matches = self.get_fuzzy_product_matches_internal(query_lower, machine_filter)
         best_match_score = matches[0][1] if matches else 0
         
+        # KROK 4.5: NOWY - Wykryj legalne zapytania kontekstowe
+        context_words_list = ['do', 'dla', 'na', 'pasuje', 'części', 'część', 'zimę', 'zimą', 'latem']
+        has_context_words = any(
+            token.lower() in context_words_list
+            for token in query_tokens
+        )
+        
+        has_known_brand = any(
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] or
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_models'] or
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands']
+            for token in query_tokens
+        )
+        
+        has_part = any(
+            token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories']
+            for token in query_tokens
+        )
+        
+        # Jeśli ma context words + (brand LUB part) = legalne zapytanie kontekstowe
+        if has_context_words and (has_known_brand or has_part) and best_match_score >= 35:
+            print(f"[ANALYZE DEBUG] Detected contextual query: context={has_context_words}, brand={has_known_brand}, part={has_part}, score={best_match_score}")
+            confidence_level = 'MEDIUM' if best_match_score >= 50 else 'HIGH' if best_match_score >= 70 else 'MEDIUM'
+            suggestion_type = 'contextual_query'
+            ga4_event = None
+            
+            return {
+                'query': query,
+                'tokens': query_tokens,
+                'token_validity': round(token_validity, 2),
+                'best_match_score': round(best_match_score, 2),
+                'confidence_level': confidence_level,
+                'suggestion_type': suggestion_type,
+                'ga4_event': ga4_event,
+                'has_luxury_brand': has_luxury_brand,
+                'has_product_code': bool(potential_product_codes),
+                'is_structural': is_structural,
+                'is_nonsense': False,
+                'matches': matches[:6] if matches else []
+            }
+        
+        # SPECJALNA LOGIKA DLA LITERÓWEK Z KOREKTY STRUKTURALNEJ
         if (is_structural and token_validity >= 70 and best_match_score < 70):
             category_typos = {
                 'amortyztor': 'amortyzator',
@@ -1349,18 +1601,18 @@ class EcommerceBot:
             }
             
             has_category_typo = any(token.lower() in category_typos for token in query_tokens)
-            has_known_brand = any(
+            has_known_brand_structural = any(
                 token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] or
                 token.lower() in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands']
                 for token in query_tokens
             )
             
-            if has_category_typo and has_known_brand:
+            if has_category_typo and has_known_brand_structural:
                 corrected_query = query_lower
                 for typo, correct in category_typos.items():
                     corrected_query = corrected_query.replace(typo, correct)
                 
-                corrected_matches = self.get_fuzzy_product_matches_internal(corrected_query)
+                corrected_matches = self.get_fuzzy_product_matches_internal(corrected_query, machine_filter)
                 corrected_best_score = corrected_matches[0][1] if corrected_matches else 0
                 
                 if corrected_best_score >= 60:
@@ -1385,7 +1637,7 @@ class EcommerceBot:
                         'matches': matches[:6] if matches else []
                     }
         
-        # ORYGINALNA KLASYFIKACJA (bez zmian)
+        # GŁÓWNA KLASYFIKACJA
         if best_match_score >= 90:
             confidence_level = 'HIGH'
             suggestion_type = 'exact_match'
@@ -1415,6 +1667,10 @@ class EcommerceBot:
             suggestion_type = 'good_match'
             ga4_event = None
         elif best_match_score >= 70 and token_validity >= 50:
+            confidence_level = 'MEDIUM'
+            suggestion_type = 'typo_correction'
+            ga4_event = 'search_typo_corrected'
+        elif query_has_typos and best_match_score >= 25:
             confidence_level = 'MEDIUM'
             suggestion_type = 'typo_correction'
             ga4_event = 'search_typo_corrected'
@@ -1777,10 +2033,13 @@ Zapisaliśmy Twoje zapytanie. Powiadomimy Cię gdy produkt będzie dostępny!"""
         if session.get('machine_filter'):
             machine_filter = session.get('machine_filter')
             
-            # Użyj nowej funkcji z analizą intencji
-            products, confidence_level, suggestion_type, analysis = self.get_fuzzy_product_matches(
-                message, machine_filter, limit=5, analyze_intent=True
-            )
+            # NAPRAWKA: Bezpośrednio użyj analyze_query_intent
+            analysis = self.analyze_query_intent(message, machine_filter)
+            
+            # Wyciągnij dane z analizy
+            products = analysis['matches'][:5]  # To już jest lista (product, score)
+            confidence_level = analysis['confidence_level']
+            suggestion_type = analysis['suggestion_type']
             
             # Wyślij odpowiednie zdarzenie GA4
             ga4_event = self.determine_ga4_event(analysis)
