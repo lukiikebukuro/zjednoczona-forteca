@@ -1,7 +1,7 @@
 import eventlet
 eventlet.monkey_patch()  # MUSI BYĆ JAKO PIERWSZE
 
-from app import app, socketio, bot, DatabaseManager, start_simulator
+from app import app, socketio, bot, DatabaseManager
 from datetime import datetime, timedelta
 import sqlite3
 
@@ -22,7 +22,7 @@ try:
 except Exception as e:
     print(f"[WSGI] Database error: {e}")
 
-start_simulator()
+
 print("[WSGI] Application initialized")
 
 application = app
