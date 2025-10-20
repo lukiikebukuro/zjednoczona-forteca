@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, jsonify, session
 from flask_socketio import SocketIO, emit
+from flask_login import login_user, logout_user, login_required, current_user
+from auth_manager import init_login_manager, User, require_client_access, require_admin_access, require_debug_access, get_user_dashboard_route, setup_default_users, ensure_tables_exist
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, make_response
 from datetime import timedelta, datetime
 from ecommerce_bot import EcommerceBot
 import sqlite3
@@ -11,9 +13,13 @@ import os
 import requests
 import uuid
 import csv
+import user_agents  # Po linii 13
+
+
 
 # Flask app configuration
 app = Flask(__name__)
+login_manager = init_login_manager(app)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
@@ -43,236 +49,6 @@ LOST_DEMAND_LOG = 'lost_demand_log.csv'
 DATABASE_NAME = 'dashboard.db'
 
 # === DASHBOARD CLASSES ===
-class TacticalDataSimulator:
-    """Symulator danych bojowych dla dashboardu demonstracyjnego"""
-    
-    def __init__(self):
-        self.price_ranges = {
-            # Średnie ceny według kategorii i marek
-            'klocki': {'standard': 150, 'premium': 300, 'luxury': 450},
-            'filtry': {'standard': 75, 'premium': 120, 'luxury': 180},
-            'amortyzatory': {'standard': 400, 'premium': 650, 'luxury': 950},
-            'świece': {'standard': 45, 'premium': 65, 'luxury': 85},
-            'akumulatory': {'standard': 350, 'premium': 450, 'luxury': 600},
-            'oleje': {'standard': 120, 'premium': 180, 'luxury': 250},
-            'tarcze': {'standard': 200, 'premium': 350, 'luxury': 500},
-            'łańcuchy': {'standard': 250, 'premium': 350, 'luxury': 450}
-        }
-        
-        # Zapytania demonstracyjne pokazujące przewagę nad no-code
-        self.battle_scenarios = [
-            # UTRACONY POPYT - Marki luksusowe
-            {
-                'query': 'klocki ferrari',
-                'decision': 'UTRACONE OKAZJE',
-                'details': 'Marka Luksusowa',
-                'category': 'klocki',
-                'brand_type': 'luxury',
-                'explanation': 'System rozpoznał markę premium której nie mamy w ofercie'
-            },
-            {
-                'query': 'amortyzatory lamborghini',
-                'decision': 'UTRACONE OKAZJE', 
-                'details': 'Marka Luksusowa',
-                'category': 'amortyzatory',
-                'brand_type': 'luxury',
-                'explanation': 'Wykryto zapytanie o części do supersamochodu'
-            },
-            {
-                'query': 'części porsche',
-                'decision': 'UTRACONE OKAZJE',
-                'details': 'Marka Premium',
-                'category': 'klocki',
-                'brand_type': 'luxury', 
-                'explanation': 'Klient szuka części do marki premium'
-            },
-            
-            # UTRACONY POPYT - Nieistniejące kody
-            {
-                'query': 'klocki bmw n123',
-                'decision': 'UTRACONE OKAZJE',
-                'details': 'Nieistniejący Kod',
-                'category': 'klocki',
-                'brand_type': 'premium',
-                'explanation': 'Kod produktu nie istnieje w bazie danych'
-            },
-            {
-                'query': 'filtr 0986494999',
-                'decision': 'UTRACONE OKAZJE',
-                'details': 'Kod OE Nieznaleziony',
-                'category': 'filtry',
-                'brand_type': 'standard',
-                'explanation': 'System nie rozpoznał kodu OE'
-            },
-            {
-                'query': 'amortyzator golf e46',
-                'decision': 'UTRACONE OKAZJE',
-                'details': 'Model Nieobsługiwany',
-                'category': 'amortyzatory',
-                'brand_type': 'standard',
-                'explanation': 'Kombinacja modelu nie istnieje w ofercie'
-            },
-            
-            # UTRACONY POPYT - Brakujące produkty
-            {
-                'query': 'opony zimowe',
-                'decision': 'UTRACONE OKAZJE',
-                'details': 'Brak Kategorii',
-                'category': 'opony',
-                'brand_type': 'standard',
-                'explanation': 'Nie obsługujemy kategorii opon'
-            },
-            {
-                'query': 'felgi aluminiowe',
-                'decision': 'UTRACONE OKAZJE',
-                'details': 'Kategoria Niedostępna', 
-                'category': 'felgi',
-                'brand_type': 'standard',
-                'explanation': 'Felgi nie są w naszej ofercie'
-            },
-            
-            # KOREKTA LITERÓWKI - Demonstracja inteligencji
-            {
-                'query': 'kloki bosh',
-                'decision': 'ODFILTROWANE',
-                'details': 'klocki Bosch',
-                'category': 'klocki',
-                'brand_type': 'standard',
-                'explanation': 'System poprawił błąd pisowni i znalazł produkt'
-            },
-            {
-                'query': 'filetr man',
-                'decision': 'ODFILTROWANE',
-                'details': 'filtr Mann',
-                'category': 'filtry',
-                'brand_type': 'standard',
-                'explanation': 'Automatyczna korekta literówki'
-            },
-            {
-                'query': 'amortyztor bilsten',
-                'decision': 'ODFILTROWANE',
-                'details': 'amortyzator Bilstein',
-                'category': 'amortyzatory',
-                'brand_type': 'premium',
-                'explanation': 'Podwójna korekta: kategoria + marka'
-            },
-            {
-                'query': 'swice ngk',
-                'decision': 'ODFILTROWANE',
-                'details': 'świece NGK',
-                'category': 'świece',
-                'brand_type': 'standard',
-                'explanation': 'Korekta polskich znaków diakrytycznych'
-            },
-            
-            
-            # PRECYZYJNE TRAFIENIA - Pokazanie sukcesu
-            {
-                'query': 'klocki bosch',
-                'decision': 'ZNALEZIONE PRODUKTY',
-                'details': 'Znaleziono Produkt',
-                'category': 'klocki',
-                'brand_type': 'standard',
-                'explanation': 'Dokładne dopasowanie marki i kategorii'
-            },
-            {
-                'query': 'filtr mann bmw',
-                'decision': 'ZNALEZIONE PRODUKTY',
-                'details': 'Dopasowanie Marki+Model',
-                'category': 'filtry',
-                'brand_type': 'standard',
-                'explanation': 'System znalazł filter Mann do BMW'
-            },
-            {
-                'query': 'amortyzator bilstein golf',
-                'decision': 'ZNALEZIONE PRODUKTY',
-                'details': 'Pełne Dopasowanie',
-                'category': 'amortyzatory',
-                'brand_type': 'premium',
-                'explanation': 'Wszystkie parametry znalezione w bazie'
-            },
-            {
-                'query': 'olej castrol 5w30',
-                'decision': 'ZNALEZIONE PRODUKTY',
-                'details': 'Specyfikacja Techniczna',
-                'category': 'oleje',
-                'brand_type': 'premium',
-                'explanation': 'System rozpoznał dokładną specyfikację oleju'
-            },
-            {
-                'query': 'filtr 0986494104',
-                'decision': 'ZNALEZIONE PRODUKTY',
-                'details': 'Kod OE Rozpoznany',
-                'category': 'filtry',
-                'brand_type': 'standard',
-                'explanation': 'Znaleziono produkt po kodzie producenta'
-            },
-            {
-                'query': 'klocki yamaha r6',
-                'decision': 'ZNALEZIONE PRODUKTY',
-                'details': 'Motocykl Sportowy',
-                'category': 'klocki',
-                'brand_type': 'premium',
-                'explanation': 'System rozpoznał części motocyklowe'
-            },
-            # BŁĘDY WYSZUKIWANIA - Demonstracja inteligencji
-            {
-                'query': 'asdasdasd',
-                'decision': 'ODFILTROWANE',
-                'details': 'Nonsensowne zapytanie',
-                'category': 'inne',
-                'brand_type': 'standard',
-                'explanation': 'System rozpoznał nonsensowne zapytanie'
-            },
-            {
-                'query': 'qwerty123',
-                'decision': 'ODFILTROWANE',
-                'details': 'Wzorzec klawiaturowy',
-                'category': 'inne',
-                'brand_type': 'standard',
-                'explanation': 'Wykryto wzorzec klawiaturowy'
-            },
-            {
-                'query': 'xyzxyzxyz',
-                'decision': 'ODFILTROWANE',
-                'details': 'Powtarzający się wzorzec',
-                'category': 'inne',
-                'brand_type': 'standard',
-                'explanation': 'Powtarzające się sekwencje znaków'
-            },
-            {
-                'query': 'hjklhjkl',
-                'decision': 'ODFILTROWANE',
-                'details': 'Losowe znaki',
-                'category': 'inne',
-                'brand_type': 'standard',
-                'explanation': 'Brak sensownej struktury językowej'
-            }
-        ]
-        
-        self.running = False
-        self.paused = False
-        self.thread = None
-        
-    def calculate_lost_value(self, category, brand_type):
-        """Oblicza szacowaną wartość utraconego popytu"""
-        if category not in self.price_ranges:
-            return random.randint(100, 300)
-        
-        base_price = self.price_ranges[category][brand_type]
-        # Dodaj losową wariację ±20%
-        variation = random.uniform(0.8, 1.2)
-        return int(base_price * variation)
-    
-    def pause_simulator(self):
-        """Pauzuje symulator"""
-        self.paused = True
-        print("[SIMULATOR] Paused by user interaction")
-
-    def resume_simulator(self):
-        """Wznawia symulator"""
-        self.paused = False
-        print("[SIMULATOR] Resumed by user interaction")
 
 class DatabaseManager:
     """Zarządza bazą danych SQLite dla dashboardu"""
@@ -416,8 +192,6 @@ class DatabaseManager:
             for row in results
         ]
 
-# Globalny symulator
-simulator = TacticalDataSimulator()
 
 # === FLASK ROUTES ===
 # === WIZYTÓWKA ROUTES ===
@@ -856,6 +630,486 @@ def health_check():
         },
         'session_active': 'cart' in session
     })
+# ================================================================
+# ROUTES AUTORYZACJI - DODAJ DO app.py PO ISTNIEJĄCYCH ROUTES
+# Importy wymagane na górze pliku
+# ================================================================
+
+# DODAJ TE IMPORTY NA GÓRZE PLIKU app.py:
+# from flask_login import login_user, logout_user, login_required, current_user
+# from auth_manager import init_login_manager, User, require_client_access, require_admin_access, require_debug_access, get_user_dashboard_route, create_default_admin
+
+# INICJALIZACJA FLASK-LOGIN (dodaj po 'app = Flask(__name__)'):
+# login_manager = init_login_manager(app)
+
+# ================================================================
+# ROUTES AUTORYZACJI
+# ================================================================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Strona logowania - obsługuje GET (formularz) i POST (uwierzytelnienie)"""
+    if request.method == 'GET':
+        # Jeśli użytkownik już zalogowany, przekieruj do dashboardu
+        if current_user.is_authenticated:
+            dashboard_route = get_user_dashboard_route()
+            return redirect(url_for(dashboard_route))
+        
+        return render_template('login.html')
+    
+    elif request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        # Walidacja podstawowa
+        if not username or not password:
+            flash('Wprowadź nazwę użytkownika i hasło', 'error')
+            return render_template('login.html')
+        
+        # Uwierzytelnienie
+        user = User.authenticate(username, password)
+        
+        if user:
+            login_user(user, remember=True)
+            flash(f'Zalogowano pomyślnie jako {user.username}', 'success')
+            
+            # Przekieruj do odpowiedniego dashboardu
+            dashboard_route = get_user_dashboard_route()
+            next_page = request.args.get('next')
+            
+            if next_page:
+                return redirect(next_page)
+            else:
+                return redirect(url_for(dashboard_route))
+        else:
+            flash('Nieprawidłowa nazwa użytkownika lub hasło', 'error')
+            return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Wylogowanie użytkownika"""
+    username = current_user.username
+    logout_user()
+    flash(f'Zostałeś wylogowany', 'info')
+    return redirect(url_for('login'))
+
+@app.route('/unauthorized')
+def unauthorized():
+    """Strona błędu dostępu"""
+    return render_template('unauthorized.html'), 403
+
+# ================================================================
+# DASHBOARDY - 3 POZIOMY DOSTĘPU
+# ================================================================
+
+@app.route('/client-dashboard')
+@login_required
+def client_dashboard():
+    """POZIOM 1 - Kokpit Klienta (tylko własne dane)"""
+    client_info = get_client_info(current_user.client_id)
+    
+    return render_template('client-dashboard.html', 
+                         user=current_user,
+                         client=client_info)
+
+@app.route('/admin-dashboard')
+@require_admin_access  
+def admin_dashboard():
+    """POZIOM 2 - Centrum Strategiczne (dane zagregowane + moduł sprzedażowy)"""
+    return render_template('admin-dashboard.html', 
+                         user=current_user)
+
+@app.route('/debug-dashboard')
+@require_debug_access
+def debug_dashboard():
+    """POZIOM 3 - Tryb Debug (surowe logi + telemetria)"""
+    return render_template('debug-dashboard.html', 
+                         user=current_user)
+
+# ================================================================
+# API ENDPOINTS - ROLE-BASED ACCESS
+# ================================================================
+
+@app.route('/api/auth/session-info')
+def get_session_info():
+    """Zwraca informacje o aktualnej sesji"""
+    if current_user.is_authenticated:
+        return jsonify({
+            'authenticated': True,
+            'username': current_user.username,
+            'role': current_user.role,
+            'client_id': current_user.client_id
+        })
+    else:
+        return jsonify({
+            'authenticated': False
+        })
+
+@app.route('/api/client/<int:client_id>/stats')
+@require_client_access
+def get_client_stats(client_id):
+    """API - POZIOM 1: Statystyki tylko dla określonego klienta"""
+    
+    # Sprawdź czy user ma dostęp do tego klienta
+    if not current_user.has_access_to_client(client_id):
+        return jsonify({'error': 'Brak dostępu'}), 403
+    
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        
+        # Pobierz statystyki tylko dla tego klienta
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Podstawowe liczniki (real-time)
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as total_queries,
+                COUNT(CASE WHEN decision = 'UTRACONE OKAZJE' THEN 1 END) as lost_opportunities,
+                COALESCE(SUM(CASE WHEN decision = 'UTRACONE OKAZJE' THEN potential_value ELSE 0 END), 0) as lost_value
+            FROM business_events 
+            WHERE client_id = ? AND date(timestamp) = ?
+        ''', (client_id, today))
+        
+        stats = cursor.fetchone()
+        conn.close()
+        
+        return jsonify({
+            'status': 'success',
+            'client_id': client_id,
+            'today_stats': {
+                'total_queries': stats[0] if stats else 0,
+                'lost_opportunities': stats[1] if stats else 0,
+                'lost_value': int(stats[2]) if stats else 0
+            },
+            'last_update': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"[API ERROR] Client stats failed: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/admin/global-stats')
+@require_admin_access
+def get_global_stats():
+    """API - POZIOM 2: Statystyki zagregowane ze wszystkich klientów"""
+    
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Globalne statystyki (anonimowe)
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as total_queries,
+                COUNT(DISTINCT client_id) as active_clients,
+                COUNT(CASE WHEN decision = 'UTRACONE OKAZJE' THEN 1 END) as total_lost_opportunities,
+                COALESCE(SUM(CASE WHEN decision = 'UTRACONE OKAZJE' THEN potential_value ELSE 0 END), 0) as total_lost_value
+            FROM business_events 
+            WHERE date(timestamp) = ?
+        ''', (today,))
+        
+        global_stats = cursor.fetchone()
+        
+        # Top kategorie utraconych okazji
+        cursor.execute('''
+            SELECT category, COUNT(*) as frequency, SUM(potential_value) as total_value
+            FROM business_events 
+            WHERE decision = 'UTRACONE OKAZJE' 
+            AND date(timestamp) >= date('now', '-7 days')
+            GROUP BY category
+            ORDER BY frequency DESC
+            LIMIT 10
+        ''')
+        
+        top_categories = cursor.fetchall()
+        conn.close()
+        
+        return jsonify({
+            'status': 'success',
+            'global_stats': {
+                'total_queries': global_stats[0] if global_stats else 0,
+                'active_clients': global_stats[1] if global_stats else 0,
+                'total_lost_opportunities': global_stats[2] if global_stats else 0,
+                'total_lost_value': int(global_stats[3]) if global_stats else 0
+            },
+            'top_lost_categories': [
+                {
+                    'category': row[0],
+                    'frequency': row[1],
+                    'total_value': int(row[2]) if row[2] else 0
+                }
+                for row in top_categories
+            ],
+            'last_update': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"[API ERROR] Global stats failed: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/debug/raw-logs')
+@require_debug_access  
+def get_raw_logs():
+    """API - POZIOM 3: Surowe logi + telemetria"""
+    
+    limit = request.args.get('limit', 100, type=int)
+    offset = request.args.get('offset', 0, type=int)
+    
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        
+        # Surowe logi wszystkich eventów
+        cursor.execute('''
+            SELECT 
+                be.id, be.timestamp, be.client_id, be.query_text, 
+                be.decision, be.details, be.potential_value, be.explanation,
+                c.company_name
+            FROM business_events be
+            LEFT JOIN clients c ON be.client_id = c.id
+            ORDER BY be.timestamp DESC
+            LIMIT ? OFFSET ?
+        ''', (limit, offset))
+        
+        raw_logs = cursor.fetchall()
+        
+        # Statystyki systemu
+        cursor.execute('SELECT COUNT(*) FROM business_events')
+        total_events = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM clients WHERE is_active = TRUE')
+        total_clients = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify({
+            'status': 'success',
+            'raw_logs': [
+                {
+                    'id': row[0],
+                    'timestamp': row[1],
+                    'client_id': row[2],
+                    'query_text': row[3],
+                    'decision': row[4],
+                    'details': row[5],
+                    'potential_value': row[6],
+                    'explanation': row[7],
+                    'company_name': row[8]
+                }
+                for row in raw_logs
+            ],
+            'pagination': {
+                'limit': limit,
+                'offset': offset,
+                'total_events': total_events
+            },
+            'system_stats': {
+                'total_events': total_events,
+                'total_clients': total_clients
+            },
+            'last_update': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"[API ERROR] Raw logs failed: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+# DODAJ TO DO app.py W SEKCJI API ENDPOINTS
+
+@app.route('/api/client/<int:client_id>/weekly-report.pdf')
+@require_client_access
+def get_weekly_pdf_report(client_id):
+    """API - POZIOM 1: Pobierz cotygodniowy raport PDF dla klienta"""
+    
+    # Sprawdź czy user ma dostęp do tego klienta
+    if not current_user.has_access_to_client(client_id):
+        return jsonify({'error': 'Brak dostępu'}), 403
+    
+    try:
+        # Pobierz dane klienta
+        client_info = get_client_info(client_id)
+        if not client_info:
+            return jsonify({'error': 'Klient nie znaleziony'}), 404
+        
+        # DEMO DATA - w prawdziwej aplikacji pobierane z bazy
+        # Po Twojej kuracji cotygodniowej
+        demo_data = {
+            'client': client_info,
+            'report_date': '13.10.2025',
+            'total_lost_value': 12450,
+            'total_products': 47,
+            'lost_products': [
+                {'name': 'Klocki Ferrari F40', 'category': 'klocki', 'value': 1250, 'frequency': 8},
+                {'name': 'Filtry Porsche 911', 'category': 'filtry', 'value': 890, 'frequency': 6},
+                {'name': 'Opony Michelin 19"', 'category': 'opony', 'value': 760, 'frequency': 5},
+                {'name': 'Amortyzatory Bentley', 'category': 'amortyzatory', 'value': 650, 'frequency': 4},
+                {'name': 'Felgi BMW M3', 'category': 'felgi', 'value': 580, 'frequency': 4},
+                {'name': 'Filtry sportowe K&N', 'category': 'filtry', 'value': 520, 'frequency': 3},
+                {'name': 'Klocki Brembo Racing', 'category': 'klocki', 'value': 480, 'frequency': 3},
+                # ... reszta 40 produktów
+            ],
+            'recommendations': [
+                'Rozszerz ofertę klocków premium - potencjał 3,250 zł miesięcznie',
+                'Dodaj filtry sportowe - popyt na 12 różnych modeli',
+                'Współpraca z dystrybutorem opon - segment premium wykryty',
+                'Części do supersamochodów - niszowy ale wartościowy segment'
+            ]
+        }
+        
+        # Generuj PDF (prosty HTML → PDF lub używaj biblioteki jak ReportLab)
+        html_content = generate_pdf_html(demo_data)
+        
+        # OPCJA 1: Zwróć HTML (tymczasowo na test)
+        from flask import make_response
+        response = make_response(html_content)
+        response.headers['Content-Type'] = 'text/html'
+        response.headers['Content-Disposition'] = f'inline; filename="raport_utraconych_okazji_{client_id}.html"'
+        
+        # OPCJA 2: Prawdziwy PDF (wymaga biblioteki)
+        # from weasyprint import HTML
+        # pdf = HTML(string=html_content).write_pdf()
+        # response = make_response(pdf)
+        # response.headers['Content-Type'] = 'application/pdf'
+        # response.headers['Content-Disposition'] = f'attachment; filename="raport_{client_id}.pdf"'
+        
+        return response
+        
+    except Exception as e:
+        print(f"[API ERROR] PDF generation failed: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+def generate_pdf_html(data):
+    """Generuje HTML dla raportu PDF"""
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="pl">
+    <head>
+        <meta charset="UTF-8">
+        <title>Raport Utraconych Okazji - {data['client']['company_name']}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; color: #333; }}
+            .header {{ text-align: center; border-bottom: 2px solid #4fc3f7; padding-bottom: 20px; margin-bottom: 30px; }}
+            .summary {{ background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; }}
+            .products-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+            .products-table th, .products-table td {{ border: 1px solid #ddd; padding: 10px; text-align: left; }}
+            .products-table th {{ background: #4fc3f7; color: white; }}
+            .value {{ color: #ff6b6b; font-weight: bold; }}
+            .category {{ background: #e3f2fd; padding: 2px 8px; border-radius: 4px; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Centrum Analityczne Utraconych Okazji</h1>
+            <h2>Cotygodniowy Raport Zweryfikowany</h2>
+            <p><strong>{data['client']['company_name']}</strong> | {data['report_date']}</p>
+        </div>
+        
+        <div class="summary">
+            <h3>Podsumowanie wykonawcze</h3>
+            <p><strong>Łączna wartość wykrytych okazji:</strong> <span class="value">{data['total_lost_value']:,} zł</span></p>
+            <p><strong>Liczba zidentyfikowanych produktów:</strong> {data['total_products']}</p>
+            <p><strong>Status:</strong> Zweryfikowany przez analityka Studio Adept AI</p>
+        </div>
+        
+        <h3>Szczegółowa lista utraconych produktów</h3>
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Lp.</th>
+                    <th>Produkt</th>
+                    <th>Kategoria</th>
+                    <th>Szacowana wartość</th>
+                    <th>Częstotliwość zapytań</th>
+                </tr>
+            </thead>
+            <tbody>
+    """
+    
+    # Dodaj produkty do tabeli
+    for i, product in enumerate(data['lost_products'], 1):
+        html += f"""
+            <tr>
+                <td>{i}</td>
+                <td>{product['name']}</td>
+                <td><span class="category">{product['category']}</span></td>
+                <td class="value">{product['value']} zł</td>
+                <td>{product['frequency']}x</td>
+            </tr>
+        """
+    
+    html += """
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 40px;">
+            <h3>Rekomendacje implementacji</h3>
+            <ol>
+    """
+    
+    # Dodaj rekomendacje
+    for rec in data['recommendations']:
+        html += f"<li>{rec}</li>"
+    
+    html += """
+            </ol>
+        </div>
+        
+        <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
+            <p>Raport wygenerowany przez Centrum Analityczne Utraconych Okazji</p>
+            <p>Studio Adept AI | {data['report_date']}</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html
+    
+
+# ================================================================
+# FUNKCJE POMOCNICZE (dodaj na koniec pliku)
+# ================================================================
+
+def get_client_info(client_id):
+    """Pobiera informacje o kliencie z bazy danych"""
+    if not client_id:
+        return None
+        
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, company_name, domain, subscription_tier, contact_email
+            FROM clients 
+            WHERE id = ? AND is_active = TRUE
+        ''', (client_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'company_name': row[1],
+                'domain': row[2], 
+                'subscription_tier': row[3],
+                'contact_email': row[4]
+            }
+        return None
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to get client info: {e}")
+        return None
+
+# ================================================================
+# INICJALIZACJA ADMIN USER (wywołaj w main lub przy starcie)
+# ================================================================
+    
+
 
 # === HELPER FUNCTIONS ===
 def extract_category_from_query(query):
@@ -1039,79 +1293,264 @@ def handle_resume_simulator():
     emit('simulator_resumed', {'status': 'resumed'})
 
 # === BATTLE SIMULATOR FUNCTION ===
-def battle_simulator():
-    """Główna pętla symulatora - działa w osobnym wątku"""
-    print("[SIMULATOR] Battle simulator started")
-    
-    while simulator.running:
-        try:
-            # Losowy interwał 6-8 sekund
-            time.sleep(random.uniform(6, 8))
-            
-            if not simulator.running:
-                break
-            
-            # Sprawdź czy symulator jest wstrzymany
-            if simulator.paused:
-                continue
-            
-            # Wybierz losowe zdarzenie
-            scenario = random.choice(simulator.battle_scenarios)
-            
-            # Oblicz wartość jeśli to utracony popyt
-            potential_value = 0
-            if scenario['decision'] == 'UTRACONE OKAZJE':
-                potential_value = simulator.calculate_lost_value(
-                    scenario['category'], 
-                    scenario['brand_type']
-                )
-            
-            # Dodaj do bazy danych
-            event_id = DatabaseManager.add_event(
-                scenario['query'],
-                scenario['decision'],
-                scenario['details'],
-                scenario['category'],
-                scenario['brand_type'],
-                potential_value,
-                scenario['explanation']
-            )
-            
-            # Przygotuj dane dla WebSocket
-            event_data = {
-                'id': event_id,
-                'timestamp': datetime.now().strftime('%H:%M:%S'),
-                'query_text': scenario['query'],
-                'decision': scenario['decision'],
-                'details': scenario['details'],
-                'category': scenario['category'],
-                'potential_value': potential_value,
-                'explanation': scenario['explanation']
+
+
+
+def get_client_info(client_id):
+    """Pobiera informacje o kliencie z bazy danych"""
+    if not client_id:
+        return None
+        
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT id, company_name, domain, subscription_tier, contact_email
+            FROM clients 
+            WHERE id = ? AND is_active = TRUE
+        ''', (client_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                'id': row[0],
+                'company_name': row[1],
+                'domain': row[2], 
+                'subscription_tier': row[3],
+                'contact_email': row[4]
             }
-            
-            # Wyślij przez WebSocket do wszystkich klientów
-            socketio.emit('new_event', event_data, namespace='/', broadcast=True)
-            
-            print(f"[SIMULATOR] Generated: {scenario['query']} -> {scenario['decision']}")
-            
-        except Exception as e:
-            print(f"[SIMULATOR ERROR] {e}")
-            time.sleep(1)
+        return None
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to get client info: {e}")
+        return None
+
+
+# === VISITOR TRACKING SYSTEM ===
+
+def ensure_visitor_tables_exist():
+    """Tworzy tabele dla visitor tracking jeśli nie istnieją"""
+    conn = sqlite3.connect(DATABASE_NAME)
+    cursor = conn.cursor()
     
-    print("[SIMULATOR] Battle simulator stopped")
+    # Tabela sesji odwiedzających
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS visitor_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT UNIQUE NOT NULL,
+            
+            -- Podstawowe dane
+            ip_address TEXT,
+            user_agent TEXT,
+            referrer TEXT,
+            page_url TEXT,
+            
+            -- Dane czasowe
+            entry_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            exit_time TIMESTAMP,
+            last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            session_duration INTEGER DEFAULT 0,
+            
+            -- Dane geograficzne
+            country TEXT,
+            country_code TEXT,
+            city TEXT,
+            region TEXT,
+            latitude REAL,
+            longitude REAL,
+            timezone TEXT,
+            
+            -- Dane organizacji (reverse IP lookup)
+            organization TEXT,
+            isp TEXT,
+            
+            -- Aktywność użytkownika
+            total_messages INTEGER DEFAULT 0,
+            max_scroll_depth INTEGER DEFAULT 0,
+            clicks_count INTEGER DEFAULT 0,
+            
+            -- UTM tracking
+            utm_source TEXT,
+            utm_medium TEXT,
+            utm_campaign TEXT,
+            utm_content TEXT,
+            utm_term TEXT,
+            
+            -- Dane techniczne
+            platform TEXT,
+            language TEXT,
+            viewport TEXT,
+            screen TEXT,
+            
+            -- Status
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Indeksy
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_visitor_sessions_entry_time ON visitor_sessions(entry_time)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_visitor_sessions_ip ON visitor_sessions(ip_address)')
+    
+    conn.commit()
+    conn.close()
+    print("[DATABASE] Visitor tracking tables initialized")
 
-def start_simulator():
-    """Uruchamia symulator w osobnym wątku"""
-    if not simulator.running:
-        simulator.running = True
-        simulator.thread = threading.Thread(target=battle_simulator, daemon=True)
-        simulator.thread.start()
+@app.route('/api/visitor-tracking', methods=['POST'])
+def visitor_tracking():
+    """API endpoint do odbierania danych visitor tracking"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'session_id' not in data:
+            return jsonify({'error': 'Missing session_id'}), 400
+        
+        session_id = data['session_id']
+        event_type = data.get('event_type', 'unknown')
+        
+        print(f"[VISITOR TRACKING] {event_type} from session {session_id[:8]}...")
+        
+        if event_type == 'session_start':
+            result = handle_session_start(session_id, data)
+        elif event_type == 'bot_query':
+            result = handle_bot_query(session_id, data)
+        else:
+            result = {'status': 'success'}
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"[ERROR] Visitor tracking failed: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
-def stop_simulator():
-    """Zatrzymuje symulator"""
-    simulator.running = False
-    if simulator.thread and simulator.thread.is_alive():
-        simulator.thread.join(timeout=2)
+def handle_session_start(session_id, data):
+    """Obsługuje rozpoczęcie sesji odwiedzającego"""
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        
+        # Zapisz sesję
+        cursor.execute('''
+            INSERT OR REPLACE INTO visitor_sessions (
+                session_id, ip_address, user_agent, referrer, page_url,
+                entry_time, country, city, organization, 
+                utm_source, utm_medium, platform, language
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            session_id,
+            data.get('ip_address'),
+            data.get('user_agent'),
+            data.get('referrer'),
+            data.get('page_url'),
+            data.get('entry_time'),
+            data.get('country'),
+            data.get('city'),
+            data.get('org'),
+            data.get('utm_source'),
+            data.get('utm_medium'),
+            data.get('platform'),
+            data.get('language')
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return {'status': 'success', 'message': 'Session started'}
+        
+    except Exception as e:
+        print(f"[ERROR] Session start failed: {e}")
+        return {'status': 'error', 'message': str(e)}
+
+def handle_bot_query(session_id, data):
+    """Obsługuje zapytanie do bota - KLUCZOWY event dla TCD"""
+    try:
+        query = data.get('query', '')
+        
+        # Analizuj zapytanie przez istniejący system AI
+        analysis = bot.analyze_query_intent(query)
+        
+        # Mapowanie na decisions
+        decision_mapping = {
+            'HIGH': 'ZNALEZIONE PRODUKTY',
+            'MEDIUM': 'ODFILTROWANE', 
+            'LOW': 'ODFILTROWANE',
+            'NO_MATCH': 'UTRACONE OKAZJE'
+        }
+        
+        decision = decision_mapping.get(analysis['confidence_level'], 'ODFILTROWANE')
+        potential_value = calculate_lost_value_internal(query) if decision == 'UTRACONE OKAZJE' else 0
+        
+        # Dodaj do głównego systemu TCD
+        event_id = DatabaseManager.add_event(
+            query,
+            decision,
+            f'Visitor query from session {session_id[:8]}',
+            extract_category_from_query(query),
+            'visitor',
+            potential_value,
+            f"Visitor tracking: {analysis['confidence_level']} confidence"
+        )
+        
+        # Wyślij przez WebSocket do Live Feed
+        event_data = {
+            'id': event_id,
+            'timestamp': datetime.now().strftime('%H:%M:%S'),
+            'query_text': query,
+            'decision': decision,
+            'details': f'Visitor: {get_visitor_context(session_id)}',
+            'category': extract_category_from_query(query),
+            'potential_value': potential_value,
+            'explanation': f'Visitor query - confidence: {analysis["confidence_level"]}',
+            'session_id': session_id[:8]
+        }
+        
+        socketio.emit('new_event', event_data)
+        
+        return {
+            'status': 'success',
+            'classification': decision,
+            'confidence': analysis['confidence_level'],
+            'potential_value': potential_value,
+            'event_id': event_id
+        }
+        
+    except Exception as e:
+        print(f"[ERROR] Bot query tracking failed: {e}")
+        return {'status': 'error', 'message': str(e)}
+
+def get_visitor_context(session_id):
+    """Pobiera kontekst odwiedzającego dla Live Feed"""
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT city, organization, country 
+            FROM visitor_sessions 
+            WHERE session_id = ?
+        ''', (session_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            city, org, country = row
+            parts = []
+            if org: parts.append(org)
+            if city: parts.append(city)
+            if country and not city: parts.append(country)
+            
+            return ', '.join(parts) if parts else 'Unknown'
+        
+        return 'Unknown'
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to get visitor context: {e}")
+        return 'Unknown'
+
 
 # === MAIN APPLICATION STARTUP ===
 if __name__ == '__main__':
@@ -1121,6 +1560,8 @@ if __name__ == '__main__':
         
         # Initialize dashboard database
         DatabaseManager.initialize_database()
+        # Initialize visitor tracking tables
+        ensure_visitor_tables_exist()
         
         # Clear old events (older than 30 days)
         try:
@@ -1137,7 +1578,7 @@ if __name__ == '__main__':
             print(f"[DATABASE] Error clearing old events: {e}")
         
         # Start battle simulator
-        start_simulator()
+        
         
         print("=" * 70)
         print("🎯 STUDIO ADEPT AI - DOKTRYNA CIERPLIWEGO NASŁUCHU v5.1")
@@ -1153,5 +1594,10 @@ if __name__ == '__main__':
         print("   🎯 Live Feed: Real-time user feedback")
         print("   📊 Metrics: Only final queries counted")
         print("=" * 70)
-    
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)    
+        ensure_tables_exist()
+        setup_default_users()
+        
+        print("🔐 Sistema Autoryzacji aktywny")
+        print("👤 Default admin: admin / admin123")
+        
+        socketio.run(app, debug=True, host='0.0.0.0', port=5000)

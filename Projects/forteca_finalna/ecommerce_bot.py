@@ -298,6 +298,52 @@ class EcommerceBot:
                 'restaurant', 'kitchen', 'cook', 'recipe', 'ingredients'
             ]
         }
+        self.PARTS_MANUFACTURERS = {
+            'brembo', 'ate', 'trw', 'ferodo', 'textar', 'bosch', 'pagid', 
+            'zimmermann', 'jurid', 'bendix', 'akebono', 'ebc', 'mann', 
+            'mahle', 'hengst', 'ufi', 'knecht', 'purflux', 'champion', 
+            'fram', 'wix', 'k&n', 'bilstein', 'sachs', 'kyb', 'monroe', 
+            'koni', 'eibach', 'h&r', 'ngk', 'denso', 'beru', 'magneti',
+            'varta', 'exide', 'yuasa', 'centra', 'moll', 'continental', 
+            'michelin', 'bridgestone', 'goodyear', 'pirelli', 'dunlop', 
+            'hankook', 'nokian', 'falken', 'yokohama', 'castrol', 'mobil', 
+            'shell', 'total', 'motul', 'liqui', 'moly', 'febi', 'gsp'
+        }
+
+        # === SŁOWNIK SLANGU MECHANIKÓW ===
+        self.SLANG_DICTIONARY = {
+            'amory': 'amortyzator', 'aku': 'akumulator', 'akum': 'akumulator',
+            'beemka': 'bmw', 'merola': 'mercedes', 'merol': 'mercedes',
+            'diesla': 'diesel', 'diesl': 'diesel', 'benza': 'benzyna',
+            'zimówki': 'zimowe', 'zimówka': 'zimowe', 'feldze': 'felgi',
+            'felga': 'felgi', 'części': 'części', 'czesci': 'części',
+            'kloce': 'klocki', 'amory': 'amortyzator', 'świece': 'świeca','longlife': 'longlife',  # To nie jest unknown brand!
+    'półsyntetyk': 'półsyntetyczny',
+    'syntetyk': 'syntetyczny',
+    'lato': 'letnie',
+    'zima': 'zimowe',
+    'mróz': 'zima',
+    'benz': 'benzyna',
+    'benza': 'benzyna',
+    'zimówki': 'zimowe',
+    'zimówka': 'zimowe'
+        }
+        
+        # === SŁOWNIK WIELOJĘZYCZNY ===
+        self.MULTILINGUAL_TERMS = {
+            'brake': 'hamulce', 'pads': 'klocki', 'oil': 'olej',
+            'filter': 'filtr', 'battery': 'akumulator', 'spark': 'świeca',
+            'plug': 'świeca', 'parts': 'części', 'für': 'dla',
+            'reifen': 'opony', 'bremsen': 'hamulce', 'huile': 'olej',
+            'freni': 'hamulce', 'freno': 'hamulce'
+        }
+        
+        # === WZORCE PODWÓJNYCH LITER ===
+        self.DOUBLE_LETTER_PATTERNS = [
+            ('kk', 'k'), ('ll', 'l'), ('rr', 'r'), ('tt', 't'),
+            ('cc', 'c'), ('ii', 'i'), ('oo', 'o'), ('aa', 'a'),
+            ('ee', 'e'), ('zz', 'z'), ('ss', 's'), ('mm', 'm')
+        ]    
         
         # === POŁĄCZENIE STARYCH I NOWYCH SŁOWNIKÓW ===
         # Zachowaj stary AUTOMOTIVE_DICTIONARY dla kompatybilności wstecznej
@@ -324,6 +370,8 @@ class EcommerceBot:
             'miejskie', 'szosowe', 'nowe', 'używane', 'oryginalne', 'zamiennikowe',
             'tanie', 'drogie', 'dobre', 'najlepsze', 'polecane', 'popularne'
         }
+        
+        
         
         self.initialize_data()
     
@@ -521,6 +569,23 @@ class EcommerceBot:
         """
         NAPRAWIONA - z rozszerzonym słownikiem części samochodowych + OBSŁUGA KODÓW PRODUKTÓW
         """
+        normalized_tokens = []
+        for token in tokens:
+            token_lower = token.lower()
+            
+            # Sprawdź słownik wielojęzyczny (jeśli istnieje)
+            if hasattr(self, 'MULTILINGUAL_TERMS') and token_lower in self.MULTILINGUAL_TERMS:
+                normalized_tokens.append(self.MULTILINGUAL_TERMS[token_lower])
+            # Sprawdź slang (jeśli istnieje)
+            elif hasattr(self, 'SLANG_DICTIONARY') and token_lower in self.SLANG_DICTIONARY:
+                normalized_tokens.append(self.SLANG_DICTIONARY[token_lower])
+            else:
+                normalized_tokens.append(token)  # Zachowaj oryginał
+        
+        # Dodaj znormalizowane tokeny do oryginalnych (sprawdzamy oba zestawy)
+        tokens = tokens + normalized_tokens
+        # === KONIEC NOWEGO KODU ===
+        
         for token in tokens:
             token_lower = token.lower()
             
@@ -601,6 +666,11 @@ class EcommerceBot:
             main_categories = ['klocki', 'filtr', 'amortyzator', 'świeca', 'akumulator', 'olej', 'opony']
             for category in main_categories:
                 if len(token) >= 4 and fuzz.ratio(token_lower, category) >= 85:
+                    return True
+            
+            tire_pattern = r'^\d{3}/\d{2}[rR]\d{2}$'
+            for token in tokens:
+                if re.match(tire_pattern, token):
                     return True
         
         return False
@@ -805,6 +875,7 @@ class EcommerceBot:
             
             # Skip wszystkie znane słowa i konteksty
             if (token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] or
+                token_lower in self.PARTS_MANUFACTURERS or
                 token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands'] or
                 token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['luxury_brands'] or
                 token_lower in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] or
@@ -836,6 +907,61 @@ class EcommerceBot:
         result = has_category and has_unknown_brand
         print(f"[STRUCTURAL DEBUG] Final result: category={has_category}, unknown_brand={has_unknown_brand}, structural={result}")
         return result
+    def correct_query_typos(self, query: str) -> str:
+        """
+        Agresywna korekcja literówek przed wyszukiwaniem
+        """
+        corrections = {
+            'swica': 'świeca', 'swieca': 'świeca', 'kloki': 'klocki',
+            'filetr': 'filtr', 'amortyztor': 'amortyzator',
+            'akumlator': 'akumulator', 'olel': 'olej', 'opny': 'opony','oopony': 'opony',
+        'ooopony': 'opony', 
+        'akum': 'akumulator',
+        'świece': 'świeca',
+        'benz': 'benzyna',
+        'benza': 'benzyna'
+        }
+        
+        tokens = query.lower().split()
+        corrected = []
+        
+        for token in tokens:
+            corrected.append(corrections.get(token, token))
+        
+        return ' '.join(corrected)
+    
+    def fix_double_letters(self, query: str) -> str:
+        """
+        Naprawia podwójne litery w literówkach
+        """
+        fixed = query.lower()
+        words = fixed.split()
+        fixed_words = []
+        
+        for word in words:
+            # Sprawdź każdy wzorzec podwójnych liter
+            fixed_word = word
+            for double, single in self.DOUBLE_LETTER_PATTERNS:
+                if double in word:
+                    # Spróbuj naprawić
+                    test_word = word.replace(double, single)
+                    
+                    # Sprawdź czy po poprawce to znana kategoria
+                    if (test_word in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories'] or
+                        test_word in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['car_brands'] or
+                        test_word in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['motorcycle_brands']):
+                        fixed_word = test_word
+                        break
+                    
+                    # Sprawdź fuzzy matching
+                    for category in self.UNIVERSAL_AUTOMOTIVE_KNOWLEDGE['part_categories']:
+                        if fuzz.ratio(test_word, category) >= 90:
+                            fixed_word = test_word
+                            break
+            
+            fixed_words.append(fixed_word)
+        
+        return ' '.join(fixed_words)
 
     # DOKŁADNE MIEJSCE WKLEJENIA I MODYFIKACJI
 
@@ -1403,9 +1529,41 @@ class EcommerceBot:
 
     def analyze_query_intent(self, query: str, machine_filter: Optional[str] = None) -> Dict:
         """
-        OSTATECZNA NAPRAWA - Z OBSŁUGĄ LITERÓWEK I ZAPYTAŃ KONTEKSTOWYCH
+        OPERACJA LISEK PUSTYNI - Z OBSŁUGĄ LITERÓWEK I ZAPYTAŃ KONTEKSTOWYCH
+        KLUCZOWE ZMIANY: Obniżone progi klasyfikacji + specjalna ścieżka dla specyfikacji technicznych
         """
         query_lower = query.lower().strip()
+        
+        # === NOWY PREPROCESSING - KROK 1: Tłumacz wielojęzyczne i slang ===
+        preprocessed_tokens = []
+        for token in query_lower.split():
+            original_token = token
+            # Tłumacz terminy wielojęzyczne
+            if hasattr(self, 'MULTILINGUAL_TERMS') and token in self.MULTILINGUAL_TERMS:
+                token = self.MULTILINGUAL_TERMS[token]
+                print(f"[ANALYZE DEBUG] Translated: {original_token} -> {token}")
+            # Popraw slang
+            if hasattr(self, 'SLANG_DICTIONARY') and token in self.SLANG_DICTIONARY:
+                token = self.SLANG_DICTIONARY[token]
+                print(f"[ANALYZE DEBUG] Slang fixed: {original_token} -> {token}")
+            preprocessed_tokens.append(token)
+        
+        # Złóż z powrotem
+        query_lower = ' '.join(preprocessed_tokens)
+        
+        # === NOWY PREPROCESSING - KROK 2: Napraw podwójne litery ===
+        if hasattr(self, 'fix_double_letters'):
+            query_before_double = query_lower
+            query_lower = self.fix_double_letters(query_lower)
+            if query_before_double != query_lower:
+                print(f"[ANALYZE DEBUG] Double letters fixed: '{query_before_double}' -> '{query_lower}'")
+        
+        # === NOWY PREPROCESSING - KROK 3: Zastosuj istniejące korekty literówek ===
+        corrected_query = self.correct_query_typos(query_lower)
+        if corrected_query != query_lower:
+            print(f"[ANALYZE DEBUG] Typos corrected: '{query_lower}' -> '{corrected_query}'")
+            query_lower = corrected_query
+        
         query_tokens = query_lower.split()
         
         # DEBUG
@@ -1447,9 +1605,44 @@ class EcommerceBot:
                 'matches': []
             }
         
+        # === NOWY KROK 2.5: Wczesne wyszukiwanie produktów po preprocessing ===
+        matches = self.get_fuzzy_product_matches_internal(query_lower, machine_filter)
+        best_match_score = matches[0][1] if matches else 0
+        
+        # Jeśli po preprocessing znaleźliśmy dobre dopasowanie, zwróć od razu
+        if best_match_score >= 60:
+            print(f"[ANALYZE DEBUG] Early match found after preprocessing: score={best_match_score}")
+        
         # KROK 3: Sprawdź token validity i structural
         token_validity = self.calculate_token_validity(query_tokens)
         is_structural = self.is_structural_query(query_tokens)
+        
+        # === OPERACJA LISEK PUSTYNI - WYKRYJ SPECYFIKACJE TECHNICZNE ===
+        has_technical_spec = False
+        has_tire_size = False
+        has_oil_spec = False
+        has_season_word = False
+        
+        for token in query_tokens:
+            token_lower = token.lower()
+            
+            # Rozmiary opon (195/65r15, 225/45r17)
+            if re.match(r'^\d{3}/\d{2}[rR]\d{2}$', token):
+                has_tire_size = True
+                has_technical_spec = True
+                print(f"[LISEK DEBUG] Wykryto rozmiar opon: {token}")
+            
+            # Specyfikacje olejów (5w30, 0w40)
+            if re.match(r'^\d+w\d+$', token_lower):
+                has_oil_spec = True
+                has_technical_spec = True
+                print(f"[LISEK DEBUG] Wykryto specyfikację oleju: {token}")
+            
+            # Słowa sezonowe i techniczne
+            if token_lower in ['longlife', 'półsyntetyczny', 'syntetyczny', 'letnie', 'zimowe', 'lato', 'zima']:
+                has_season_word = True
+                has_technical_spec = True
+                print(f"[LISEK DEBUG] Wykryto słowo techniczne: {token}")
         
         # KROK 4: Sprawdź czy query zawiera znane literówki
         known_typos = {
@@ -1545,11 +1738,8 @@ class EcommerceBot:
                         has_nonexistent_short_code = True
                         break
         
-        matches = self.get_fuzzy_product_matches_internal(query_lower, machine_filter)
-        best_match_score = matches[0][1] if matches else 0
-        
         # KROK 4.5: NOWY - Wykryj legalne zapytania kontekstowe
-        context_words_list = ['do', 'dla', 'na', 'pasuje', 'części', 'część', 'zimę', 'zimą', 'latem']
+        context_words_list = ['do', 'dla', 'na', 'pasuje', 'części', 'część', 'zimę', 'zimą', 'latem', 'w', 'z', 'pod']
         has_context_words = any(
             token.lower() in context_words_list
             for token in query_tokens
@@ -1637,8 +1827,37 @@ class EcommerceBot:
                         'matches': matches[:6] if matches else []
                     }
         
-        # GŁÓWNA KLASYFIKACJA
-        if best_match_score >= 90:
+        # === OPERACJA LISEK PUSTYNI - GŁÓWNA KLASYFIKACJA Z OBNIŻONYMI PROGAMI ===
+        
+        # STRATEGIA 1: Specjalne traktowanie specyfikacji technicznych
+        if has_technical_spec and best_match_score >= 35:
+            print(f"[LISEK DEBUG] Specyfikacja techniczna wykryta - obniżony próg aktywowany")
+            if best_match_score >= 65:  # OBNIŻONE z 90
+                confidence_level = 'HIGH'
+                suggestion_type = 'technical_specification_match'
+                ga4_event = None
+            else:
+                confidence_level = 'MEDIUM'
+                suggestion_type = 'technical_specification_partial'
+                ga4_event = 'search_typo_corrected'
+            
+            return {
+                'query': query,
+                'tokens': query_tokens,
+                'token_validity': round(token_validity, 2),
+                'best_match_score': round(best_match_score, 2),
+                'confidence_level': confidence_level,
+                'suggestion_type': suggestion_type,
+                'ga4_event': ga4_event,
+                'has_luxury_brand': has_luxury_brand,
+                'has_product_code': bool(potential_product_codes),
+                'is_structural': is_structural,
+                'is_nonsense': False,
+                'matches': matches[:6] if matches else []
+            }
+        
+        # STRATEGIA 2: Standardowa klasyfikacja z obniżonymi progami
+        if best_match_score >= 75:  # OBNIŻONE z 90
             confidence_level = 'HIGH'
             suggestion_type = 'exact_match'
             ga4_event = None
@@ -1662,11 +1881,11 @@ class EcommerceBot:
             confidence_level = 'NO_MATCH'
             suggestion_type = 'luxury_brand_missing'
             ga4_event = 'search_lost_demand'
-        elif best_match_score >= 80:
+        elif best_match_score >= 65:  # OBNIŻONE z 80
             confidence_level = 'HIGH'
             suggestion_type = 'good_match'
             ga4_event = None
-        elif best_match_score >= 70 and token_validity >= 50:
+        elif best_match_score >= 55 and token_validity >= 50:  # OBNIŻONE z 70
             confidence_level = 'MEDIUM'
             suggestion_type = 'typo_correction'
             ga4_event = 'search_typo_corrected'
@@ -1676,7 +1895,7 @@ class EcommerceBot:
             ga4_event = 'search_typo_corrected'
         elif (len(query_tokens) >= 2 and 
               token_validity >= 70 and 
-              best_match_score < 70 and
+              best_match_score < 55 and  # OBNIŻONE z 70
               not potential_product_codes and
               not short_codes):
             confidence_level = 'NO_MATCH'

@@ -325,27 +325,38 @@
         buttonText.innerHTML = '<span class="loading"></span>Logowanie...';
         
         // Sprawdź dane logowania
-        setTimeout(() => {
-            if (username === 'demo_client' && password === 'demo123') {
-                // Przekieruj do dashboard
-                window.location.href = 'client-dashboard.html';
-            } else {
-                // Błędne dane - reset button
-                button.disabled = false;
-                buttonText.innerHTML = 'Zaloguj się';
-                
-                // Pokaż błąd
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-error';
-                alertDiv.textContent = 'Nieprawidłowa nazwa użytkownika lub hasło';
-                
-                const form = document.querySelector('.login-form');
-                form.insertBefore(alertDiv, form.firstChild);
-                
-                // Usuń alert po 3 sekundach
-                setTimeout(() => alertDiv.remove(), 3000);
-            }
-        }, 1000); // 1 sekunda delay dla efektu loading
+        // Sprawdź dane logowania
+setTimeout(() => {
+    if ((username === 'demo_client' && password === 'demo123') || 
+        (username === 'admin' && password === 'admin123') ||
+        (username === 'debug' && password === 'debug123')) {
+        
+        // Ustaw formularz na POST do Flask
+        const form = document.getElementById('loginForm');
+        form.method = 'POST';
+        form.action = '/login';
+        
+        // Usuń preventDefault i wyślij formularz
+        form.removeEventListener('submit', arguments.callee);
+        form.submit();
+        
+    } else {
+        // Błędne dane - reset button
+        button.disabled = false;
+        buttonText.innerHTML = 'Zaloguj się';
+        
+        // Pokaż błąd
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-error';
+        alertDiv.textContent = 'Nieprawidłowa nazwa użytkownika lub hasło';
+        
+        const form = document.querySelector('.login-form');
+        form.insertBefore(alertDiv, form.firstChild);
+        
+        // Usuń alert po 3 sekundach
+        setTimeout(() => alertDiv.remove(), 3000);
+    }
+}, 1000); // 1 sekunda delay dla efektu loading
     });
 
     document.addEventListener('DOMContentLoaded', function() {

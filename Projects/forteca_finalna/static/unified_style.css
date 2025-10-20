@@ -3913,3 +3913,36 @@ pricing-main {
     padding: 10px;
     border-radius: 50%;
 }
+.demo-cta-section {
+    width: 80px;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    border: 1px solid #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.cta-content {
+    text-align: center;
+    color: #e2e8f0;
+    padding: 20px 10px;
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+}
+
+.demo-cta-btn {
+    display: block;
+    background: #3b82f6;
+    color: white;
+    padding: 12px 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-top: 15px;
+    font-size: 12px;
+    transition: background 0.3s;
+}
+
+.demo-cta-btn:hover {
+    background: #2563eb;
+}

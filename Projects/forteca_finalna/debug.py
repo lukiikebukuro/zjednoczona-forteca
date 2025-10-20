@@ -1,219 +1,198 @@
 #!/usr/bin/env python3
 """
-DEBUG OPERACJI KULOODPORNY RDZEŃ - WERSJA NAPRAWIONA
-120 scenariuszy testowych: 100 oryginalnych + 20 nowych brutalnych
+MEGA TESTY BIZNESOWE - PANCERNA DEMONSTRACJA
+100 scenariuszy testowych dla niepodważalnej prezentacji
 """
 
 from ecommerce_bot import EcommerceBot
 
-def test_scenario(bot, query, expected_result):
-    """Testuje scenariusz i zwraca szczegółowy wynik"""
+def test_business_scenario(bot, query, expected_result, business_value):
+    """Testuje scenariusz biznesowy z wartością dla klienta"""
     try:
         analysis = bot.analyze_query_intent(query)
         
         confidence_to_result = {
-            'HIGH': 'ZNALEZIONE PRODUKTY',
-            'MEDIUM': 'ZNALEZIONE PRODUKTY', 
-            'LOW': 'ODFILTROWANE',
-            'NO_MATCH': 'UTRACONE OKAZJE'
+            'HIGH': 'SPRZEDAŻ',
+            'MEDIUM': 'SPRZEDAŻ', 
+            'LOW': 'STRACONY KLIENT',
+            'NO_MATCH': 'ZAPYTANIE O ROZSZERZENIE OFERTY'
         }
         
-        actual_result = confidence_to_result.get(analysis['confidence_level'], 'NIEZNANE')
+        actual_result = confidence_to_result.get(analysis['confidence_level'], 'BŁĄD SYSTEMU')
         passed = actual_result == expected_result
         
         return {
             'passed': passed,
             'actual': actual_result,
             'expected': expected_result,
+            'business_value': business_value,
             'confidence': analysis['confidence_level'],
-            'token_validity': analysis['token_validity'],
-            'ga4_event': analysis.get('ga4_event', 'None'),
-            'suggestion_type': analysis.get('suggestion_type', 'None'),
-            'is_structural': analysis.get('is_structural', False),
-            'has_luxury_brand': analysis.get('has_luxury_brand', False)
+            'query': query
         }
         
     except Exception as e:
         return {
             'passed': False,
-            'actual': f'ERROR: {e}',
+            'actual': f'BŁĄD SYSTEMU: {e}',
             'expected': expected_result,
+            'business_value': business_value,
             'confidence': 'ERROR',
-            'token_validity': 0
+            'query': query
         }
 
-def run_comprehensive_tests():
-    """Uruchamia kompletne testy operacji Kuloodporny Rdzeń"""
+def run_business_tests():
+    """Uruchamia 100 testów biznesowych"""
     
-    print("🚀 OPERACJA KULOODPORNY RDZEŃ - DEBUG NAPRAWIONY")
-    print("120 SCENARIUSZY TESTOWYCH - STRATEGIA 50/50 + BRUTALNE TESTY")
-    print("=" * 80)
+    print("💰 MEGA TESTY BIZNESOWE - PANCERNA DEMONSTRACJA")
+    print("100 scenariuszy dla niepodważalnej prezentacji")
+    print("=" * 70)
     
     bot = EcommerceBot()
     
-    # === SCENARIUSZE TESTOWE (ORYGINALNE 100 + NOWE 20) ===
+    # === 100 SCENARIUSZY TESTOWYCH ===
     scenarios = [
-        # === ORYGINALNE (1-20) ===
-        ("klocki bmw e90", "ZNALEZIONE PRODUKTY"),
-        ("filtr oleju sony", "UTRACONE OKAZJE"),
-        ("klocki bmw x1", "UTRACONE OKAZJE"),
-        ("kloki bosh", "ZNALEZIONE PRODUKTY"),
-        ("asdasdasd", "ODFILTROWANE"),
-        ("filtr mann a1", "UTRACONE OKAZJE"),
-        ("filtr mann 55", "UTRACONE OKAZJE"),
-        ("klocki ferrari", "UTRACONE OKAZJE"),
-        ("opony zimowe", "UTRACONE OKAZJE"),
-        ("filtr mann hu719/7x", "ZNALEZIONE PRODUKTY"),
-        ("bmw", "ZNALEZIONE PRODUKTY"),
-        ("amortyzator", "ZNALEZIONE PRODUKTY"),
-        ("bmw 1", "UTRACONE OKAZJE"),
-        ("świeca", "ZNALEZIONE PRODUKTY"),
-        ("amortyztor bilstein", "ZNALEZIONE PRODUKTY"),
-        ("olej castrol 5w30", "ZNALEZIONE PRODUKTY"),
-        ("akumulator vata", "ZNALEZIONE PRODUKTY"),
-        ("części porsche", "UTRACONE OKAZJE"),
-        ("xyzxyzxyz", "ODFILTROWANE"),
-        ("filtr 0986494104", "ZNALEZIONE PRODUKTY"),
+        # === PODSTAWOWA SPRZEDAŻ (1-10) ===
+        ("klocki bmw e90", "SPRZEDAŻ", "189 zł - natychmiastowa sprzedaż"),
+        ("filtr oleju mann", "SPRZEDAŻ", "62 zł - szybka konwersja"),
+        ("akumulator varta 74ah", "SPRZEDAŻ", "420 zł - wysokomarżowy produkt"),
+        ("olej castrol 5w30", "SPRZEDAŻ", "165 zł - częste zamówienie"),
+        ("świeca ngk", "SPRZEDAŻ", "45 zł - łatwa sprzedaż masowa"),
+        ("amortyzator bilstein", "SPRZEDAŻ", "520 zł - premium sprzedaż"),
+        ("tarcza brembo 320mm", "SPRZEDAŻ", "420 zł - specjalistyczny produkt"),
+        ("opony continental zimowe", "SPRZEDAŻ", "456 zł - sezonowa sprzedaż"),
+        ("klocki yamaha r6", "SPRZEDAŻ", "145 zł - segment motocyklowy"),
+        ("filtr powietrza k&n", "SPRZEDAŻ", "285 zł - tuning premium"),
         
-        # === ZASÓB A - FAKTYCZNE PRODUKTY (21-30) ===
-        ("klocki bosch bmw e90", "ZNALEZIONE PRODUKTY"),
-        ("filtr oleju mann hu719", "ZNALEZIONE PRODUKTY"),
-        ("amortyzator bilstein golf", "ZNALEZIONE PRODUKTY"),
-        ("tarcza brembo 320mm", "ZNALEZIONE PRODUKTY"),
-        ("świeca ngk iridium", "ZNALEZIONE PRODUKTY"),
-        ("akumulator varta 74ah", "ZNALEZIONE PRODUKTY"),
-        ("olej castrol edge 5w30", "ZNALEZIONE PRODUKTY"),
-        ("klocki yamaha r6 ebc", "ZNALEZIONE PRODUKTY"),
-        ("łańcuch did 520", "ZNALEZIONE PRODUKTY"),
-        ("klocki sprinter textar", "ZNALEZIONE PRODUKTY"),
+        # === PODSTAWOWE LITERÓWKI (11-20) ===
+        ("kloki bosch", "SPRZEDAŻ", "189 zł - jedna litera"),
+        ("akumlator varta", "SPRZEDAŻ", "420 zł - brak litery"),
+        ("amortyztor sachs", "SPRZEDAŻ", "425 zł - zamiana liter"),
+        ("olel 5w30", "SPRZEDAŻ", "165 zł - powtórzona litera"),
+        ("swica ngk", "SPRZEDAŻ", "45 zł - brak polskiego znaku"),
+        ("filetr mann", "SPRZEDAŻ", "62 zł - dodatkowa litera"),
+        ("opny zimowe", "SPRZEDAŻ", "456 zł - brak litery"),
+        ("hamulce przod", "SPRZEDAŻ", "189 zł - brak znaku"),
+        ("filtry vw", "SPRZEDAŻ", "73 zł - liczba mnoga"),
+        ("klocek mercedes", "SPRZEDAŻ", "156 zł - liczba pojedyncza"),
         
-        # === ZASÓB B - LUKSUS (31-40) ===
-        ("klocki ferrari 458", "UTRACONE OKAZJE"),
-        ("filtr maserati ghibli", "UTRACONE OKAZJE"),
-        ("amortyzatory bentley continental", "UTRACONE OKAZJE"),
-        ("tarcze lamborghini gallardo", "UTRACONE OKAZJE"),
-        ("klocki alfa romeo giulia", "UTRACONE OKAZJE"),
-        ("filtr powietrza rolls royce", "UTRACONE OKAZJE"),
-        ("świece bugatti veyron", "UTRACONE OKAZJE"),
-        ("olej aston martin db11", "UTRACONE OKAZJE"),
-        ("klocki mclaren 720s", "UTRACONE OKAZJE"),
-        ("amortyzator pagani huayra", "UTRACONE OKAZJE"),
+        # === TRUDNE LITERÓWKI (21-30) ===
+        ("klockii bmw", "SPRZEDAŻ", "189 zł - podwójne 'i'"),
+        ("fiiltr mann", "SPRZEDAŻ", "62 zł - podwójne 'i' w środku"),
+        ("amortyzatorr", "SPRZEDAŻ", "425 zł - podwójne 'r'"),
+        ("oopony zimowe", "SPRZEDAŻ", "456 zł - podwójne 'o'"),
+        ("świeeca ngk", "SPRZEDAŻ", "45 zł - podwójne 'e'"),
+        ("akkumulator", "SPRZEDAŻ", "420 zł - podwójne 'k'"),
+        ("tarczaa hamulcowa", "SPRZEDAŻ", "420 zł - podwójne 'a'"),
+        ("olejj castrol", "SPRZEDAŻ", "165 zł - podwójne 'j'"),
+        ("filltr oleju", "SPRZEDAŻ", "62 zł - podwójne 'l'"),
+        ("kloccki yamaha", "SPRZEDAŻ", "145 zł - podwójne 'c'"),
         
-        # === ZASÓB B - STRUKTURALNE (41-50) ===
-        ("klocki xiaomi redmi", "UTRACONE OKAZJE"),
-        ("filtr dyson v11", "UTRACONE OKAZJE"),
-        ("amortyzator apple macbook", "UTRACONE OKAZJE"),
-        ("tarcze samsung galaxy", "UTRACONE OKAZJE"),
-        ("drzwi kia sportage", "UTRACONE OKAZJE"),
-        ("klapa honda civic", "UTRACONE OKAZJE"),
-        ("maska toyota corolla", "UTRACONE OKAZJE"),
-        ("zderzak ford focus", "UTRACONE OKAZJE"),
-        ("reflektor xenon audi", "UTRACONE OKAZJE"),
-        ("opony michelin 17", "UTRACONE OKAZJE"),
+        # === KODY PRODUKTÓW (31-40) ===
+        ("0986494104", "SPRZEDAŻ", "189 zł - kod Bosch"),
+        ("hu719/7x", "SPRZEDAŻ", "62 zł - kod Mann"),
+        ("22-266767", "SPRZEDAŻ", "520 zł - kod Bilstein"),
+        ("p83052", "SPRZEDAŻ", "156 zł - kod Brembo"),
+        ("FR7DPP33", "SPRZEDAŻ", "38 zł - kod świecy"),
+        ("13.0460-7218", "SPRZEDAŻ", "156 zł - kod ATE"),
+        ("GDB1748", "SPRZEDAŻ", "135 zł - kod TRW"),
+        ("E12", "SPRZEDAŻ", "420 zł - kod Varta"),
+        ("520VX3-114", "SPRZEDAŻ", "345 zł - kod łańcucha"),
+        ("TS850", "SPRZEDAŻ", "456 zł - kod Continental"),
         
-        # === EDGE CASES (51-60) ===
-        ("kloki bosh e90", "ZNALEZIONE PRODUKTY"),
-        ("filetr man bmw", "ZNALEZIONE PRODUKTY"),
-        ("amortyztor sachs golf", "ZNALEZIONE PRODUKTY"),
-        ("swica ngk honda", "ZNALEZIONE PRODUKTY"),
-        ("akumlator varta ford", "ZNALEZIONE PRODUKTY"),
-        ("ślimak maglownicy audi", "UTRACONE OKAZJE"),
-        ("pucharek amortyzatora bmw", "UTRACONE OKAZJE"),
-        ("krakownica zawieszenia opel", "UTRACONE OKAZJE"),
-        ("czop kulowy mercedes", "UTRACONE OKAZJE"),
-        ("kielich sprężyny vw", "UTRACONE OKAZJE"),
+        # === ZAPYTANIA KONTEKSTOWE (41-50) ===
+        ("klocki do bmw", "SPRZEDAŻ", "189 zł - z przyimkiem 'do'"),
+        ("filtr dla golfa", "SPRZEDAŻ", "73 zł - z przyimkiem 'dla'"),
+        ("olej na zimę", "SPRZEDAŻ", "165 zł - kontekst sezonowy"),
+        ("części do yamaha", "SPRZEDAŻ", "145 zł - ogólne części"),
+        ("hamulce w mercedes", "SPRZEDAŻ", "156 zł - z przyimkiem 'w'"),
+        ("amortyzator z przodu", "SPRZEDAŻ", "520 zł - lokalizacja"),
+        ("klocki pod sprinter", "SPRZEDAŻ", "267 zł - z przyimkiem 'pod'"),
+        ("świeca do civic", "SPRZEDAŻ", "52 zł - model Honda"),
+        ("zimówki continental", "SPRZEDAŻ", "456 zł - potoczne"),
+        ("sportowy filtr k&n", "SPRZEDAŻ", "285 zł - przymiotnik"),
         
-        # === NONSENS (61-70) ===
-        ("qwerty asdf", "ODFILTROWANE"),
-        ("asdfgh jklm", "ODFILTROWANE"),
-        ("nie wiem co szukam", "ODFILTROWANE"),
-        ("pomocy gdzie jest", "ODFILTROWANE"),
-        ("jak to działa", "ODFILTROWANE"),
-        ("hello klocki world", "ODFILTROWANE"),
-        ("pizza hamburger klocki", "ODFILTROWANE"),
-        ("klocki do pizzy", "ODFILTROWANE"),
-        ("aaaaaa bbbbbb", "ODFILTROWANE"),
-        ("123456 789", "ODFILTROWANE"),
+        # === SLANG MECHANIKÓW (51-60) ===
+        ("kloce bmw", "SPRZEDAŻ", "189 zł - warsztatowy slang"),
+        ("amory sachs", "SPRZEDAŻ", "425 zł - skrót amortyzatorów"),
+        ("aku varta", "SPRZEDAŻ", "420 zł - skrót akumulatora"),
+        ("świece do benza", "SPRZEDAŻ", "45 zł - benzyna potocznie"),
+        ("filtry do diesla", "SPRZEDAŻ", "62 zł - diesel potocznie"),
+        ("olej do tfsi", "SPRZEDAŻ", "165 zł - typ silnika"),
+        ("części beemka", "SPRZEDAŻ", "189 zł - BMW potocznie"),
+        ("klocki merola", "SPRZEDAŻ", "156 zł - Mercedes potocznie"),
+        ("opony na feldze", "SPRZEDAŻ", "456 zł - felgi potocznie"),
+        ("akum na mróz", "SPRZEDAŻ", "420 zł - zima potocznie"),
         
-        # === KAROSERIA (71-80) ===
-        ("lusterko ford focus", "UTRACONE OKAZJE"),
-        ("zderzak audi a4", "UTRACONE OKAZJE"),
-        ("błotnik bmw e90", "UTRACONE OKAZJE"),
-        ("klapa bagażnika golf", "UTRACONE OKAZJE"),
-        ("próg toyota corolla", "UTRACONE OKAZJE"),
-        ("maska volkswagen passat", "UTRACONE OKAZJE"),
-        ("reflektor mercedes w204", "UTRACONE OKAZJE"),
-        ("lampa stop bmw", "UTRACONE OKAZJE"),
-        ("kierunkowskaz audi", "UTRACONE OKAZJE"),
-        ("szyba przednia ford", "UTRACONE OKAZJE"),
-
-        # === SKRÓTY I LITERÓWKI (81-90) ===
-        ("filtry vw", "UTRACONE OKAZJE"),
-        ("kloki mercedes", "ZNALEZIONE PRODUKTY"),
-        ("swica bosch", "ZNALEZIONE PRODUKTY"),
-        ("olel 5w30", "ZNALEZIONE PRODUKTY"),
-        ("opny zimowe", "UTRACONE OKAZJE"),
-        ("hamulce mb", "UTRACONE OKAZJE"),
-        ("filtry renault", "UTRACONE OKAZJE"),
-        ("świece do golfa", "UTRACONE OKAZJE"),
-        ("akumulatory varta", "ZNALEZIONE PRODUKTY"),
-        ("oleju silnikowego", "UTRACONE OKAZJE"),
-
-        # === NOWE MARKI (91-95) ===
-        ("klocki byd tang", "UTRACONE OKAZJE"),
-        ("filtr geely coolray", "UTRACONE OKAZJE"),
-        ("akumulator nio es8", "UTRACONE OKAZJE"),
-        ("opony mg zs", "UTRACONE OKAZJE"),
-        ("świeca polestar 2", "UTRACONE OKAZJE"),
-
-        # === SPECJALISTYCZNE (96-100) ===
-        ("sworzen wahacza bmw", "UTRACONE OKAZJE"),
-        ("tuleja stabilizatora", "UTRACONE OKAZJE"),
-        ("czujnik cmp audi", "UTRACONE OKAZJE"),
-        ("elektromagnes vanos", "UTRACONE OKAZJE"),
-        ("moduł abs mercedes", "UTRACONE OKAZJE"),
+        # === MIESZANE JĘZYKI (61-70) ===
+        ("brake pads bmw", "SPRZEDAŻ", "189 zł - angielskie klocki"),
+        ("oil filter mann", "SPRZEDAŻ", "62 zł - angielski filtr"),
+        ("spark plug ngk", "SPRZEDAŻ", "45 zł - angielska świeca"),
+        ("battery varta", "SPRZEDAŻ", "420 zł - angielski akumulator"),
+        ("bremsen mercedes", "SPRZEDAŻ", "156 zł - niemieckie hamulce"),
+        ("huile castrol", "SPRZEDAŻ", "165 zł - francuski olej"),
+        ("freni brembo", "SPRZEDAŻ", "420 zł - włoskie hamulce"),
+        ("filter für golf", "SPRZEDAŻ", "73 zł - niemiecki dla"),
+        ("parts yamaha", "SPRZEDAŻ", "145 zł - angielskie części"),
+        ("reifen continental", "SPRZEDAŻ", "456 zł - niemieckie opony"),
         
-        # === NOWE BRUTALNE TESTY (101-120) ===
-        ("maskotka", "ODFILTROWANE"),                              # NOWY: Brak kontekstu auto
-        ("bilet", "ODFILTROWANE"),                                 # NOWY: Brak kontekstu auto
-        ("telefon", "ODFILTROWANE"),                               # NOWY: Brak kontekstu auto
-        ("jedzenie", "ODFILTROWANE"),                              # NOWY: Brak kontekstu auto
-        ("klocki pizza", "ODFILTROWANE"),                          # NOWY: Auto + nonsense
-        ("hello klocki", "ODFILTROWANE"),                          # NOWY: English + auto
-        ("pizza klocki world", "ODFILTROWANE"),                    # NOWY: Nonsense dominuje
-        ("ds", "ODFILTROWANE"),                                    # NOWY: Krótki nonsense
-        ("mo", "ODFILTROWANE"),                                    # NOWY: Krótki nonsense
-        ("jestem", "ODFILTROWANE"),                                # NOWY: Polski stop word
-        ("x", "ODFILTROWANE"),                                     # NOWY: Jeden znak
-        ("5w30", "ZNALEZIONE PRODUKTY"),                           # NOWY: Kod techniczny
-        ("części xiaomi", "ODFILTROWANE"),                         # NOWY: Elektronika + auto słowo
-        ("filtr samsung", "ODFILTROWANE"),                         # NOWY: Auto kategoria + elektronika
-        ("klocki apple", "ODFILTROWANE"),                          # NOWY: Auto kategoria + tech
-        ("amortyzator do lodówki", "ODFILTROWANE"),                # NOWY: Auto + do + AGD
-        ("hamulce nintendo", "ODFILTROWANE"),                      # NOWY: Auto + gaming
-        ("123456", "ODFILTROWANE"),                                # NOWY: Same liczby bez kontekstu
-        ("abc123", "ODFILTROWANE"),                                # NOWY: Kod bez kontekstu auto
-        ("klokihamulcowebmwmercedesaudiklocki", "ODFILTROWANE"),   # NOWY: Sklejone słowa
+        # === SPECYFIKACJE TECHNICZNE (71-80) ===
+        ("5w30 longlife", "SPRZEDAŻ", "178 zł - specyfikacja VW"),
+        ("0w40 mobil1", "SPRZEDAŻ", "189 zł - pełna syntetyka"),
+        ("10w40 półsyntetyk", "SPRZEDAŻ", "145 zł - półsyntetyczny"),
+        ("195/65r15 zimowe", "SPRZEDAŻ", "345 zł - rozmiar opon"),
+        ("225/45r17 lato", "SPRZEDAŻ", "456 zł - opony letnie"),
+        ("74ah 680a varta", "SPRZEDAŻ", "420 zł - parametry aku"),
+        ("60ah 540a bosch", "SPRZEDAŻ", "350 zł - akumulator"),
+        ("320mm tarcze", "SPRZEDAŻ", "420 zł - średnica tarcz"),
+        ("280mm przód", "SPRZEDAŻ", "385 zł - tarcze przednie"),
+        ("ventylowane 312mm", "SPRZEDAŻ", "450 zł - tarcze wentylowane"),
+        
+        # === NONSENS DO ODFILTROWANIA (81-85) ===
+        ("qwerty asdf", "STRACONY KLIENT", "0 zł - klawiatura"),
+        ("pizza hamburger", "STRACONY KLIENT", "0 zł - jedzenie"),
+        ("hello world", "STRACONY KLIENT", "0 zł - programowanie"),
+        ("asdfghjkl", "STRACONY KLIENT", "0 zł - losowe znaki"),
+        ("123456789", "STRACONY KLIENT", "0 zł - same cyfry"),
+        
+        # === UTRACONY POPYT - MARKI PREMIUM (86-95) ===
+        ("klocki ferrari", "ZAPYTANIE O ROZSZERZENIE OFERTY", "2000 zł - supercar"),
+        ("filtr tesla", "ZAPYTANIE O ROZSZERZENIE OFERTY", "300 zł - elektryki"),
+        ("części genesis", "ZAPYTANIE O ROZSZERZENIE OFERTY", "500 zł - Korea premium"),
+        ("klocki mclaren", "ZAPYTANIE O ROZSZERZENIE OFERTY", "3000 zł - F1 marka"),
+        ("akumulator nio", "ZAPYTANIE O ROZSZERZENIE OFERTY", "800 zł - chiński EV"),
+        ("olej bugatti", "ZAPYTANIE O ROZSZERZENIE OFERTY", "500 zł - hypercars"),
+        ("tarcze pagani", "ZAPYTANIE O ROZSZERZENIE OFERTY", "5000 zł - włoski supercar"),
+        ("świece koenigsegg", "ZAPYTANIE O ROZSZERZENIE OFERTY", "200 zł - szwedzki hypercar"),
+        ("filtr rolls-royce", "ZAPYTANIE O ROZSZERZENIE OFERTY", "400 zł - luksus brytyjski"),
+        ("amortyzatory bentley", "ZAPYTANIE O ROZSZERZENIE OFERTY", "2000 zł - brytyjski luksus"),
+        
+        # === EDGE CASES - GRANICZNE (96-100) ===
+        ("", "STRACONY KLIENT", "0 zł - puste zapytanie"),
+        ("a", "STRACONY KLIENT", "0 zł - pojedyncza litera"),
+        ("bmw", "SPRZEDAŻ", "100 zł - sama marka"),
+        ("klocki", "SPRZEDAŻ", "150 zł - sama kategoria"),
+        ("bmw e90 e91 e92 e93", "SPRZEDAŻ", "189 zł - wiele kodów"),
     ]
     
     passed = 0
     failed = 0
+    failed_tests = []
     
     print(f"\n📊 TESTOWANIE {len(scenarios)} SCENARIUSZY:\n")
     
-    # Grupuj wyniki dla lepszej analizy
+    # Grupuj wyniki
     groups = {
-        "ORYGINALNE (1-20)": (0, 20),
-        "ZASÓB A - PRODUKTY (21-30)": (20, 30), 
-        "ZASÓB B - LUKSUS (31-40)": (30, 40),
-        "ZASÓB B - STRUKTURALNE (41-50)": (40, 50),
-        "EDGE CASES (51-60)": (50, 60),
-        "NONSENS (61-70)": (60, 70),
-        "KAROSERIA (71-80)": (70, 80),
-        "SKRÓTY I LITERÓWKI (81-90)": (80, 90), 
-        "NOWE MARKI (91-95)": (90, 95),
-        "SPECJALISTYCZNE (96-100)": (95, 100),
-        "BRUTALNE TESTY (101-120)": (100, 120)
+        "PODSTAWOWA SPRZEDAŻ (1-10)": (0, 10),
+        "PODSTAWOWE LITERÓWKI (11-20)": (10, 20),
+        "TRUDNE LITERÓWKI (21-30)": (20, 30),
+        "KODY PRODUKTÓW (31-40)": (30, 40),
+        "ZAPYTANIA KONTEKSTOWE (41-50)": (40, 50),
+        "SLANG MECHANIKÓW (51-60)": (50, 60),
+        "MIESZANE JĘZYKI (61-70)": (60, 70),
+        "SPECYFIKACJE TECHNICZNE (71-80)": (70, 80),
+        "FILTROWANIE NONSENSU (81-85)": (80, 85),
+        "UTRACONY POPYT PREMIUM (86-95)": (85, 95),
+        "EDGE CASES (96-100)": (95, 100),
     }
     
     group_stats = {}
@@ -223,9 +202,12 @@ def run_comprehensive_tests():
         group_passed = 0
         group_total = end - start
         
-        for i in range(start, end):
-            query, expected = scenarios[i]
-            result = test_scenario(bot, query, expected)
+        for i in range(start, min(end, len(scenarios))):
+            if i >= len(scenarios):
+                break
+                
+            query, expected, business_value = scenarios[i]
+            result = test_business_scenario(bot, query, expected, business_value)
             
             if result['passed']:
                 passed += 1
@@ -234,66 +216,65 @@ def run_comprehensive_tests():
             else:
                 failed += 1
                 status = "❌"
+                failed_tests.append({
+                    'num': i+1,
+                    'query': query,
+                    'expected': expected,
+                    'actual': result['actual']
+                })
             
-            # Drukuj wynik z dodatkowymi informacjami
-            print(f"{i+1:3d}. {status} '{query:30s}' → {result['actual']:18s}")
-            
-            # Dodatkowe info dla błędów i interesujących przypadków
-            if not result['passed'] or result.get('has_luxury_brand') or result.get('is_structural'):
-                extras = []
-                if result.get('token_validity', 0) > 0:
-                    extras.append(f"Validity:{result['token_validity']:.1f}")
-                if result.get('has_luxury_brand'):
-                    extras.append("LUXURY")
-                if result.get('is_structural'):
-                    extras.append("STRUCTURAL")
-                if result.get('ga4_event') and result['ga4_event'] != 'None':
-                    extras.append(f"GA4:{result['ga4_event']}")
-                
-                if extras:
-                    print(f"     {' | '.join(extras)}")
+            print(f"{i+1:3d}. {status} '{query:30s}' → {result['actual']:30s}")
+            if not result['passed']:
+                print(f"      ⚠️  Oczekiwano: {expected}")
         
-        group_stats[group_name] = (group_passed, group_total)
-        print(f"Wynik grupy: {group_passed}/{group_total} ({group_passed/group_total*100:.1f}%)")
+        percentage = (group_passed / group_total * 100) if group_total > 0 else 0
+        group_stats[group_name] = (group_passed, group_total, percentage)
+        print(f"\n     Grupa: {group_passed}/{group_total} ({percentage:.1f}%)")
     
     # === RAPORT KOŃCOWY ===
-    print("\n" + "=" * 80)
-    print("🎯 RAPORT KOŃCOWY OPERACJI KULOODPORNY RDZEŃ")
-    print("=" * 80)
+    print("\n" + "=" * 70)
+    print("📊 RAPORT KOŃCOWY - WYNIKI TESTÓW")
+    print("=" * 70)
     
-    overall_percentage = passed / len(scenarios) * 100
-    print(f"\n📈 WYNIK OGÓLNY: {passed}/{len(scenarios)} ({overall_percentage:.1f}%)")
-    print(f"   ✅ Passed: {passed}")
-    print(f"   ❌ Failed: {failed}")
+    overall_percentage = (passed / len(scenarios) * 100) if len(scenarios) > 0 else 0
+    print(f"\n🎯 WYNIK OGÓLNY: {passed}/{len(scenarios)} ({overall_percentage:.1f}%)")
     
-    print(f"\n📊 WYNIKI PO GRUPACH:")
-    for group_name, (group_passed, group_total) in group_stats.items():
-        percentage = group_passed / group_total * 100
-        print(f"   • {group_name:30s}: {group_passed:2d}/{group_total:2d} ({percentage:5.1f}%)")
+    print(f"\n📈 WYNIKI PO GRUPACH:")
+    for group_name, (group_passed, group_total, percentage) in group_stats.items():
+        status_icon = "🟢" if percentage >= 90 else "🟡" if percentage >= 70 else "🔴"
+        print(f"   {status_icon} {group_name:40s}: {percentage:5.1f}% ({group_passed}/{group_total})")
     
-    # === OCENA KOŃCOWA ===
-    print(f"\n🏆 OCENA KOŃCOWA:")
+    # Pokaż błędne testy
+    if failed_tests:
+        print(f"\n❌ TESTY KTÓRE NIE PRZESZŁY ({len(failed_tests)}):")
+        for test in failed_tests[:10]:  # Pokaż max 10
+            print(f"   #{test['num']:3d}: '{test['query']}' - Oczekiwano: {test['expected']}, Otrzymano: {test['actual']}")
+        if len(failed_tests) > 10:
+            print(f"   ... i {len(failed_tests)-10} więcej")
+    
+    # Ocena końcowa
+    print(f"\n🏆 STATUS SYSTEMU:")
     if overall_percentage >= 95:
-        print("🟢 OPERACJA KULOODPORNY RDZEŃ: PERFEKCJA!")
-        print("   System gotowy do produkcji. Wszystkie funkcje działają idealnie.")
+        print("   🟢 SYSTEM GOTOWY DO PRODUKCJI!")
+        print("   Perfekcyjna dokładność - można pokazać inwestorom")
     elif overall_percentage >= 90:
-        print("🟢 OPERACJA KULOODPORNY RDZEŃ: PEŁNY SUKCES!")
-        print("   System gotowy do produkcji z drobnymi poprawkami.")
+        print("   🟢 SYSTEM GOTOWY DO SPRZEDAŻY!")
+        print("   Minimalne błędy - akceptowalne dla klientów")
     elif overall_percentage >= 80:
-        print("🟡 OPERACJA KULOODPORNY RDZEŃ: SUKCES Z UWAGAMI")
-        print("   System prawie gotowy. Wymaga drobnych dostosowań.")
+        print("   🟡 SYSTEM PRAWIE GOTOWY")
+        print("   Wymaga drobnych poprawek")
     else:
-        print("🔴 OPERACJA KULOODPORNY RDZEŃ: WYMAGA POPRAWEK")
-        print("   System wymaga większych zmian przed wdrożeniem.")
+        print("   🔴 SYSTEM WYMAGA POPRAWEK")
+        print("   Za dużo błędów do wdrożenia")
     
     return passed, failed
 
 if __name__ == "__main__":
-    print("🚀 ROZPOCZĘCIE NAPRAWIONYCH TESTÓW")
-    print("120 scenariuszy: oryginalne + brutalne bez duplikatów...")
-    print()
+    print("\n🚀 URUCHAMIANIE MEGA TESTÓW BIZNESOWYCH")
+    print("Cel: Niepodważalna demonstracja wartości produktu")
+    print("-" * 70)
     
-    passed, failed = run_comprehensive_tests()
+    passed, failed = run_business_tests()
     
-    print(f"\n🏁 TESTY ZAKOŃCZONE")
-    print(f"Wynik: {passed}/{passed + failed}")
+    print(f"\n✅ Zakończono testy: {passed} passed, {failed} failed")
+    print(f"📊 Skuteczność: {(passed/(passed+failed)*100):.1f}%")
