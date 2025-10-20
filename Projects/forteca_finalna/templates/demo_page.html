@@ -169,16 +169,11 @@
                 </div>
             </div>
         </div>
-        <!-- CTA Section między botem a dashboardem -->
-<div class="demo-cta-section">
-    <div class="cta-content">
-        <div class="cta-icon">💼</div>
-        <h4>Chcesz zobaczyć swoje przyszłe centrum dowodzenia?</h4>
-        <p>Zobacz jak będzie wyglądać dashboard analizujący Twój utracony popyt</p>
-        <a href="/login" class="demo-cta-btn">
-            <span>Wejdź do Demo Dashboard</span>
-            <small>demo_client / demo123</small>
-        </a>
+        <!-- KOMPAKTOWY CTA -->
+<div class="compact-cta-section">
+    <div class="compact-cta">
+        <span class="cta-text">Chcesz zobaczyć jak będzie wyglądać Twoje przyszłe centrum dowodzenia?</span>
+        <a href="/login" class="cta-link">Kliknij tutaj</a>
     </div>
 </div>
 
@@ -660,6 +655,39 @@
     </div>
 </div>
 <script src="{{ url_for('static', filename='visitor_tracking.js') }}" defer></script>
+<style>
+.compact-cta-section {
+    background: #f8fafc;
+    padding: 16px 20px;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.compact-cta {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.cta-text {
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-right: 8px;
+}
+
+.cta-link {
+    color: #0ea5e9;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.cta-link:hover {
+    color: #0284c7;
+    text-decoration: underline;
+}
+</style>
 </body>
 </html>
 
