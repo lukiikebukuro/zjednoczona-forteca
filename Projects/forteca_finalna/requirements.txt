@@ -5,3 +5,4 @@ fuzzywuzzy
 python-Levenshtein
 gunicorn
 eventlet
+flask-login==0.6.3
