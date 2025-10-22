@@ -2,7 +2,7 @@ from flask_socketio import SocketIO, emit
 from flask_login import login_user, logout_user, login_required, current_user
 from auth_manager import init_login_manager, User, require_client_access, require_admin_access, require_debug_access, get_user_dashboard_route, setup_default_users, ensure_tables_exist
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, make_response
-from datetime import timedelta, datetime
+from datetime import datetime, timezone, timedelta
 from ecommerce_bot import EcommerceBot
 import sqlite3
 import json
@@ -472,8 +472,11 @@ def get_visitor_stats():
         conn = sqlite3.connect(DATABASE_NAME)
         cursor = conn.cursor()
         
+        # FIX: Użyj datetime bez timezone
+        now = datetime.now()
+        
         # === 1. AKTYWNI UŻYTKOWNICY (ostatnie 15 min) ===
-        fifteen_min_ago = (datetime.now() - timedelta(minutes=15)).isoformat()
+        fifteen_min_ago = (now - timedelta(minutes=15)).isoformat()
         cursor.execute('''
             SELECT COUNT(DISTINCT session_id)
             FROM visitor_sessions
@@ -482,7 +485,7 @@ def get_visitor_stats():
         active_now = cursor.fetchone()[0] or 0
         
         # === 2. SESJE DZIŚ ===
-        today = datetime.now().strftime('%Y-%m-%d')
+        today = now.strftime('%Y-%m-%d')
         cursor.execute('''
             SELECT COUNT(*)
             FROM visitor_sessions
@@ -500,7 +503,7 @@ def get_visitor_stats():
             AND is_active = 1
         ''', (today,))
         avg_duration = cursor.fetchone()[0] or 0
-        avg_duration = int(avg_duration)
+        avg_duration = int(avg_duration) if avg_duration else 0
         
         # === 4. CONVERSION RATE (% sesji z high-intent queries) ===
         cursor.execute('''
@@ -515,7 +518,7 @@ def get_visitor_stats():
         conv_data = cursor.fetchone()
         total_sessions = conv_data[0] or 1
         high_intent_sessions = conv_data[1] or 0
-        conversion_rate = int((high_intent_sessions / total_sessions) * 100)
+        conversion_rate = int((high_intent_sessions / total_sessions) * 100) if total_sessions > 0 else 0
         
         # === 5. LISTA FIRM ===
         cursor.execute('''
@@ -602,8 +605,14 @@ def get_visitor_stats():
         for row in cursor.fetchall():
             sess_id, org, city, country, entry_time, query_count = row
             
-            entry_dt = datetime.fromisoformat(entry_time)
-            duration = int((datetime.now() - entry_dt).total_seconds())
+            # FIX: Bezpieczne parsowanie datetime
+            try:
+                entry_dt = datetime.fromisoformat(entry_time.replace('Z', '+00:00'))
+                if entry_dt.tzinfo:
+                    entry_dt = entry_dt.replace(tzinfo=None)
+                duration = int((now - entry_dt).total_seconds())
+            except:
+                duration = 0
             
             cursor.execute('''
                 SELECT 
@@ -1761,6 +1770,18 @@ def handle_session_start(session_id, data):
         conn = sqlite3.connect(DATABASE_NAME)
         cursor = conn.cursor()
         
+        # FIX: Parsuj entry_time i usuń timezone
+        entry_time = data.get('entry_time')
+        if isinstance(entry_time, str):
+            # Parse ISO datetime i usuń timezone info
+            try:
+                from dateutil import parser
+                entry_time_dt = parser.parse(entry_time)
+                entry_time = entry_time_dt.replace(tzinfo=None).isoformat()
+            except:
+                # Fallback - użyj current time
+                entry_time = datetime.now().isoformat()
+        
         # Zapisz sesję
         cursor.execute('''
             INSERT OR REPLACE INTO visitor_sessions (
@@ -1774,7 +1795,7 @@ def handle_session_start(session_id, data):
             data.get('user_agent'),
             data.get('referrer'),
             data.get('page_url'),
-            data.get('entry_time'),
+            entry_time,  # ← FIXED: bez timezone
             data.get('country'),
             data.get('city'),
             data.get('org'),
@@ -1787,10 +1808,13 @@ def handle_session_start(session_id, data):
         conn.commit()
         conn.close()
         
+        print(f"[VISITOR TRACKING] Session saved: {session_id[:8]}... from {data.get('org', 'Unknown')}")
         return {'status': 'success', 'message': 'Session started'}
         
     except Exception as e:
         print(f"[ERROR] Session start failed: {e}")
+        import traceback
+        traceback.print_exc()
         return {'status': 'error', 'message': str(e)}
 
 def handle_bot_query(session_id, data):
