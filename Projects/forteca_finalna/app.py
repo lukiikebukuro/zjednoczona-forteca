@@ -344,7 +344,7 @@ def search_suggestions():
                 # Log lost demand if needed (optional - można zostawić dla GA4)
                 if confidence_level == 'NO_MATCH':
                     log_lost_demand(query, analysis)
-        
+    
         print(f"[SUGGESTIONS] Query: '{query}' | Type: {search_type} | Confidence: {confidence_level} | GA4: {ga4_event}")
         
         return jsonify({
@@ -438,8 +438,8 @@ def analyze_query():
             'explanation': f'Analiza po 800ms pauzy - confidence: {confidence_level}'
         }
         
-        # WYŚLIJ TYLKO DO DEMO TCD (nie do admin dashboard)
-        socketio.emit('new_event', event_data, room='client_demo')
+        # ### OPERACJA SAPER: Poniższa linia została wyciszona, aby uniknąć duplikatów. ###
+        # socketio.emit('new_event', event_data, room='client_demo')
         
         print(f"[FINAL ANALYSIS] Saved to TCD: {query} -> {decision} (value: {potential_value})")
         
@@ -720,7 +720,7 @@ def get_initial_data():
         print(f"[API ERROR] {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/api/reset_demo', methods=['POST'])  # DODAJ TO
+@app.route('/api/reset_demo', methods=['POST']) # DODAJ TO
 def reset_demo():
     """Resetuje demo - czyści bazę i restartuje symulację"""
     try:
@@ -762,8 +762,8 @@ def receive_real_event():
             'explanation': 'Prawdziwe zapytanie użytkownika'
         }
         
-        # WYŚLIJ TYLKO DO DEMO TCD (nie do admin dashboard)
-        socketio.emit('new_event', event_data, room='client_demo')
+        # ### OPERACJA SAPER: Poniższa linia została wyciszona, aby uniknąć duplikatów. ###
+        # socketio.emit('new_event', event_data, room='client_demo')
         
         return jsonify({'status': 'success'})
         
@@ -947,22 +947,22 @@ def client_dashboard():
     client_info = get_client_info(current_user.client_id)
     
     return render_template('client-dashboard.html', 
-                         user=current_user,
-                         client=client_info)
+                           user=current_user,
+                           client=client_info)
 
 @app.route('/admin-dashboard')
 @require_admin_access  
 def admin_dashboard():
     """POZIOM 2 - Centrum Strategiczne (dane zagregowane + moduł sprzedażowy)"""
     return render_template('admin-dashboard.html', 
-                         user=current_user)
+                           user=current_user)
 
 @app.route('/debug-dashboard')
 @require_debug_access
 def debug_dashboard():
     """POZIOM 3 - Tryb Debug (surowe logi + telemetria)"""
     return render_template('debug-dashboard.html', 
-                         user=current_user)
+                           user=current_user)
 
 # ================================================================
 # API ENDPOINTS - ROLE-BASED ACCESS
@@ -1060,7 +1060,7 @@ def get_global_stats():
             GROUP BY category
             ORDER BY frequency DESC
             LIMIT 10
-        ''')
+        ''', )
         
         top_categories = cursor.fetchall()
         conn.close()
@@ -1269,13 +1269,13 @@ def generate_pdf_html(data):
     # Dodaj produkty do tabeli
     for i, product in enumerate(data['lost_products'], 1):
         html += f"""
-            <tr>
-                <td>{i}</td>
-                <td>{product['name']}</td>
-                <td><span class="category">{product['category']}</span></td>
-                <td class="value">{product['value']} zł</td>
-                <td>{product['frequency']}x</td>
-            </tr>
+                <tr>
+                    <td>{i}</td>
+                    <td>{product['name']}</td>
+                    <td><span class="category">{product['category']}</span></td>
+                    <td class="value">{product['value']} zł</td>
+                    <td>{product['frequency']}x</td>
+                </tr>
         """
     
     html += """
@@ -1367,11 +1367,11 @@ def calculate_lost_value_internal(query):
     # Nowe zakresy 500-1000 z bonusami dla kategorii
     base_ranges = {
         'klocki': (600, 1000),      # Popularna kategoria
-        'filtry': (500, 800),       # Tańsze części  
+        'filtry': (500, 800),      # Tańsze części  
         'amortyzatory': (800, 1200), # Drogie części
-        'świece': (500, 700),       # Małe części
+        'świece': (500, 700),      # Małe części
         'akumulatory': (700, 1100), # Średnio drogie
-        'oleje': (600, 900),        # Płyny
+        'oleje': (600, 900),       # Płyny
         'tarcze': (700, 1000),      # Duże części
         'łańcuchy': (600, 900)      # Motocykle
     }
@@ -1817,7 +1817,7 @@ def handle_bot_query(session_id, data):
             f"Visitor tracking: {analysis['confidence_level']} confidence"
         )
         
-        # WYŁĄCZONE - duplikat z WebSocket handler (linia 1455)
+        # ### OPERACJA SAPER: Poniższa sekcja została wyciszona, aby uniknąć duplikatów. ###
         # event_data = {
         #     'id': event_id,
         #     'timestamp': datetime.now().strftime('%H:%M:%S'),
@@ -1830,7 +1830,7 @@ def handle_bot_query(session_id, data):
         #     'session_id': session_id[:8]
         # }
         # 
-        # socketio.emit('new_event', event_data)  # WYŁĄCZONE - używamy live_feed_update
+        # socketio.emit('new_event', event_data)
         
         return {
             'status': 'success',
