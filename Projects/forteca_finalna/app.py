@@ -1528,17 +1528,18 @@ def handle_stats_request():
         print(f"[WEBSOCKET ERROR] {e}")
         emit('error', {'message': str(e)})
 
-@socketio.on('pause_simulator')
-def handle_pause_simulator():
-    """Pauzuje symulator na żądanie klienta"""
-    simulator.pause_simulator()
-    emit('simulator_paused', {'status': 'paused'})
+# WYŁĄCZONE - simulator nie jest używany (martwy kod)
+# @socketio.on('pause_simulator')
+# def handle_pause_simulator():
+#     """Pauzuje symulator na żądanie klienta"""
+#     simulator.pause_simulator()
+#     emit('simulator_paused', {'status': 'paused'})
 
-@socketio.on('resume_simulator') 
-def handle_resume_simulator():
-    """Wznawia symulator na żądanie klienta"""
-    simulator.resume_simulator()
-    emit('simulator_resumed', {'status': 'resumed'})
+# @socketio.on('resume_simulator') 
+# def handle_resume_simulator():
+#     """Wznawia symulator na żądanie klienta"""
+#     simulator.resume_simulator()
+#     emit('simulator_resumed', {'status': 'resumed'})
 
 # === BATTLE SIMULATOR FUNCTION ===
 
