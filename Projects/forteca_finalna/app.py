@@ -35,8 +35,10 @@ socketio = SocketIO(app,
     async_mode='eventlet',
     logger=True,
     engineio_logger=True,
-    ping_timeout=60,
-    ping_interval=25
+    ping_timeout=120,  # Zwiększone z 60 → 120
+    ping_interval=25,
+    allow_upgrades=True,  # DODANE: pozwól upgrade do WebSocket
+    transports=['polling', 'websocket']  # DODANE: oba transporty
 )
 
 # Initialize bot
@@ -1717,7 +1719,16 @@ def handle_visitor_event_websocket(data):
 def visitor_tracking():
     """API endpoint do odbierania danych visitor tracking"""
     try:
-        data = request.get_json()
+        # FORCE JSON parsing z lepszym error handling
+        if not request.is_json:
+            print(f"[WARNING] Request without JSON content-type: {request.content_type}")
+            # Try to parse anyway
+            try:
+                data = request.get_json(force=True)
+            except:
+                return jsonify({'error': 'Content-Type must be application/json'}), 415
+        else:
+            data = request.get_json()
         
         if not data or 'session_id' not in data:
             return jsonify({'error': 'Missing session_id'}), 400
@@ -1729,6 +1740,7 @@ def visitor_tracking():
         
         if event_type == 'session_start':
             result = handle_session_start(session_id, data)
+            print(f"[VISITOR TRACKING] Session start result: {result}")
         elif event_type == 'bot_query':
             result = handle_bot_query(session_id, data)
         else:
@@ -1738,6 +1750,8 @@ def visitor_tracking():
         
     except Exception as e:
         print(f"[ERROR] Visitor tracking failed: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': 'Internal server error'}), 500
 
 def handle_session_start(session_id, data):
