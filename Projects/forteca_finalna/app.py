@@ -459,25 +459,12 @@ def analyze_query():
             'message': str(e)
         }), 500
 
-# === DASHBOARD API ROUTES ===
-@app.route('/dashboard')
-def dashboard():
-    """Główna strona dashboardu"""
-    return render_template('dashboard.html')
-
+# === ADMIN DASHBOARD API ===
 @app.route('/api/admin/visitor-stats')
 @require_admin_access
 def get_visitor_stats():
     """
     Zwraca statystyki visitor tracking dla admin dashboardu
-    
-    CO TO ROBI:
-    - Liczy aktywnych użytkowników (ostatnie 15 min)
-    - Liczy sesje z dziś
-    - Oblicza średni czas sesji
-    - Oblicza conversion rate
-    - Zwraca listę firm które odwiedziły
-    - Zwraca aktywne sesje (kto jest TERAZ)
     """
     try:
         conn = sqlite3.connect(DATABASE_NAME)
@@ -524,11 +511,11 @@ def get_visitor_stats():
             WHERE date(vs.entry_time) = ?
         ''', (today,))
         conv_data = cursor.fetchone()
-        total_sessions = conv_data[0] or 1  # Avoid division by zero
+        total_sessions = conv_data[0] or 1
         high_intent_sessions = conv_data[1] or 0
         conversion_rate = int((high_intent_sessions / total_sessions) * 100)
         
-        # === 5. LISTA FIRM (Companies Tracking) ===
+        # === 5. LISTA FIRM ===
         cursor.execute('''
             SELECT 
                 organization,
@@ -550,7 +537,6 @@ def get_visitor_stats():
         for row in cursor.fetchall():
             org, city, country, first_visit, last_visit, total_queries = row
             
-            # Policz high-intent i lost opportunities dla tej firmy
             cursor.execute('''
                 SELECT 
                     COUNT(CASE WHEN decision = 'ZNALEZIONE PRODUKTY' THEN 1 END) as high_intent,
@@ -563,13 +549,11 @@ def get_visitor_stats():
             high_intent = intent_data[0] if intent_data else 0
             lost_opp = intent_data[1] if intent_data else 0
             
-            # Oblicz engagement score (0-100)
             engagement_score = min(
                 (total_queries * 10) + (high_intent * 20) + (lost_opp * 10),
                 100
             )
             
-            # Ostatnie zapytanie
             cursor.execute('''
                 SELECT query_text
                 FROM events
@@ -591,10 +575,10 @@ def get_visitor_stats():
                 'highIntentQueries': high_intent,
                 'lostOpportunities': lost_opp,
                 'engagementScore': engagement_score,
-                'queries': [latest_query]  # W pełnej wersji mogłyby być wszystkie
+                'queries': [latest_query]
             })
         
-        # === 6. AKTYWNE SESJE (kto jest TERAZ na stronie) ===
+        # === 6. AKTYWNE SESJE ===
         cursor.execute('''
             SELECT 
                 vs.session_id,
@@ -616,11 +600,9 @@ def get_visitor_stats():
         for row in cursor.fetchall():
             sess_id, org, city, country, entry_time, query_count = row
             
-            # Czas trwania sesji (sekundy)
             entry_dt = datetime.fromisoformat(entry_time)
             duration = int((datetime.now() - entry_dt).total_seconds())
             
-            # Sprawdź czy ma high-intent lub lost opportunity
             cursor.execute('''
                 SELECT 
                     MAX(CASE WHEN decision = 'ZNALEZIONE PRODUKTY' THEN 1 ELSE 0 END) as has_high_intent,
@@ -649,7 +631,7 @@ def get_visitor_stats():
                 'latest_query': latest_query
             })
         
-        # === 7. KLASYFIKACJA ZAPYTAŃ (dla wykresu) ===
+        # === 7. KLASYFIKACJA ZAPYTAŃ ===
         cursor.execute('''
             SELECT 
                 decision,
@@ -676,7 +658,6 @@ def get_visitor_stats():
         
         conn.close()
         
-        # === ZWRÓĆ WSZYSTKO ===
         return jsonify({
             'status': 'success',
             'stats': {
@@ -698,6 +679,12 @@ def get_visitor_stats():
             'status': 'error',
             'message': str(e)
         }), 500
+
+# === DASHBOARD API ROUTES ===
+@app.route('/dashboard')
+def dashboard():
+    """Główna strona dashboardu"""
+    return render_template('dashboard.html')
 
 @app.route('/api/initial_data')
 def get_initial_data():

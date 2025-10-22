@@ -239,11 +239,12 @@ this.socket = io(socketURL, {
                     reject(error);
                 });
                 
-                // ==== ZADANIE 1.2: LISTENER DLA live_feed_update ====
-                this.socket.on('live_feed_update', (data) => {
-                    console.log('🛰️ SATELITA: Received live_feed_update', data);
-                    this.handleLiveFeedUpdate(data);
-                });
+                // WYŁĄCZONE - live_feed_update jest TYLKO dla admina!
+                // Publiczny TCD nasłuchuje TYLKO na 'new_event'
+                // this.socket.on('live_feed_update', (data) => {
+                //     console.log('🛰️ SATELITA: Received live_feed_update', data);
+                //     this.handleLiveFeedUpdate(data);
+                // });
                 
                 this.socket.on('connect_error', (error) => {
                     console.error('🔌 WebSocket connection error:', error);

@@ -24,6 +24,7 @@ class AdminDashboard {
             conversionRate: 0
         };
         
+        this.hotLeads = [];                // HOT LEADS lista (WAŻNE!)
         this.socket = null;
         
         // Start!
@@ -453,8 +454,8 @@ class AdminDashboard {
         const ctx = document.getElementById('classificationChart');
         if (!ctx) return;
         
-        // Usuń stary wykres jeśli istnieje
-        if (window.classificationChart) {
+        // Usuń stary wykres jeśli istnieje (FIX: sprawdź czy to Chart instance)
+        if (window.classificationChart && window.classificationChart instanceof Chart) {
             window.classificationChart.destroy();
         }
         
