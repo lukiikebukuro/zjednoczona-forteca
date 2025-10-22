@@ -11,6 +11,7 @@ class VisitorTracker {
         this.messageCount = 0;
         this.visitorData = null;
         this.isTracking = false;
+        this.socket = null; // WebSocket do Live Feed
         
         console.log('🛰️ SATELITA: Visitor Tracker initialized');
         console.log('Session ID:', this.sessionId);
@@ -33,6 +34,9 @@ class VisitorTracker {
             // Gather initial visitor data
             await this.gatherVisitorData();
             
+            // Initialize WebSocket connection for Live Feed
+            this.initializeWebSocket();
+            
             // Setup event listeners
             this.setupEventListeners();
             
@@ -47,6 +51,39 @@ class VisitorTracker {
             
         } catch (error) {
             console.error('🛰️ SATELITA: Failed to initialize tracking:', error);
+        }
+    }
+    
+    /**
+     * Initialize WebSocket connection for Live Feed communication
+     */
+    initializeWebSocket() {
+        try {
+            const socketURL = window.location.hostname === 'localhost' 
+                ? 'http://localhost:5000' 
+                : window.location.origin;
+            
+            this.socket = io(socketURL, {
+                transports: ['polling', 'websocket'],
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5,
+                timeout: 20000,
+                path: '/socket.io/',
+                secure: true,
+                rejectUnauthorized: false
+            });
+            
+            this.socket.on('connect', () => {
+                console.log('🛰️ SATELITA: WebSocket connected to Live Feed');
+            });
+            
+            this.socket.on('disconnect', () => {
+                console.log('🛰️ SATELITA: WebSocket disconnected from Live Feed');
+            });
+            
+        } catch (error) {
+            console.error('🛰️ SATELITA: Failed to initialize WebSocket:', error);
         }
     }
     
@@ -259,7 +296,28 @@ class VisitorTracker {
             window.botUI.sendFinalAnalysis = async (query) => {
                 this.messageCount++;
                 
-                // Send visitor tracking data
+                // ==== ZADANIE 2.1: WZBOGACENIE DANYCH WYWIADOWCZYCH ====
+                // Pobierz szczegółowe dane o sesji
+                const sessionInfo = this.getVisitorSummary();
+                
+                // Wyślij przez WebSocket do Live Feed z pełnymi danymi
+                if (this.socket && this.socket.connected) {
+                    const eventData = {
+                        query: query,
+                        classification: 'ANALYZING', // Będzie zaktualizowane przez backend
+                        estimatedValue: 0,
+                        timestamp: new Date().toISOString(),
+                        city: sessionInfo.city || 'Unknown',
+                        country: sessionInfo.country || 'Unknown',
+                        organization: sessionInfo.organization || 'Unknown',
+                        sessionId: this.sessionId
+                    };
+                    
+                    console.log('🛰️ SATELITA: Emitting visitor_event with data:', eventData);
+                    this.socket.emit('visitor_event', eventData);
+                }
+                
+                // Wyślij także przez REST API dla persystencji
                 await this.sendVisitorEvent('bot_query', {
                     query: query,
                     message_count: this.messageCount,
@@ -378,18 +436,22 @@ class VisitorTracker {
     }
     
     /**
-     * Get session summary for debugging
+     * Get session summary for debugging AND Live Feed integration
+     * ZADANIE 2.1: Funkcja zwracająca pełne dane o sesji
      */
-    getSessionSummary() {
+    getVisitorSummary() {
         const now = new Date();
         const sessionDuration = now - this.entryTime;
         
         return {
-            session_id: this.sessionId,
+            sessionId: this.sessionId,
             entry_time: this.entryTime.toISOString(),
             session_duration: Math.round(sessionDuration / 1000), // seconds
             message_count: this.messageCount,
             location: this.getVisitorLocation(),
+            city: this.visitorData?.city || 'Unknown',
+            country: this.visitorData?.country || 'Unknown',
+            organization: this.visitorData?.org || 'Unknown',
             referrer: this.visitorData?.referrer || 'direct',
             ip_address: this.visitorData?.ip_address || 'unknown'
         };
@@ -405,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add debug console command
         window.getVisitorSummary = () => {
             if (window.visitorTracker) {
-                console.table(window.visitorTracker.getSessionSummary());
+                console.table(window.visitorTracker.getVisitorSummary());
             }
         };
         

@@ -1399,6 +1399,69 @@ def ensure_visitor_tables_exist():
     conn.close()
     print("[DATABASE] Visitor tracking tables initialized")
 
+# ==== ZADANIE 2.2: WEBSOCKET HANDLER DLA VISITOR_EVENT ====
+@socketio.on('visitor_event')
+def handle_visitor_event_websocket(data):
+    """
+    Handler WebSocket dla visitor_event
+    Odbiera dane z visitor_tracking.js i retransmituje jako live_feed_update
+    """
+    try:
+        print(f"[WEBSOCKET] Received visitor_event: {data.get('query', 'N/A')[:50]}...")
+        
+        # Wyciągnij dane
+        query = data.get('query', '')
+        session_id = data.get('sessionId', 'unknown')
+        
+        # Analizuj zapytanie przez istniejący system AI
+        analysis = bot.analyze_query_intent(query)
+        
+        # Mapowanie na decisions
+        decision_mapping = {
+            'HIGH': 'ZNALEZIONE PRODUKTY',
+            'MEDIUM': 'ODFILTROWANE', 
+            'LOW': 'ODFILTROWANE',
+            'NO_MATCH': 'UTRACONE OKAZJE'
+        }
+        
+        decision = decision_mapping.get(analysis['confidence_level'], 'ODFILTROWANE')
+        potential_value = calculate_lost_value_internal(query) if decision == 'UTRACONE OKAZJE' else 0
+        
+        # Dodaj do głównego systemu TCD
+        event_id = DatabaseManager.add_event(
+            query,
+            decision,
+            f'Visitor: {data.get("city", "Unknown")}',
+            extract_category_from_query(query),
+            'visitor',
+            potential_value,
+            f"Live visitor query - {analysis['confidence_level']} confidence"
+        )
+        
+        # ==== KLUCZOWE: Retransmituj jako live_feed_update z pełnymi danymi ====
+        live_feed_data = {
+            'id': event_id,
+            'timestamp': datetime.now().strftime('%H:%M:%S'),
+            'query': query,
+            'classification': decision,
+            'estimatedValue': potential_value,
+            'city': data.get('city', 'Unknown'),
+            'country': data.get('country', 'Unknown'),
+            'organization': data.get('organization', 'Unknown'),
+            'sessionId': session_id
+        }
+        
+        print(f"[WEBSOCKET] Broadcasting live_feed_update to all clients")
+        emit('live_feed_update', live_feed_data, broadcast=True)
+        
+        print(f"[WEBSOCKET] Event processed successfully: {decision}")
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to handle visitor_event: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 @app.route('/api/visitor-tracking', methods=['POST'])
 def visitor_tracking():
     """API endpoint do odbierania danych visitor tracking"""
@@ -1550,7 +1613,6 @@ def get_visitor_context(session_id):
     except Exception as e:
         print(f"[ERROR] Failed to get visitor context: {e}")
         return 'Unknown'
-
 
 # === MAIN APPLICATION STARTUP ===
 if __name__ == '__main__':

@@ -239,6 +239,18 @@ this.socket = io(socketURL, {
                     reject(error);
                 });
                 
+                // ==== ZADANIE 1.2: LISTENER DLA live_feed_update ====
+                this.socket.on('live_feed_update', (data) => {
+                    console.log('🛰️ SATELITA: Received live_feed_update', data);
+                    this.handleLiveFeedUpdate(data);
+                });
+                
+                this.socket.on('connect_error', (error) => {
+                    console.error('🔌 WebSocket connection error:', error);
+                    this.updateConnectionStatus('disconnected');
+                    reject(error);
+                });
+                
                 // Data events
                 this.socket.on('connection_confirmed', (data) => {
                     console.log('✅ Connection confirmed:', data.message);
@@ -284,17 +296,177 @@ this.socket = io(socketURL, {
      * Load initial data from API
      */
     async loadInitialData() {
-    try {
-        // Skip API call - use empty initial state
-        console.log('📊 Using empty initial state');
-        this.updateMetricsFromStats({});
-        this.populateLiveFeed([]);
-        this.updateMissingProducts([]);
-    } catch (error) {
-        console.error('❌ Failed to load initial data:', error);
+        try {
+            // ==== ZADANIE 1.1: WCZYTANIE HISTORII Z localStorage ====
+            console.log('📊 Loading feed history from localStorage...');
+            this.loadHistoryFromLocalStorage();
+            
+            // Use empty initial state for metrics
+            this.updateMetricsFromStats({});
+            this.updateMissingProducts([]);
+        } catch (error) {
+            console.error('❌ Failed to load initial data:', error);
+        }
     }
-}
     
+    /**
+     * ZADANIE 1.1: Wczytanie historii z localStorage
+     */
+    loadHistoryFromLocalStorage() {
+        try {
+            const savedHistory = JSON.parse(localStorage.getItem('feedHistory')) || [];
+            console.log(`📂 Found ${savedHistory.length} events in localStorage`);
+            
+            // Wyświetl eventy w odwrotnej kolejności (najstarsze pierwsze)
+            savedHistory.reverse().forEach(itemData => {
+                this.addFeedItem(itemData, false); // false = nie zapisuj ponownie do localStorage
+            });
+            
+            if (savedHistory.length > 0) {
+                console.log('✅ Feed history loaded successfully');
+            }
+        } catch (error) {
+            console.error('❌ Failed to load feed history:', error);
+        }
+    }
+    
+    /**
+     * ZADANIE 1.2 + 2.3: Handler dla live_feed_update z pełnymi danymi gościa
+     */
+    handleLiveFeedUpdate(data) {
+        console.log('🛰️ Processing live_feed_update:', data);
+        
+        if (this.feedPaused) {
+            this.eventQueue.push(data);
+            return;
+        }
+        
+        // Dodaj do live feed z pełnymi danymi
+        this.addFeedItem(data, true); // true = zapisz do localStorage
+        
+        // Update metrics
+        this.updateMetricsFromLiveFeed(data);
+        
+        // Update last update time
+        this.updateLastUpdateTime();
+    }
+    
+    /**
+     * ZADANIE 2.3: Nowa funkcja addFeedItem z pełnymi danymi gościa
+     */
+    addFeedItem(data, saveToLocalStorage = true) {
+        const liveFeed = document.getElementById('liveFeed');
+        if (!liveFeed) return;
+        
+        // Remove placeholder if present
+        const placeholder = liveFeed.querySelector('.feed-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+        
+        // Create feed item
+        const item = document.createElement('div');
+        item.className = 'feed-item';
+        
+        // ==== ZADANIE 2.3: RENDEROWANIE SZCZEGÓŁÓW GOŚCIA ====
+        let visitorInfoHtml = '<div class="feed-visitor-info">Visitor: Unknown</div>';
+        
+        if (data.organization && data.organization !== 'Unknown') {
+            visitorInfoHtml = `<div class="feed-visitor-info">🏢 ${data.organization} (${data.city || 'N/A'})</div>`;
+        } else if (data.city && data.city !== 'Unknown') {
+            visitorInfoHtml = `<div class="feed-visitor-info">📍 ${data.city}, ${data.country || ''}</div>`;
+        }
+        
+        // Map classification to CSS class
+        const classMap = {
+            'ZNALEZIONE PRODUKTY': 'found-products',
+            'UTRACONE OKAZJE': 'lost-opportunities',
+            'ODFILTROWANE': 'filtered-out'
+        };
+        
+        const cssClass = classMap[data.classification] || 'default';
+        
+        // Build HTML
+        item.innerHTML = `
+            <div class="feed-timestamp">${data.timestamp || new Date().toLocaleTimeString()}</div>
+            <div class="feed-query">"${data.query}"</div>
+            ${visitorInfoHtml}
+            <span class="feed-classification ${cssClass}">${data.classification}</span>
+            ${data.estimatedValue > 0 ? `<div class="feed-value">~${data.estimatedValue} zł</div>` : ''}
+        `;
+        
+        // Insert at top
+        liveFeed.insertBefore(item, liveFeed.firstChild);
+        
+        // ==== ZADANIE 1.2: ZAPIS DO localStorage ====
+        if (saveToLocalStorage) {
+            try {
+                let history = JSON.parse(localStorage.getItem('feedHistory')) || [];
+                history.unshift(data); // Dodaj na początek
+                
+                // Limit do 50 eventów
+                if (history.length > 50) {
+                    history.pop();
+                }
+                
+                localStorage.setItem('feedHistory', JSON.stringify(history));
+                console.log('💾 Event saved to localStorage');
+            } catch (error) {
+                console.error('❌ Failed to save to localStorage:', error);
+            }
+        }
+        
+        // Limit displayed items to 50
+        const items = liveFeed.querySelectorAll('.feed-item');
+        if (items.length > 50) {
+            for (let i = 50; i < items.length; i++) {
+                items[i].remove();
+            }
+        }
+        
+        // Scroll to top
+        liveFeed.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+    
+    /**
+     * Update metrics from live feed data
+     */
+    updateMetricsFromLiveFeed(data) {
+        const classification = data.classification;
+        const value = data.estimatedValue || 0;
+        
+        switch (classification) {
+            case 'ZNALEZIONE PRODUKTY':
+                if (!this.metrics.foundProducts) this.metrics.foundProducts = { count: 0, amount: 0 };
+                this.metrics.foundProducts.count++;
+                this.animateCounter('foundProductsCount', this.metrics.foundProducts.count);
+                break;
+                
+            case 'UTRACONE OKAZJE':
+                if (!this.metrics.lostOpportunities) this.metrics.lostOpportunities = { count: 0, amount: 0 };
+                this.metrics.lostOpportunities.count++;
+                this.metrics.lostOpportunities.amount += value;
+                this.animateCounter('lostOpportunitiesCount', this.metrics.lostOpportunities.count);
+                this.animateCounter('lostOpportunitiesAmount', this.metrics.lostOpportunities.amount);
+                break;
+                
+            case 'ODFILTROWANE':
+                if (!this.metrics.filteredOut) this.metrics.filteredOut = { count: 0, amount: 0 };
+                this.metrics.filteredOut.count++;
+                this.animateCounter('filteredOutCount', this.metrics.filteredOut.count);
+                break;
+                
+            default:
+                console.warn('Unknown classification:', classification);
+                break;
+        }
+        
+        this.updateAdditionalStats();
+        this.updateChartsData();
+    }
     /**
      * Handle new event from WebSocket
      */
