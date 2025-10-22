@@ -339,9 +339,180 @@
                 grid-template-columns: 1fr;
             }
         }
+/* 🎨 NOWE STYLE DLA ADMIN DASHBOARD */
+
+/* Company List */
+.company-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.company-item {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.2s ease;
+}
+
+.company-item:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.company-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.company-name {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.company-name strong {
+    font-size: 15px;
+    color: #111827;
+}
+
+.company-location {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.engagement-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.company-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.company-latest {
+    font-size: 13px;
+    color: #374151;
+    font-style: italic;
+    padding: 8px;
+    background: #f9fafb;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+
+/* Hot Leads */
+.hot-lead-item {
+    background: #ffffff;
+    border: 2px solid #f59e0b;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.hot-lead-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.hot-lead-time {
+    font-size: 11px;
+    color: #78350f;
+    font-weight: 500;
+}
+
+.hot-lead-query {
+    font-size: 14px;
+    color: #374151;
+    font-style: italic;
+    margin-bottom: 4px;
+}
+
+.hot-lead-value {
+    font-size: 12px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* Notifications */
+#notificationContainer {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+}
+
+.notification {
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 14px;
+    font-weight: 500;
+    animation: slideInToast 0.3s ease-out;
+}
+
+.notification-success {
+    background: #10b981;
+    color: white;
+}
+
+.notification-error {
+    background: #ef4444;
+    color: white;
+}
+
+.notification-hot-lead {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #78350f;
+    border: 2px solid #d97706;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+@keyframes slideInToast {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* No sessions message */
+.no-sessions {
+    text-align: center;
+    color: #9ca3af;
+    padding: 32px;
+    font-size: 14px;
+}
+
+/* Section subtitle */
+.section-subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: -8px;
+    margin-bottom: 16px;
+}
     </style>
 </head>
 <body>
+    <div id="notificationContainer"></div>
     <div class="header">
         <div class="header-content">
             <div class="header-left">
@@ -391,6 +562,35 @@
                 </div>
             </div>
             
+            <!-- 🏢 NOWA SEKCJA: Companies Tracking -->
+            <div class="card">
+                <div class="section-title">
+                    🏢 Firmy Które Was Odwiedzają
+                </div>
+                <div style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">
+                    Sortowane po zainteresowaniu (🔥🔥🔥 = gorący lead gotowy kupić)
+                </div>
+                <div id="companyList" class="company-list">
+                    <div style="text-align: center; color: #6b7280; padding: 20px;">
+                        📡 Ładowanie danych firm...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 🔥 HOT LEADS Alerts -->
+            <div class="card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b;">
+                <div class="section-title" style="color: #92400e;">
+                    🔥 HOT LEADS - Klienci Gotowi Do Rozmowy
+                </div>
+                <div style="font-size: 13px; color: #78350f; margin-bottom: 16px;">
+                    Firmy które pokazują wysok zainteresowanie - dzwoń DO NICH!
+                </div>
+                <div id="hotLeadsList">
+                    <div style="text-align: center; color: #78350f; padding: 20px;">
+                        Czekam na gorące leady...
+                    </div>
+                </div>
+            </div>
             <!-- Visitor Stats -->
             <div class="card">
                 <div class="section-title">
@@ -508,6 +708,6 @@
         
     </script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='admin_dashboard.js') }}" defer></script>
 </body>
 </html>

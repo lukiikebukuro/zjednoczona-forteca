@@ -465,6 +465,241 @@ def dashboard():
     """Główna strona dashboardu"""
     return render_template('dashboard.html')
 
+
+@app.route('/api/admin/visitor-stats')
+@require_admin_access
+def get_visitor_stats():
+    """
+    Zwraca statystyki visitor tracking dla admin dashboardu
+    
+    CO TO ROBI:
+    - Liczy aktywnych użytkowników (ostatnie 15 min)
+    - Liczy sesje z dziś
+    - Oblicza średni czas sesji
+    - Oblicza conversion rate
+    - Zwraca listę firm które odwiedziły
+    - Zwraca aktywne sesje (kto jest TERAZ)
+    """
+    try:
+        conn = sqlite3.connect(DATABASE_NAME)
+        cursor = conn.cursor()
+        
+        # === 1. AKTYWNI UŻYTKOWNICY (ostatnie 15 min) ===
+        fifteen_min_ago = (datetime.now() - timedelta(minutes=15)).isoformat()
+        cursor.execute('''
+            SELECT COUNT(DISTINCT session_id)
+            FROM visitor_sessions
+            WHERE entry_time >= ?
+        ''', (fifteen_min_ago,))
+        active_now = cursor.fetchone()[0] or 0
+        
+        # === 2. SESJE DZIŚ ===
+        today = datetime.now().strftime('%Y-%m-%d')
+        cursor.execute('''
+            SELECT COUNT(*)
+            FROM visitor_sessions
+            WHERE date(entry_time) = ?
+        ''', (today,))
+        sessions_today = cursor.fetchone()[0] or 0
+        
+        # === 3. ŚREDNI CZAS SESJI (w sekundach) ===
+        cursor.execute('''
+            SELECT AVG(
+                (julianday('now') - julianday(entry_time)) * 86400
+            )
+            FROM visitor_sessions
+            WHERE date(entry_time) = ?
+            AND is_active = 1
+        ''', (today,))
+        avg_duration = cursor.fetchone()[0] or 0
+        avg_duration = int(avg_duration)
+        
+        # === 4. CONVERSION RATE (% sesji z high-intent queries) ===
+        cursor.execute('''
+            SELECT 
+                COUNT(DISTINCT vs.session_id) as total,
+                COUNT(DISTINCT CASE WHEN e.decision = 'ZNALEZIONE PRODUKTY' 
+                    THEN vs.session_id END) as high_intent
+            FROM visitor_sessions vs
+            LEFT JOIN events e ON e.details LIKE '%' || substr(vs.session_id, 1, 8) || '%'
+            WHERE date(vs.entry_time) = ?
+        ''', (today,))
+        conv_data = cursor.fetchone()
+        total_sessions = conv_data[0] or 1  # Avoid division by zero
+        high_intent_sessions = conv_data[1] or 0
+        conversion_rate = int((high_intent_sessions / total_sessions) * 100)
+        
+        # === 5. LISTA FIRM (Companies Tracking) ===
+        cursor.execute('''
+            SELECT 
+                organization,
+                city,
+                country,
+                MIN(entry_time) as first_visit,
+                MAX(entry_time) as last_visit,
+                COUNT(*) as total_queries
+            FROM visitor_sessions
+            WHERE organization IS NOT NULL 
+            AND organization != 'Unknown'
+            AND date(entry_time) >= date('now', '-7 days')
+            GROUP BY organization, city, country
+            ORDER BY total_queries DESC
+            LIMIT 20
+        ''')
+        
+        companies = []
+        for row in cursor.fetchall():
+            org, city, country, first_visit, last_visit, total_queries = row
+            
+            # Policz high-intent i lost opportunities dla tej firmy
+            cursor.execute('''
+                SELECT 
+                    COUNT(CASE WHEN decision = 'ZNALEZIONE PRODUKTY' THEN 1 END) as high_intent,
+                    COUNT(CASE WHEN decision = 'UTRACONE OKAZJE' THEN 1 END) as lost_opp
+                FROM events
+                WHERE details LIKE ?
+            ''', (f'%{org}%',))
+            
+            intent_data = cursor.fetchone()
+            high_intent = intent_data[0] if intent_data else 0
+            lost_opp = intent_data[1] if intent_data else 0
+            
+            # Oblicz engagement score (0-100)
+            engagement_score = min(
+                (total_queries * 10) + (high_intent * 20) + (lost_opp * 10),
+                100
+            )
+            
+            # Ostatnie zapytanie
+            cursor.execute('''
+                SELECT query_text
+                FROM events
+                WHERE details LIKE ?
+                ORDER BY timestamp DESC
+                LIMIT 1
+            ''', (f'%{org}%',))
+            
+            latest_query = cursor.fetchone()
+            latest_query = latest_query[0] if latest_query else 'N/A'
+            
+            companies.append({
+                'name': org,
+                'city': city,
+                'country': country,
+                'firstVisit': first_visit,
+                'lastVisit': last_visit,
+                'totalQueries': total_queries,
+                'highIntentQueries': high_intent,
+                'lostOpportunities': lost_opp,
+                'engagementScore': engagement_score,
+                'queries': [latest_query]  # W pełnej wersji mogłyby być wszystkie
+            })
+        
+        # === 6. AKTYWNE SESJE (kto jest TERAZ na stronie) ===
+        cursor.execute('''
+            SELECT 
+                vs.session_id,
+                vs.organization,
+                vs.city,
+                vs.country,
+                vs.entry_time,
+                COUNT(e.id) as query_count
+            FROM visitor_sessions vs
+            LEFT JOIN events e ON e.details LIKE '%' || substr(vs.session_id, 1, 8) || '%'
+            WHERE vs.entry_time >= ?
+            AND vs.is_active = 1
+            GROUP BY vs.session_id, vs.organization, vs.city, vs.country, vs.entry_time
+            ORDER BY vs.entry_time DESC
+            LIMIT 10
+        ''', (fifteen_min_ago,))
+        
+        active_sessions = []
+        for row in cursor.fetchall():
+            sess_id, org, city, country, entry_time, query_count = row
+            
+            # Czas trwania sesji (sekundy)
+            entry_dt = datetime.fromisoformat(entry_time)
+            duration = int((datetime.now() - entry_dt).total_seconds())
+            
+            # Sprawdź czy ma high-intent lub lost opportunity
+            cursor.execute('''
+                SELECT 
+                    MAX(CASE WHEN decision = 'ZNALEZIONE PRODUKTY' THEN 1 ELSE 0 END) as has_high_intent,
+                    MAX(CASE WHEN decision = 'UTRACONE OKAZJE' THEN 1 ELSE 0 END) as has_lost_opp,
+                    query_text
+                FROM events
+                WHERE details LIKE ?
+                ORDER BY timestamp DESC
+                LIMIT 1
+            ''', (f'%{sess_id[:8]}%',))
+            
+            session_data = cursor.fetchone()
+            has_high_intent = bool(session_data[0]) if session_data else False
+            has_lost_opp = bool(session_data[1]) if session_data else False
+            latest_query = session_data[2] if session_data else None
+            
+            active_sessions.append({
+                'session_id': sess_id[:8],
+                'company': org or None,
+                'city': city,
+                'country': country,
+                'duration': duration,
+                'queries': query_count,
+                'has_high_intent': has_high_intent,
+                'has_lost_opportunity': has_lost_opp,
+                'latest_query': latest_query
+            })
+        
+        # === 7. KLASYFIKACJA ZAPYTAŃ (dla wykresu) ===
+        cursor.execute('''
+            SELECT 
+                decision,
+                COUNT(*) as count
+            FROM events
+            WHERE date(timestamp) = ?
+            GROUP BY decision
+        ''', (today,))
+        
+        classification = {
+            'found': 0,
+            'lost': 0,
+            'filtered': 0
+        }
+        
+        for row in cursor.fetchall():
+            decision, count = row
+            if decision == 'ZNALEZIONE PRODUKTY':
+                classification['found'] = count
+            elif decision == 'UTRACONE OKAZJE':
+                classification['lost'] = count
+            elif decision == 'ODFILTROWANE':
+                classification['filtered'] = count
+        
+        conn.close()
+        
+        # === ZWRÓĆ WSZYSTKO ===
+        return jsonify({
+            'status': 'success',
+            'stats': {
+                'active_now': active_now,
+                'sessions_today': sessions_today,
+                'avg_duration': avg_duration,
+                'conversion_rate': conversion_rate
+            },
+            'companies': companies,
+            'active_sessions': active_sessions,
+            'classification': classification
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] Admin visitor stats failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 @app.route('/api/initial_data')
 def get_initial_data():
     """API endpoint zwracający dane inicjalne dla dashboardu"""
