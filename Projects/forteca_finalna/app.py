@@ -1677,7 +1677,7 @@ def handle_visitor_event_websocket(data):
         event_id = DatabaseManager.add_event(
             query,
             decision,
-            f'Visitor: {data.get("city", "Unknown")}',
+            f'{data.get("organization", "Unknown")}',  # FIXED: organizacja zamiast Visitor
             extract_category_from_query(query),
             'visitor',
             potential_value,
@@ -1699,6 +1699,19 @@ def handle_visitor_event_websocket(data):
         
         print(f"[WEBSOCKET] Broadcasting live_feed_update ONLY to admin_dashboard")
         emit('live_feed_update', live_feed_data, room='admin_dashboard')
+        
+        # DODAJ: Wyślij też new_event do TCD (demo prezentacji)
+        tcd_event_data = {
+            'id': event_id,
+            'timestamp': datetime.now().strftime('%H:%M:%S'),
+            'query_text': query,
+            'decision': decision,
+            'details': data.get('organization', 'Unknown'),
+            'category': extract_category_from_query(query),
+            'potential_value': potential_value,
+            'explanation': f"Live visitor query - {analysis['confidence_level']} confidence"
+        }
+        socketio.emit('new_event', tcd_event_data, room='client_demo')
         
         print(f"[WEBSOCKET] Event processed successfully: {decision}")
         
@@ -1792,16 +1805,18 @@ def handle_bot_query(session_id, data):
         decision = decision_mapping.get(analysis['confidence_level'], 'ODFILTROWANE')
         potential_value = calculate_lost_value_internal(query) if decision == 'UTRACONE OKAZJE' else 0
         
-        # Dodaj do głównego systemu TCD
-        event_id = DatabaseManager.add_event(
-            query,
-            decision,
-            f'Visitor query from session {session_id[:8]}',
-            extract_category_from_query(query),
-            'visitor',
-            potential_value,
-            f"Visitor tracking: {analysis['confidence_level']} confidence"
-        )
+        # WYŁĄCZONE - duplikat z WebSocket handler (@socketio.on('visitor_event'))
+        # event_id = DatabaseManager.add_event(
+        #     query,
+        #     decision,
+        #     f'Visitor query from session {session_id[:8]}',
+        #     extract_category_from_query(query),
+        #     'visitor',
+        #     potential_value,
+        #     f"Visitor tracking: {analysis['confidence_level']} confidence"
+        # )
+        
+        # Zwróć tylko status - WebSocket handler zajmuje się dodawaniem do bazy
         
         # WYŁĄCZONE - duplikat z WebSocket handler (linia 1455)
         # event_data = {
