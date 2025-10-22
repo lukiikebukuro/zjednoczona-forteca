@@ -1700,18 +1700,10 @@ def handle_visitor_event_websocket(data):
         print(f"[WEBSOCKET] Broadcasting live_feed_update ONLY to admin_dashboard")
         emit('live_feed_update', live_feed_data, room='admin_dashboard')
         
-        # DODAJ: Wyślij też new_event do TCD (demo prezentacji)
-        tcd_event_data = {
-            'id': event_id,
-            'timestamp': datetime.now().strftime('%H:%M:%S'),
-            'query_text': query,
-            'decision': decision,
-            'details': data.get('organization', 'Unknown'),
-            'category': extract_category_from_query(query),
-            'potential_value': potential_value,
-            'explanation': f"Live visitor query - {analysis['confidence_level']} confidence"
-        }
-        socketio.emit('new_event', tcd_event_data, room='client_demo')
+        # WYŁĄCZONE - TCD dostaje event z /api/analyze_query ("Finalne zapytanie")
+        # Nie wysyłamy tu new_event bo to powoduje duplikaty!
+        # tcd_event_data = { ... }
+        # socketio.emit('new_event', tcd_event_data, room='client_demo')
         
         print(f"[WEBSOCKET] Event processed successfully: {decision}")
         

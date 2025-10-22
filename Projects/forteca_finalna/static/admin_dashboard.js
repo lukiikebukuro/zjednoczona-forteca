@@ -27,8 +27,38 @@ class AdminDashboard {
         this.hotLeads = [];                // HOT LEADS lista (WAŻNE!)
         this.socket = null;
         
+        // DODAJ: Załaduj HOT LEADS z localStorage (persistence!)
+        this.loadHotLeadsFromStorage();
+        
         // Start!
         this.initialize();
+    }
+    
+    /**
+     * Załaduj HOT LEADS z localStorage
+     */
+    loadHotLeadsFromStorage() {
+        try {
+            const stored = localStorage.getItem('hotLeads');
+            if (stored) {
+                this.hotLeads = JSON.parse(stored);
+                this.hotLeads.forEach(lead => {
+                    lead.timestamp = new Date(lead.timestamp);
+                });
+                console.log(`✅ Załadowano ${this.hotLeads.length} HOT LEADS z localStorage`);
+            }
+        } catch (e) {
+            console.error('❌ Błąd ładowania HOT LEADS:', e);
+            this.hotLeads = [];
+        }
+    }
+    
+    saveHotLeadsToStorage() {
+        try {
+            localStorage.setItem('hotLeads', JSON.stringify(this.hotLeads));
+        } catch (e) {
+            console.error('❌ Błąd zapisywania HOT LEADS:', e);
+        }
     }
     
     /**
@@ -269,6 +299,9 @@ class AdminDashboard {
         
         // Odśwież listę hot leads
         this.updateHotLeadsList();
+        
+        // Zapisz do localStorage
+        this.saveHotLeadsToStorage();
     }
     
     /**
