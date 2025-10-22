@@ -40,13 +40,15 @@ class VisitorTracker {
             // Setup event listeners
             this.setupEventListeners();
             
+            // WAŻNE: Włącz tracking PRZED wysłaniem session_start!
+            this.isTracking = true;
+            
             // Send session start event
             await this.sendVisitorEvent('session_start', {
                 entry_time: this.entryTime.toISOString(),
                 ...this.visitorData
             });
             
-            this.isTracking = true;
             console.log('🛰️ SATELITA: Tracking started');
             
         } catch (error) {
