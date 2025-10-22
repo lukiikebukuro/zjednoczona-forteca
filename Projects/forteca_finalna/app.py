@@ -1663,15 +1663,14 @@ def ensure_visitor_tables_exist():
 @socketio.on('visitor_event')
 def handle_visitor_event_websocket(data):
     """
-    Handler WebSocket dla visitor_event.
+    Handler WebSocket dla visitor_event. Wersja PANCERNA.
     ROZDZIELA sygnały: prosty dla demo, wzbogacony dla admina.
     """
     try:
-        print(f"[WEBSOCKET] Received visitor_event: {data.get('query', 'N/A')[:50]}...")
-        
+        # === KROK 1: Analiza i zapis do bazy ===
         query = data.get('query', '')
-        
-        # Analiza i zapis do bazy danych (tak jak wcześniej)
+        if not query: return
+
         analysis = bot.analyze_query_intent(query)
         decision_mapping = {
             'HIGH': 'ZNALEZIONE PRODUKTY', 'MEDIUM': 'ODFILTROWANE', 
@@ -1679,32 +1678,29 @@ def handle_visitor_event_websocket(data):
         }
         decision = decision_mapping.get(analysis['confidence_level'], 'ODFILTROWANE')
         potential_value = calculate_lost_value_internal(query) if decision == 'UTRACONE OKAZJE' else 0
-        
+
         event_id = DatabaseManager.add_event(
             query, decision, f'Session: {data.get("sessionId", "unknown")[:8]}',
             extract_category_from_query(query), 'visitor', potential_value,
             f"Live query - confidence: {analysis['confidence_level']}"
         )
-        
-        # --- NOWA, PODWÓJNA LOGIKA WYSYŁANIA ---
 
-        # 1. Przygotuj PROSTY meldunek dla publicznego DEMO TCD
+        # === KROK 2: Przygotuj dwa ODDZIELNE meldunki ===
+
+        # Meldunek A: PROSTY (dla publicznego TCD)
         client_feed_data = {
             'id': event_id,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
             'query_text': query,
             'decision': decision,
-            'details': 'Finalne zapytanie użytkownika', # Prosty tekst
+            'details': 'Finalne zapytanie użytkownika',
             'potential_value': potential_value
         }
-        # Wyślij PROSTY meldunek TYLKO do pokoju 'client_demo'
-        print(f"[WEBSOCKET] Broadcasting simple event to client_demo room")
-        socketio.emit('new_event', client_feed_data, room='client_demo')
 
-        # 2. Przygotuj WZBOGACONY meldunek dla ADMINA
+        # Meldunek B: WZBOGACONY (dla Twojego kokpitu)
         admin_feed_data = {
             'id': event_id,
-            'timestamp': datetime.now().isoformat(), # Pełny timestamp dla admina
+            'timestamp': datetime.now().isoformat(),
             'query': query,
             'classification': decision,
             'estimatedValue': potential_value,
@@ -1713,14 +1709,19 @@ def handle_visitor_event_websocket(data):
             'organization': data.get('organization', 'Unknown'),
             'sessionId': data.get('sessionId', 'unknown')
         }
-        # Wyślij WZBOGACONY meldunek TYLKO do pokoju 'admin_dashboard'
-        print(f"[WEBSOCKET] Broadcasting rich event to admin_dashboard room")
-        socketio.emit('live_feed_update', admin_feed_data, room='admin_dashboard')
 
-        print(f"[WEBSOCKET] Event processed and split successfully: {decision}")
-        
+        # === KROK 3: Wyślij meldunki na ODDZIELNE, dedykowane kanały ===
+
+        # Kanał 1: TYLKO do pokoju 'client_demo'
+        socketio.emit('new_event', client_feed_data, room='client_demo')
+        print(f"[WEBSOCKET] Wysłano PROSTY event do 'client_demo' room.")
+
+        # Kanał 2: TYLKO do pokoju 'admin_dashboard'
+        socketio.emit('live_feed_update', admin_feed_data, room='admin_dashboard')
+        print(f"[WEBSOCKET] Wysłano WZBOGACONY event do 'admin_dashboard' room.")
+
     except Exception as e:
-        print(f"[ERROR] Failed to handle visitor_event: {e}")
+        print(f"[ERROR] Krytyczny błąd w handle_visitor_event: {e}")
         import traceback
         traceback.print_exc()
 
