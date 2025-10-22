@@ -1663,58 +1663,61 @@ def ensure_visitor_tables_exist():
 @socketio.on('visitor_event')
 def handle_visitor_event_websocket(data):
     """
-    Handler WebSocket dla visitor_event
-    Odbiera dane z visitor_tracking.js i retransmituje jako live_feed_update
+    Handler WebSocket dla visitor_event.
+    ROZDZIELA sygnały: prosty dla demo, wzbogacony dla admina.
     """
     try:
         print(f"[WEBSOCKET] Received visitor_event: {data.get('query', 'N/A')[:50]}...")
         
-        # Wyciągnij dane
         query = data.get('query', '')
-        session_id = data.get('sessionId', 'unknown')
         
-        # Analizuj zapytanie przez istniejący system AI
+        # Analiza i zapis do bazy danych (tak jak wcześniej)
         analysis = bot.analyze_query_intent(query)
-        
-        # Mapowanie na decisions
         decision_mapping = {
-            'HIGH': 'ZNALEZIONE PRODUKTY',
-            'MEDIUM': 'ODFILTROWANE', 
-            'LOW': 'ODFILTROWANE',
-            'NO_MATCH': 'UTRACONE OKAZJE'
+            'HIGH': 'ZNALEZIONE PRODUKTY', 'MEDIUM': 'ODFILTROWANE', 
+            'LOW': 'ODFILTROWANE', 'NO_MATCH': 'UTRACONE OKAZJE'
         }
-        
         decision = decision_mapping.get(analysis['confidence_level'], 'ODFILTROWANE')
         potential_value = calculate_lost_value_internal(query) if decision == 'UTRACONE OKAZJE' else 0
         
-        # Dodaj do głównego systemu TCD
         event_id = DatabaseManager.add_event(
-            query,
-            decision,
-            f'Visitor: {data.get("city", "Unknown")}',
-            extract_category_from_query(query),
-            'visitor',
-            potential_value,
-            f"Live visitor query - {analysis['confidence_level']} confidence"
+            query, decision, f'Session: {data.get("sessionId", "unknown")[:8]}',
+            extract_category_from_query(query), 'visitor', potential_value,
+            f"Live query - confidence: {analysis['confidence_level']}"
         )
         
-        # ==== KLUCZOWE: Retransmituj jako live_feed_update z pełnymi danymi ====
-        live_feed_data = {
+        # --- NOWA, PODWÓJNA LOGIKA WYSYŁANIA ---
+
+        # 1. Przygotuj PROSTY meldunek dla publicznego DEMO TCD
+        client_feed_data = {
             'id': event_id,
             'timestamp': datetime.now().strftime('%H:%M:%S'),
+            'query_text': query,
+            'decision': decision,
+            'details': 'Finalne zapytanie użytkownika', # Prosty tekst
+            'potential_value': potential_value
+        }
+        # Wyślij PROSTY meldunek TYLKO do pokoju 'client_demo'
+        print(f"[WEBSOCKET] Broadcasting simple event to client_demo room")
+        socketio.emit('new_event', client_feed_data, room='client_demo')
+
+        # 2. Przygotuj WZBOGACONY meldunek dla ADMINA
+        admin_feed_data = {
+            'id': event_id,
+            'timestamp': datetime.now().isoformat(), # Pełny timestamp dla admina
             'query': query,
             'classification': decision,
             'estimatedValue': potential_value,
             'city': data.get('city', 'Unknown'),
             'country': data.get('country', 'Unknown'),
             'organization': data.get('organization', 'Unknown'),
-            'sessionId': session_id
+            'sessionId': data.get('sessionId', 'unknown')
         }
-        
-        print(f"[WEBSOCKET] Broadcasting live_feed_update ONLY to admin_dashboard")
-        emit('live_feed_update', live_feed_data, room='admin_dashboard')
-        
-        print(f"[WEBSOCKET] Event processed successfully: {decision}")
+        # Wyślij WZBOGACONY meldunek TYLKO do pokoju 'admin_dashboard'
+        print(f"[WEBSOCKET] Broadcasting rich event to admin_dashboard room")
+        socketio.emit('live_feed_update', admin_feed_data, room='admin_dashboard')
+
+        print(f"[WEBSOCKET] Event processed and split successfully: {decision}")
         
     except Exception as e:
         print(f"[ERROR] Failed to handle visitor_event: {e}")
