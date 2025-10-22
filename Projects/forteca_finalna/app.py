@@ -438,7 +438,8 @@ def analyze_query():
             'explanation': f'Analiza po 800ms pauzy - confidence: {confidence_level}'
         }
         
-        socketio.emit('new_event', event_data)
+        # WYŚLIJ TYLKO DO DEMO TCD (nie do admin dashboard)
+        socketio.emit('new_event', event_data, room='client_demo')
         
         print(f"[FINAL ANALYSIS] Saved to TCD: {query} -> {decision} (value: {potential_value})")
         
@@ -526,7 +527,8 @@ def receive_real_event():
             'explanation': 'Prawdziwe zapytanie użytkownika'
         }
         
-        socketio.emit('new_event', event_data)
+        # WYŚLIJ TYLKO DO DEMO TCD (nie do admin dashboard)
+        socketio.emit('new_event', event_data, room='client_demo')
         
         return jsonify({'status': 'success'})
         
@@ -1256,8 +1258,31 @@ def lost_demand_report():
 @socketio.on('connect')
 def handle_connect():
     """Klient podłączył się do WebSocket"""
+    from flask_socketio import join_room
+    from flask import request as flask_request
+    
     print('[WEBSOCKET] Client connected')
-    emit('connection_confirmed', {'message': 'Connected to TCD'})
+    
+    # Sprawdź czy to admin czy demo TCD (client)
+    # Sprawdzamy przez referer URL lub user role
+    user_agent = flask_request.headers.get('User-Agent', '')
+    referer = flask_request.headers.get('Referer', '')
+    
+    # Jeśli zalogowany - sprawdź rolę
+    if current_user.is_authenticated:
+        if current_user.role in ['admin', 'debug']:
+            join_room('admin_dashboard')
+            print(f'[WEBSOCKET] Admin {current_user.username} joined admin_dashboard room')
+            emit('connection_confirmed', {'message': 'Connected to Admin Dashboard', 'room': 'admin'})
+        else:
+            join_room('client_demo')
+            print(f'[WEBSOCKET] Client {current_user.username} joined client_demo room')
+            emit('connection_confirmed', {'message': 'Connected to Demo TCD', 'room': 'client'})
+    else:
+        # Niezalogowany - domyślnie demo TCD
+        join_room('client_demo')
+        print('[WEBSOCKET] Anonymous user joined client_demo room')
+        emit('connection_confirmed', {'message': 'Connected to Demo TCD', 'room': 'client'})
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -1451,8 +1476,8 @@ def handle_visitor_event_websocket(data):
             'sessionId': session_id
         }
         
-        print(f"[WEBSOCKET] Broadcasting live_feed_update to all clients")
-        emit('live_feed_update', live_feed_data, broadcast=True)
+        print(f"[WEBSOCKET] Broadcasting live_feed_update ONLY to admin_dashboard")
+        emit('live_feed_update', live_feed_data, room='admin_dashboard')
         
         print(f"[WEBSOCKET] Event processed successfully: {decision}")
         
@@ -1557,20 +1582,20 @@ def handle_bot_query(session_id, data):
             f"Visitor tracking: {analysis['confidence_level']} confidence"
         )
         
-        # Wyślij przez WebSocket do Live Feed
-        event_data = {
-            'id': event_id,
-            'timestamp': datetime.now().strftime('%H:%M:%S'),
-            'query_text': query,
-            'decision': decision,
-            'details': f'Visitor: {get_visitor_context(session_id)}',
-            'category': extract_category_from_query(query),
-            'potential_value': potential_value,
-            'explanation': f'Visitor query - confidence: {analysis["confidence_level"]}',
-            'session_id': session_id[:8]
-        }
-        
-        socketio.emit('new_event', event_data)
+        # WYŁĄCZONE - duplikat z WebSocket handler (linia 1455)
+        # event_data = {
+        #     'id': event_id,
+        #     'timestamp': datetime.now().strftime('%H:%M:%S'),
+        #     'query_text': query,
+        #     'decision': decision,
+        #     'details': f'Visitor: {get_visitor_context(session_id)}',
+        #     'category': extract_category_from_query(query),
+        #     'potential_value': potential_value,
+        #     'explanation': f'Visitor query - confidence: {analysis["confidence_level"]}',
+        #     'session_id': session_id[:8]
+        # }
+        # 
+        # socketio.emit('new_event', event_data)  # WYŁĄCZONE - używamy live_feed_update
         
         return {
             'status': 'success',

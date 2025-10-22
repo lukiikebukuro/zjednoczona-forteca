@@ -317,12 +317,12 @@ class VisitorTracker {
                     this.socket.emit('visitor_event', eventData);
                 }
                 
-                // Wyślij także przez REST API dla persystencji
-                await this.sendVisitorEvent('bot_query', {
-                    query: query,
-                    message_count: this.messageCount,
-                    time_since_entry: Date.now() - this.entryTime.getTime()
-                });
+// WYŁĄCZONE - duplikat:                 // Wyślij także przez REST API dla persystencji
+// WYŁĄCZONE - duplikat:                 await this.sendVisitorEvent('bot_query', {
+// WYŁĄCZONE - duplikat:                     query: query,
+// WYŁĄCZONE - duplikat:                     message_count: this.messageCount,
+// WYŁĄCZONE - duplikat:                     time_since_entry: Date.now() - this.entryTime.getTime()
+// WYŁĄCZONE - duplikat:                 });
                 
                 // Call original function
                 return originalSendFinalAnalysis.call(window.botUI, query);
