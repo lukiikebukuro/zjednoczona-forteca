@@ -175,28 +175,7 @@
             </div>
         </div>
 
-        <!-- VERTICAL CTA BAR -->
-        <a href="/login" class="vertical-cta-bar">
-            <div class="cta-icons">
-                <span class="cta-lightning">⚡</span>
-                <span class="cta-eye">👁️</span>
-            </div>
-            <div class="cta-text-vertical">
-                <span>To tylko</span>
-                <span>DEMO</span>
-                <span class="cta-divider">━━━</span>
-                <span>Chcesz</span>
-                <span>zobaczyć</span>
-                <span>Twoje</span>
-                <span>przyszłe</span>
-                <span>centrum</span>
-                <span>dowodzenia?</span>
-                <span class="cta-divider">━━━</span>
-                <span class="cta-arrow">→ Kliknij</span>
-            </div>
-        </a>
-
-        <!-- Resizer Handle -->
+                <!-- Resizer Handle -->
         <div class="resize-handle" id="resizeHandle">
             <div class="resize-grip"></div>
         </div>
@@ -671,32 +650,7 @@
 /* ========================================
    VERTICAL CTA BAR - Pasek pionowy między botem a TCD
    ======================================== */
-.vertical-cta-bar {
-    position: absolute;
-    right: -68px; /* Tuż obok bot-column */
-    top: 120px; /* Pod headerem */
-    width: 65px;
-    padding: 20px 8px;
-    background: linear-gradient(180deg, 
-        #dc2626 0%,    /* Czerwony matching bot */
-        #991b1b 50%,
-        #7f1d1d 100%   /* Ciemniejszy czerwony */
-    );
-    border-left: 3px solid #000;
-    border-right: 3px solid #000;
-    border-radius: 12px;
-    box-shadow: 
-        0 8px 24px rgba(220, 38, 38, 0.4),
-        inset 0 1px 0 rgba(255,255,255,0.1);
-    z-index: 100;
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-}
+
 
 .vertical-cta-bar:hover {
     width: 75px;
@@ -822,11 +776,7 @@ footer button,
 
 /* Responsive dla małych ekranów */
 @media (max-width: 1400px) {
-    .vertical-cta-bar {
-        left: calc(50% - 210px);
-        width: 55px;
-        padding: 16px 6px;
-    }
+    
     
     .cta-icons {
         font-size: 20px;
@@ -845,9 +795,7 @@ footer button,
 }
 
 @media (max-width: 1200px) {
-    .vertical-cta-bar {
-        display: none; /* Ukryj na mniejszych ekranach */
-    }
+    
 }
 
 @media (max-width: 768px) {
@@ -960,32 +908,7 @@ footer button,
 /* ========================================
    VERTICAL CTA BAR - Pasek pionowy między botem a TCD
    ======================================== */
-.vertical-cta-bar {
-    position: absolute;
-    right: -68px; /* Tuż obok bot-column */
-    top: 120px; /* Pod headerem */
-    width: 65px;
-    padding: 20px 8px;
-    background: linear-gradient(180deg, 
-        #dc2626 0%,    /* Czerwony matching bot */
-        #991b1b 50%,
-        #7f1d1d 100%   /* Ciemniejszy czerwony */
-    );
-    border-left: 3px solid #000;
-    border-right: 3px solid #000;
-    border-radius: 12px;
-    box-shadow: 
-        0 8px 24px rgba(220, 38, 38, 0.4),
-        inset 0 1px 0 rgba(255,255,255,0.1);
-    z-index: 100;
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-}
+
 
 .vertical-cta-bar:hover {
     width: 75px;
@@ -1111,11 +1034,7 @@ footer button,
 
 /* Responsive dla małych ekranów */
 @media (max-width: 1400px) {
-    .vertical-cta-bar {
-        left: calc(50% - 210px);
-        width: 55px;
-        padding: 16px 6px;
-    }
+    
     
     .cta-icons {
         font-size: 20px;
@@ -1134,9 +1053,7 @@ footer button,
 }
 
 @media (max-width: 1200px) {
-    .vertical-cta-bar {
-        display: none; /* Ukryj na mniejszych ekranach */
-    }
+    
 }
 
 @media (max-width: 768px) {
