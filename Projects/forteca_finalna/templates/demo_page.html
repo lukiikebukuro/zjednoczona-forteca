@@ -169,14 +169,6 @@
                 </div>
             </div>
         </div>
-        <!-- KOMPAKTOWY CTA -->
-<div class="compact-cta-section">
-    <div class="compact-cta">
-        <span class="cta-text">Chcesz zobaczyć jak będzie wyglądać Twoje przyszłe centrum dowodzenia?</span>
-        <a href="/login" class="cta-link">Kliknij tutaj</a>
-    </div>
-</div>
-
         <!-- Resizer Handle -->
         <div class="resize-handle" id="resizeHandle">
             <div class="resize-grip"></div>
@@ -656,38 +648,71 @@
 </div>
 <script src="{{ url_for('static', filename='visitor_tracking.js') }}" defer></script>
 <style>
-.compact-cta-section {
-    background: #f8fafc;
-    padding: 16px 20px;
-    border-top: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
-    text-align: center;
-}
-
-.compact-cta {
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.cta-text {
-    color: #475569;
-    font-size: 14px;
-    line-height: 1.4;
-    margin-right: 8px;
-}
-
-.cta-link {
-    color: #0ea5e9;
-    font-weight: 600;
+/* CTA Button w headerze */
+.header-cta-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    margin-left: 12px;
 }
 
-.cta-link:hover {
-    color: #0284c7;
-    text-decoration: underline;
+.header-cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.header-cta-button .cta-icon {
+    font-size: 18px;
+}
+
+.header-cta-button .cta-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.2;
+}
+
+.header-cta-button .cta-small {
+    font-size: 10px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.header-cta-button .cta-main {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .header-cta-button .cta-small {
+        display: none;
+    }
+    .header-cta-button .cta-main {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-cta-button {
+        padding: 6px 12px;
+        gap: 6px;
+    }
+    .header-cta-button .cta-icon {
+        font-size: 16px;
+    }
+    .header-cta-button .cta-main {
+        font-size: 11px;
+    }
 }
 </style>
 </body>
 </html>
-
