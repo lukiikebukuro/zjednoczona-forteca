@@ -4010,3 +4010,103 @@ pricing-main {
         font-size: 13px !important;
     }
 }
+
+
+/* ===== REMOVE VERTICAL BAR ===== */
+.vertical-cta-bar,
+.vertical-cta-bar * {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* ===== HEADER RESPONSIVE ===== */
+.security-badge,
+.iso-badge {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+}
+
+.badge-ecommerce {
+    font-size: 13px !important;
+    padding: 6px 12px !important;
+}
+
+@media (max-width: 1400px) {
+    .header-content {
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+    }
+    
+    .header-badges {
+        gap: 8px !important;
+    }
+    
+    .security-badge,
+    .iso-badge {
+        padding: 5px 10px !important;
+        font-size: 11px !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .header-left {
+        flex: 1 1 100% !important;
+    }
+    
+    .header-right {
+        flex: 1 1 100% !important;
+        justify-content: flex-start !important;
+    }
+}
+
+/* ===== MNIEJSZE PRZYCISKI - AGGRESSIVE ===== */
+/* Wszystkie przyciski w bocie */
+.bot-column button,
+.bot-column .action-button,
+.bot-column [class*="button"],
+.bot-content button,
+.app-container button {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    min-height: 40px !important;
+    margin: 4px 0 !important;
+}
+
+/* Konkretne przyciski */
+button[class*="Znajdź"],
+button[class*="Status"],
+button[class*="pytanie"],
+button[class*="Restart"],
+button[class*="Zwroty"],
+button[class*="Kontakt"] {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+}
+
+/* Grid z przyciskami */
+.button-grid,
+.actions-grid,
+[class*="grid"] {
+    gap: 6px !important;
+}
+
+/* Przyciski kategorii (Samochód, Dostawczy) */
+.category-button,
+.vehicle-button,
+button[class*="Samochód"],
+button[class*="Dostawczy"],
+button[class*="Motocykl"],
+button[class*="Powrót"] {
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    min-height: 42px !important;
+}
+
+@media (max-width: 1400px) {
+    .bot-column button,
+    .bot-content button {
+        padding: 7px 12px !important;
+        font-size: 12px !important;
+        min-height: 38px !important;
+    }
+}
