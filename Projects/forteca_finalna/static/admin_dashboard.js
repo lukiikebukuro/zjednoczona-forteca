@@ -181,8 +181,8 @@ class AdminDashboard {
             klasyfikacja: data.classification
         });
         
-        // Dodaj do Live Feed (już działa przez dashboard.js)
-        // Ale my dodatkowo zrobimy coś fajnego...
+        // DODANE: Renderuj w Live Feed
+        this.addLiveFeedEvent(data);
         
         // 1. Dodaj firmę do listy (jeśli nie ma)
         this.trackCompany(data);
@@ -647,3 +647,51 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🎯 Inicjalizuję Admin Dashboard...');
     window.adminDashboard = new AdminDashboard();
 });
+    /**
+     * DODANE: Renderuj Live Feed event
+     */
+    addLiveFeedEvent(data) {
+        const liveFeed = document.getElementById('liveFeed');
+        if (!liveFeed) return;
+        
+        // Usuń placeholder jeśli istnieje
+        const placeholder = liveFeed.querySelector('[style*="Czekam"]');
+        if (placeholder) {
+            liveFeed.innerHTML = '';
+        }
+        
+        // Klasyfikacja → CSS class
+        const classMap = {
+            'ZNALEZIONE PRODUKTY': 'classification-found',
+            'UTRACONE OKAZJE': 'classification-lost',
+            'ODFILTROWANE': 'classification-filtered'
+        };
+        
+        const cssClass = classMap[data.classification] || 'classification-filtered';
+        
+        // Stwórz element
+        const feedItem = document.createElement('div');
+        feedItem.className = 'feed-item';
+        feedItem.innerHTML = `
+            <div class="feed-timestamp">${data.timestamp || new Date().toLocaleTimeString('pl-PL')}</div>
+            <div class="feed-query">${this.escapeHtml(data.query)}</div>
+            <span class="feed-classification ${cssClass}">${data.classification}</span>
+        `;
+        
+        // Dodaj na górę
+        liveFeed.insertBefore(feedItem, liveFeed.firstChild);
+        
+        // Ogranicz do 20 najnowszych
+        while (liveFeed.children.length > 20) {
+            liveFeed.removeChild(liveFeed.lastChild);
+        }
+    }
+    
+    /**
+     * Escape HTML (bezpieczeństwo)
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
