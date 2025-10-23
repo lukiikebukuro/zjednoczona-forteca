@@ -640,13 +640,7 @@ class AdminDashboard {
         if (seconds < 86400) return `${Math.floor(seconds / 3600)} h temu`;
         return `${Math.floor(seconds / 86400)} dni temu`;
     }
-}
 
-// 🚀 URUCHOM DASHBOARD automatycznie
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎯 Inicjalizuję Admin Dashboard...');
-    window.adminDashboard = new AdminDashboard();
-});
     /**
      * DODANE: Renderuj Live Feed event
      */
@@ -695,3 +689,10 @@ document.addEventListener('DOMContentLoaded', () => {
         div.textContent = text;
         return div.innerHTML;
     }
+}
+
+// 🚀 URUCHOM DASHBOARD automatycznie
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎯 Inicjalizuję Admin Dashboard...');
+    window.adminDashboard = new AdminDashboard();
+});
