@@ -46,6 +46,9 @@ class AdminDashboard {
                     lead.timestamp = new Date(lead.timestamp);
                 });
                 console.log(`✅ Załadowano ${this.hotLeads.length} HOT LEADS z localStorage`);
+                
+                // CRITICAL FIX: Renderuj HOT LEADS po załadowaniu!
+                this.updateHotLeadsList();
             }
         } catch (e) {
             console.error('❌ Błąd ładowania HOT LEADS:', e);
