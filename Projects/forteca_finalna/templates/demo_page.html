@@ -169,6 +169,28 @@
                 </div>
             </div>
         </div>
+
+        <!-- VERTICAL CTA BAR -->
+        <a href="/login" class="vertical-cta-bar">
+            <div class="cta-icons">
+                <span class="cta-lightning">⚡</span>
+                <span class="cta-eye">👁️</span>
+            </div>
+            <div class="cta-text-vertical">
+                <span>To tylko</span>
+                <span>DEMO</span>
+                <span class="cta-divider">━━━</span>
+                <span>Chcesz</span>
+                <span>zobaczyć</span>
+                <span>Twoje</span>
+                <span>przyszłe</span>
+                <span>centrum</span>
+                <span>dowodzenia?</span>
+                <span class="cta-divider">━━━</span>
+                <span class="cta-arrow">→ Kliknij</span>
+            </div>
+        </a>
+
         <!-- Resizer Handle -->
         <div class="resize-handle" id="resizeHandle">
             <div class="resize-grip"></div>
@@ -639,7 +661,221 @@
         }
     });
 </script>
-<!-- DODAJ PRZED ZAMKNIĘCIEM </body>: -->
+<!-- DODAJ PRZED ZAMKNIĘCIEM 
+<style>
+/* ========================================
+   VERTICAL CTA BAR - Pasek pionowy między botem a TCD
+   ======================================== */
+.vertical-cta-bar {
+    position: absolute;
+    right: -68px; /* Tuż obok bot-column */
+    top: 120px; /* Pod headerem */
+    width: 65px;
+    padding: 20px 8px;
+    background: linear-gradient(180deg, 
+        #dc2626 0%,    /* Czerwony matching bot */
+        #991b1b 50%,
+        #7f1d1d 100%   /* Ciemniejszy czerwony */
+    );
+    border-left: 3px solid #000;
+    border-right: 3px solid #000;
+    border-radius: 12px;
+    box-shadow: 
+        0 8px 24px rgba(220, 38, 38, 0.4),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    z-index: 100;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.vertical-cta-bar:hover {
+    width: 75px;
+    box-shadow: 
+        0 12px 32px rgba(220, 38, 38, 0.6),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    border-left-width: 4px;
+    border-right-width: 4px;
+}
+
+/* Ikony */
+.cta-icons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.cta-lightning {
+    animation: pulse-glow 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+}
+
+.cta-eye {
+    animation: blink 4s ease-in-out infinite;
+}
+
+/* Tekst pionowy */
+.cta-text-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.cta-text-vertical span {
+    white-space: nowrap;
+}
+
+.cta-divider {
+    font-size: 10px;
+    opacity: 0.5;
+    margin: 4px 0;
+}
+
+.cta-arrow {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffd700;
+    animation: bounce-arrow 2s ease-in-out infinite;
+}
+
+/* Animacje */
+@keyframes blink {
+    0%, 90%, 100% { opacity: 1; }
+    93%, 97% { opacity: 0.3; }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { 
+        transform: scale(1);
+        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+    }
+    50% { 
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.9));
+    }
+}
+
+@keyframes bounce-arrow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+/* ========================================
+   BOT RESPONSIVE - Mniejsze przyciski
+   ======================================== */
+
+/* Główne przyciski (Znajdź część, Status, etc) */
+.action-button,
+.bot-column .action-button,
+.bot-content .action-button {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    min-height: 44px !important;
+    margin: 6px 0 !important;
+}
+
+/* Grid przycisków */
+.button-grid,
+.actions-grid {
+    gap: 8px !important;
+}
+
+/* Przyciski w footerze */
+footer button,
+.footer-actions button {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+}
+
+/* Input pole */
+#user-input {
+    font-size: 14px !important;
+    padding: 12px 16px !important;
+}
+
+/* Przyciski kategorii (Samochód, Dostawczy, etc) */
+.category-button,
+.vehicle-button {
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+}
+
+/* Responsive dla małych ekranów */
+@media (max-width: 1400px) {
+    .vertical-cta-bar {
+        left: calc(50% - 210px);
+        width: 55px;
+        padding: 16px 6px;
+    }
+    
+    .cta-icons {
+        font-size: 20px;
+    }
+    
+    .cta-text-vertical {
+        font-size: 10px;
+    }
+    
+    .action-button,
+    .bot-column .action-button {
+        padding: 8px 14px !important;
+        font-size: 13px !important;
+        min-height: 40px !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .vertical-cta-bar {
+        display: none; /* Ukryj na mniejszych ekranach */
+    }
+}
+
+@media (max-width: 768px) {
+    .action-button,
+    .bot-column .action-button {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+    }
+}
+
+
+/* Bot column musi być relative dla CTA bar */
+.bot-column {
+    position: relative !important;
+}
+
+/* Fix dla overlappingu z TCD */
+.demo-container {
+    position: relative;
+}
+
+.bot-column {
+    position: relative;
+    z-index: 10;
+}
+
+.dashboard-column {
+    position: relative;
+    z-index: 5;
+}
+</style>
+
+</body>: -->
 <div class="mobile-dashboard-overlay" id="mobileDashboardOverlay">
     <div class="mobile-dashboard-close" id="mobileDashboardClose">✖️</div>
     <div class="mobile-dashboard-content" id="mobileDashboardContent">
@@ -714,5 +950,219 @@
     }
 }
 </style>
+
+<style>
+/* ========================================
+   VERTICAL CTA BAR - Pasek pionowy między botem a TCD
+   ======================================== */
+.vertical-cta-bar {
+    position: absolute;
+    right: -68px; /* Tuż obok bot-column */
+    top: 120px; /* Pod headerem */
+    width: 65px;
+    padding: 20px 8px;
+    background: linear-gradient(180deg, 
+        #dc2626 0%,    /* Czerwony matching bot */
+        #991b1b 50%,
+        #7f1d1d 100%   /* Ciemniejszy czerwony */
+    );
+    border-left: 3px solid #000;
+    border-right: 3px solid #000;
+    border-radius: 12px;
+    box-shadow: 
+        0 8px 24px rgba(220, 38, 38, 0.4),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    z-index: 100;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.vertical-cta-bar:hover {
+    width: 75px;
+    box-shadow: 
+        0 12px 32px rgba(220, 38, 38, 0.6),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    border-left-width: 4px;
+    border-right-width: 4px;
+}
+
+/* Ikony */
+.cta-icons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.cta-lightning {
+    animation: pulse-glow 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+}
+
+.cta-eye {
+    animation: blink 4s ease-in-out infinite;
+}
+
+/* Tekst pionowy */
+.cta-text-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.cta-text-vertical span {
+    white-space: nowrap;
+}
+
+.cta-divider {
+    font-size: 10px;
+    opacity: 0.5;
+    margin: 4px 0;
+}
+
+.cta-arrow {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffd700;
+    animation: bounce-arrow 2s ease-in-out infinite;
+}
+
+/* Animacje */
+@keyframes blink {
+    0%, 90%, 100% { opacity: 1; }
+    93%, 97% { opacity: 0.3; }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { 
+        transform: scale(1);
+        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+    }
+    50% { 
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.9));
+    }
+}
+
+@keyframes bounce-arrow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+/* ========================================
+   BOT RESPONSIVE - Mniejsze przyciski
+   ======================================== */
+
+/* Główne przyciski (Znajdź część, Status, etc) */
+.action-button,
+.bot-column .action-button,
+.bot-content .action-button {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    min-height: 44px !important;
+    margin: 6px 0 !important;
+}
+
+/* Grid przycisków */
+.button-grid,
+.actions-grid {
+    gap: 8px !important;
+}
+
+/* Przyciski w footerze */
+footer button,
+.footer-actions button {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+}
+
+/* Input pole */
+#user-input {
+    font-size: 14px !important;
+    padding: 12px 16px !important;
+}
+
+/* Przyciski kategorii (Samochód, Dostawczy, etc) */
+.category-button,
+.vehicle-button {
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+}
+
+/* Responsive dla małych ekranów */
+@media (max-width: 1400px) {
+    .vertical-cta-bar {
+        left: calc(50% - 210px);
+        width: 55px;
+        padding: 16px 6px;
+    }
+    
+    .cta-icons {
+        font-size: 20px;
+    }
+    
+    .cta-text-vertical {
+        font-size: 10px;
+    }
+    
+    .action-button,
+    .bot-column .action-button {
+        padding: 8px 14px !important;
+        font-size: 13px !important;
+        min-height: 40px !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .vertical-cta-bar {
+        display: none; /* Ukryj na mniejszych ekranach */
+    }
+}
+
+@media (max-width: 768px) {
+    .action-button,
+    .bot-column .action-button {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+    }
+}
+
+
+/* Bot column musi być relative dla CTA bar */
+.bot-column {
+    position: relative !important;
+}
+
+/* Fix dla overlappingu z TCD */
+.demo-container {
+    position: relative;
+}
+
+.bot-column {
+    position: relative;
+    z-index: 10;
+}
+
+.dashboard-column {
+    position: relative;
+    z-index: 5;
+}
+</style>
+
 </body>
 </html>
