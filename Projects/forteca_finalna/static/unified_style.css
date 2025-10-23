@@ -3945,33 +3945,37 @@ pricing-main {
 
 .demo-cta-btn:hover {
     background: #2563eb;
-}
+}/* ========================================
+   CLEAN FIXES - Only essential changes
+   ======================================== */
 
-/* ===== FIX OBRÓCONY TEKST ===== */
+/* 1. FIX OBRÓCONY TEKST */
 .arguments-cta,
 .arguments-cta *,
 .arguments-cta h3,
-.arguments-cta p,
-.arguments-cta .cta-content,
-.arguments-cta .cta-buttons {
+.arguments-cta p {
     transform: none !important;
     writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
 }
 
-/* ===== PRZYCISK CTA W HEADERZE ===== */
+/* 2. USUŃ VERTICAL BAR (jeśli był w CSS) */
+.vertical-cta-bar {
+    display: none !important;
+}
+
+/* 3. PRZYCISK CTA W HEADERZE - Style */
 .header-cta-link {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 20px;
+    padding: 8px 16px;
     background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     color: white !important;
     text-decoration: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    margin-left: 16px;
+    margin-left: 12px;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     white-space: nowrap;
@@ -3980,133 +3984,47 @@ pricing-main {
 .header-cta-link:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5);
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
 }
 
-.header-cta-link .cta-icon {
-    font-size: 16px;
-}
-
-/* ===== MNIEJSZE PRZYCISKI W BOCIE ===== */
-.action-button {
-    padding: 10px 16px !important;
-    font-size: 14px !important;
-    min-height: 44px !important;
-}
-
-.button-grid {
-    gap: 8px !important;
-}
-
-.category-button,
-.vehicle-button {
-    padding: 12px 18px !important;
-    font-size: 14px !important;
-}
-
-@media (max-width: 1400px) {
-    .action-button {
-        padding: 8px 14px !important;
-        font-size: 13px !important;
-    }
-}
-
-
-/* ===== REMOVE VERTICAL BAR ===== */
-.vertical-cta-bar,
-.vertical-cta-bar * {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-/* ===== HEADER RESPONSIVE ===== */
+/* 4. HEADER RESPONSIVE - ISO nie spłaszczony */
 .security-badge,
 .iso-badge {
     padding: 6px 12px !important;
     font-size: 12px !important;
+    min-width: 80px !important;
 }
 
-.badge-ecommerce {
+.header-badges {
+    gap: 8px !important;
+}
+
+/* 5. PRZYCISKI MNIEJSZE */
+.bot-column button,
+.bot-content button {
+    padding: 8px 14px !important;
     font-size: 13px !important;
-    padding: 6px 12px !important;
+    min-height: 40px !important;
 }
 
+.button-grid {
+    gap: 6px !important;
+}
+
+/* 6. RESPONSIVE */
 @media (max-width: 1400px) {
-    .header-content {
-        flex-wrap: wrap !important;
-        gap: 12px !important;
+    .header-cta-link {
+        font-size: 12px;
+        padding: 7px 14px;
     }
     
-    .header-badges {
-        gap: 8px !important;
-    }
-    
-    .security-badge,
-    .iso-badge {
-        padding: 5px 10px !important;
-        font-size: 11px !important;
+    .bot-column button {
+        padding: 7px 12px !important;
+        font-size: 12px !important;
     }
 }
 
 @media (max-width: 1200px) {
-    .header-left {
-        flex: 1 1 100% !important;
-    }
-    
-    .header-right {
-        flex: 1 1 100% !important;
-        justify-content: flex-start !important;
-    }
-}
-
-/* ===== MNIEJSZE PRZYCISKI - AGGRESSIVE ===== */
-/* Wszystkie przyciski w bocie */
-.bot-column button,
-.bot-column .action-button,
-.bot-column [class*="button"],
-.bot-content button,
-.app-container button {
-    padding: 8px 14px !important;
-    font-size: 13px !important;
-    min-height: 40px !important;
-    margin: 4px 0 !important;
-}
-
-/* Konkretne przyciski */
-button[class*="Znajdź"],
-button[class*="Status"],
-button[class*="pytanie"],
-button[class*="Restart"],
-button[class*="Zwroty"],
-button[class*="Kontakt"] {
-    padding: 8px 12px !important;
-    font-size: 13px !important;
-}
-
-/* Grid z przyciskami */
-.button-grid,
-.actions-grid,
-[class*="grid"] {
-    gap: 6px !important;
-}
-
-/* Przyciski kategorii (Samochód, Dostawczy) */
-.category-button,
-.vehicle-button,
-button[class*="Samochód"],
-button[class*="Dostawczy"],
-button[class*="Motocykl"],
-button[class*="Powrót"] {
-    padding: 10px 16px !important;
-    font-size: 13px !important;
-    min-height: 42px !important;
-}
-
-@media (max-width: 1400px) {
-    .bot-column button,
-    .bot-content button {
-        padding: 7px 12px !important;
-        font-size: 12px !important;
-        min-height: 38px !important;
+    .header-content {
+        flex-wrap: wrap !important;
     }
 }
