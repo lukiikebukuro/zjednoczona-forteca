@@ -4028,3 +4028,18 @@ pricing-main {
         flex-wrap: wrap !important;
     }
 }
+
+
+/* P1, Zadanie 2: KOREKTA UX DLA WIADOMOŚCI POWITALNEJ */
+
+/* Wiadomość powitalna jest typu 'welcome', a jej zawartość ma klasę '.message-content' */
+.message.welcome .message-content {
+  /* Zwiększamy maksymalną szerokość dla tej jednej wiadomości. 
+     Ustawiamy na stałą wartość 450px, aby wymusić zmieszczenie się tekstu. */
+  max-width: 450px !important; 
+}
+
+/* Opcjonalnie: Jeśli używasz dedykowanej klasy dla wiadomości powitalnej (np. .bot-message) */
+.bot-message .message-content.welcome {
+  max-width: 450px !important; 
+}
