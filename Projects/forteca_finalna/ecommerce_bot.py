@@ -2165,7 +2165,7 @@ Filtr Nonsensu: Wpisz asdfgh jkl. (Odróżniamy szum od sygnału),
         
         if action == 'search_product':
             return {
-                'text_message': """🔧 **Wyszukiwarka części**
+                'text_message': """\U0001F527 **Wyszukiwarka części**"""
 
 Wybierz typ pojazdu:""",
                 'buttons': [
