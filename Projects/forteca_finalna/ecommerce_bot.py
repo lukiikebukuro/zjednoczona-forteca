@@ -18,6 +18,29 @@ from fuzzywuzzy import fuzz, process
 from typing import Tuple, List, Dict, Optional
 
 
+def load_welcome_message_from_config():
+    """Ładuje wiadomość powitalną z pliku JSON."""
+    config_path = 'config_teksty.json'
+    try:
+        # Używamy 'utf-8' dla poprawnego odczytu emoji 🧪
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config_data = json.load(f)
+
+        # Łączymy linie z tablicy w jeden string, używając znaku nowej linii
+        welcome_lines = config_data.get('welcome_message_lines', [])
+        return "\n".join(welcome_lines)
+
+    except FileNotFoundError:
+        print(f"BŁĄD KRYTYCZNY: Nie znaleziono pliku {config_path}. Używam domyślnego powitania.")
+        return "Błąd: Nie można załadować konfiguracji powitania."
+    except Exception as e:
+        print(f"BŁĄD KRYTYCZNY: Błąd podczas ładowania {config_path}: {e}")
+        return "Błąd: Nie można załadować konfiguracji powitania."
+
+# --- ZAŁADOWANIE KONFIGURACJI PRZY STARCIE ---
+# Ta zmienna będzie zawierać gotowy tekst powitania
+GLOBAL_WELCOME_MESSAGE = load_welcome_message_from_config()
+
 class EcommerceBot:
     def __init__(self):
         self.product_database = {}
@@ -2124,19 +2147,12 @@ class EcommerceBot:
     
     def get_initial_greeting(self) -> Dict:
         """Powitanie"""
+        
+        # Używamy globalnej zmiennej wczytanej z config_teksty.json
+        # zamiast "hardcoded" tekstu.
+        
         return {
-            'text_message': """🚗 Witaj w Auto Parts Pro
-
-Jestem asystentem sprzedażowym zbudowanym na silniku analitycznym Adept, który widzi więcej niż zwykła wyszukiwarka.
-
-**Rzuć mi wyzwanie. Przetestuj moją inteligencję:**
-
-- **Sprawdź, jak radzę sobie z literówką:** wpisz "kloki bosh e90"
-- **Zobacz, jak identyfikuję utracony popyt:** wpisz "klocki bmw e62" lub "klocki ferrari"
-- **Przetestuj mój filtr antyszumowy:** wpisz "asdfgh jkl"
-
-**A teraz wpisz własną, skomplikowaną nazwę części i obserwuj na żywo, jak klasyfikuję Twoje intencje na dashboardzie po prawej stronie.**
-""",
+            'text_message': GLOBAL_WELCOME_MESSAGE,
             'buttons': [
                 {'text': '🔧 Znajdź część', 'action': 'search_product'},
                 {'text': '📦 Status zamówienia', 'action': 'order_status'},
