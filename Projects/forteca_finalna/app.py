@@ -4,6 +4,7 @@ from auth_manager import init_login_manager, User, require_client_access, requir
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, make_response
 from datetime import datetime, timezone, timedelta
 from ecommerce_bot import EcommerceBot
+from dateutil import parser
 import sqlite3
 import json
 import time
@@ -13,12 +14,24 @@ import os
 import requests
 import uuid
 import csv
-import user_agents  # Po linii 13
+import user_agents
+import logging
+from logging.handlers import RotatingFileHandler
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address  # Po linii 13
 
 
 
 # Flask app configuration
 app = Flask(__name__)
+# === KONFIGURACJA LIMITERA ===
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["1000 per day", "100 per hour"],
+    storage_uri="memory://",
+    strategy="fixed-window"
+)
 login_manager = init_login_manager(app)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
@@ -28,6 +41,35 @@ app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_PERMANENT'] = False
+
+# === KONFIGURACJA LOGGINGU ===
+if not app.debug:
+    log_file = 'adept_ai_app.log'
+    
+    # Handler rotacyjny: 10MB na plik, 5 backupów
+    file_handler = RotatingFileHandler(
+        log_file,
+        maxBytes=10*1024*1024,  # 10 MB
+        backupCount=5
+    )
+    
+    # Formatter logów (z czasem, poziomem, wiadomością i numerem linii)
+    formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s '
+        '[in %(pathname)s:%(lineno)d]'
+    )
+    file_handler.setFormatter(formatter)
+    
+    # Ustaw poziom logowania dla handlera
+    file_handler.setLevel(logging.INFO)
+    
+    # Dodaj handler do loggera aplikacji Flask
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    
+    # Log startu aplikacji (Krok 2.4 - część 1)
+    app.logger.info('Adept AI Application startup')
+# ===============================
 
 # Initialize SocketIO for dashboard
 socketio = SocketIO(app, 
@@ -219,6 +261,7 @@ def demo_page():
     return render_template('demo_page.html')
 
 @app.route('/motobot-prototype/bot/start', methods=['POST'])
+@limiter.limit("20/minute")
 def bot_start():
     """Initialize bot session"""
     try:
@@ -234,6 +277,7 @@ def bot_start():
     
     except Exception as e:
         print(f"[ERROR] Bot start error: {e}")
+        app.logger.error(f"Bot start error: {e}", exc_info=True)
         return jsonify({
             'reply': {
                 'text_message': f'Wystąpił błąd podczas inicjalizacji: {str(e)}',
@@ -244,6 +288,7 @@ def bot_start():
         }), 500
 
 @app.route('/motobot-prototype/bot/send', methods=['POST'])
+@limiter.limit("100/minute")
 def bot_send():
     """Handle user messages - BEZ integracji z TCD"""
     try:
@@ -252,6 +297,7 @@ def bot_send():
         button_action = data.get('button_action', '')
         
         print(f"[DEBUG] Message: {user_message}, Action: {button_action}")
+        app.logger.info(f"Received message: '{user_message}', Action: '{button_action}'")
         
         # Process button action or text message
         if button_action:
@@ -266,6 +312,7 @@ def bot_send():
     
     except Exception as e:
         print(f"[ERROR] Bot send error: {e}")
+        app.logger.error(f"Bot send error: {e}", exc_info=True)
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -278,6 +325,7 @@ def bot_send():
         }), 500
 
 @app.route('/motobot-prototype/search-suggestions', methods=['POST'])
+@limiter.limit("100/minute")
 def search_suggestions():
     """Real-time search suggestions - BEZ integracji z TCD (tylko sugestie)"""
     try:
@@ -358,12 +406,14 @@ def search_suggestions():
     
     except Exception as e:
         print(f"[ERROR] Search suggestions error: {e}")
+        app.logger.error(f"Search suggestions error: {e}", exc_info=True)
         import traceback
         traceback.print_exc()
         return jsonify({'suggestions': [], 'error': str(e)}), 200
 
 # === NOWY ENDPOINT - FINALNA ANALIZA DLA TCD ===
 @app.route('/motobot-prototype/api/analyze_query', methods=['POST'])
+@limiter.limit("100/minute")
 def analyze_query():
     """
     NOWY ENDPOINT - Doktryna Cierpliwego Nasłuchu
@@ -454,6 +504,7 @@ def analyze_query():
         
     except Exception as e:
         print(f"[ERROR] Final analysis error: {e}")
+        app.logger.error(f"Final analysis error: {e}", exc_info=True)
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -1775,13 +1826,18 @@ def handle_session_start(session_id, data):
         if isinstance(entry_time, str):
             # Parse ISO datetime i usuń timezone info
             try:
-                from dateutil import parser
+                # 'from dateutil import parser' ZOSTAŁO PRZENIESIONE NA GÓRĘ PLIKU
                 entry_time_dt = parser.parse(entry_time)
                 entry_time = entry_time_dt.replace(tzinfo=None).isoformat()
-            except:
-                # Fallback - użyj current time
+            except Exception as e_parser:
+                # Log błędu parsowania i użyj fallback
+                print(f"[WARNING] Dateutil parse error: {e_parser}. Falling back to now.")
+                app.logger.warning(f"Dateutil parse error for entry_time '{entry_time}': {e_parser}")
                 entry_time = datetime.now().isoformat()
-        
+        else:
+            # Fallback dla braku daty
+            entry_time = datetime.now().isoformat()
+            
         # Zapisz sesję
         cursor.execute('''
             INSERT OR REPLACE INTO visitor_sessions (
@@ -1809,12 +1865,14 @@ def handle_session_start(session_id, data):
         conn.close()
         
         print(f"[VISITOR TRACKING] Session saved: {session_id[:8]}... from {data.get('org', 'Unknown')}")
+        app.logger.info(f"Visitor session started: {session_id[:8]}... from {data.get('org', 'Unknown')}")
         return {'status': 'success', 'message': 'Session started'}
         
     except Exception as e:
         print(f"[ERROR] Session start failed: {e}")
         import traceback
         traceback.print_exc()
+        app.logger.error(f"Handle session start failed: {e}", exc_info=True) # Dodany logging błędu
         return {'status': 'error', 'message': str(e)}
 
 def handle_bot_query(session_id, data):
@@ -1864,16 +1922,18 @@ def handle_bot_query(session_id, data):
         # 
         # socketio.emit('new_event', event_data)  # WYŁĄCZONE - używamy live_feed_update
         
+        # === POPRAWIONY RETURN ===
+        # Usunięto odwołanie do 'event_id', które nie jest już tutaj definiowane.
         return {
             'status': 'success',
             'classification': decision,
             'confidence': analysis['confidence_level'],
-            'potential_value': potential_value,
-            'event_id': event_id
+            'potential_value': potential_value
         }
         
     except Exception as e:
         print(f"[ERROR] Bot query tracking failed: {e}")
+        app.logger.error(f"Handle bot query failed: {e}", exc_info=True) # Dodany logging błędu
         return {'status': 'error', 'message': str(e)}
 
 def get_visitor_context(session_id):
