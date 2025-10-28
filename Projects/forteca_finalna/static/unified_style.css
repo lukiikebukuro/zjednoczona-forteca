@@ -154,8 +154,8 @@ body {
 
 .resize-handle:hover {
     width: 8px;
-    background: linear-gradient(180deg, #b91c1c, var(--bot-primary-color));
-    box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+    background: linear-gradient(180deg, #3a54bb, var(--bot-primary-color));
+    box-shadow: 0 0 15px rgba(32, 96, 233, 0.44);
 }
 
 .resize-grip {
@@ -4042,4 +4042,286 @@ pricing-main {
 /* Opcjonalnie: Jeśli używasz dedykowanej klasy dla wiadomości powitalnej (np. .bot-message) */
 .bot-message .message-content.welcome {
   max-width: 450px !important; 
+}
+
+
+/* ===== OPERACJA "SZTANDAR" (Dla .bot-header) ===== */
+
+.bot-header {
+    background: linear-gradient(135deg, #0d47a1, #1976d2) !important; /* Ciemny, stalowy niebieski */
+    color: #ffffff !important;
+    padding: 0.75rem 1.25rem !important; 
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    text-align: left;
+    border-bottom: 1px solid #0d47a1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bot-header strong {
+    color: #fdd835 !important; /* Kontrastowy złoty/żółty */
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    margin-right: 5px;
+}
+
+
+/* ================================================= */
+/* ===== OPERACJA "BŁĘKITNA STAL" (DEMO APP) ===== */
+/* ================================================= */
+
+/* 1. Nagłówek okna czatu (był czerwony) */
+.chat-header {
+    background: linear-gradient(135deg, #0d47a1, #1976d2) !important;
+    color: white !important; /* Upewniamy się, że tekst jest biały */
+}
+
+/* 2. Przycisk "Nowa sesja" (był czerwony) */
+.reset-btn {
+    background: #1976d2 !important;
+    border-color: #0d47a1 !important;
+}
+.reset-btn:hover {
+    background: #0d47a1 !important;
+}
+
+/* 3. Przycisk "Wyślij" (był czerwony) */
+.send-btn {
+    background: #1976d2 !important;
+    color: white !important;
+}
+.send-btn:hover {
+    background: #0d47a1 !important;
+}
+
+/* 4. Dymki użytkownika (były czerwone) */
+.user-message .message-content {
+    background: linear-gradient(135deg, #0d47a1, #1976d2) !important;
+    color: var(--bot-white) !important;
+}
+
+/* 5. Awatar użytkownika (był czerwony) */
+.user-message .message-avatar {
+    background: linear-gradient(135deg, #0d47a1, #1976d2) !important;
+}
+
+/* 6. Zmienne globalne (dla pewności) */
+:root {
+    --bot-primary-color: #1976d2 !important;
+    --bot-secondary-color: #0d47a1 !important;
+}
+
+
+/* ================================================= */
+/* ===== OPERACJA "LATARNIA" (Styling CTA) ===== */
+/* ================================================= */
+
+/* 1. Definicja animacji pulsowania */
+@keyframes pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0 rgba(253, 216, 53, 0.7); /* Złoty kolor cienia */
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(253, 216, 53, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(253, 216, 53, 0);
+  }
+}
+
+/* 2. Styl bazowy przycisku CTA */
+.header-cta-link {
+    background: #fdd835 !important; /* Złoty/żółty - ten sam co <strong> */
+    color: #212529 !important; /* Ciemny tekst dla czytelności na żółtym tle */
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    
+    /* Aplikacja animacji */
+    animation: pulse-animation 2s infinite;
+}
+
+.header-cta-link .cta-icon {
+    margin-right: 6px;
+}
+
+/* 3. Styl przy najechaniu (Hover) */
+.header-cta-link:hover {
+    background: #fbc02d !important; /* Lekko ciemniejszy złoty */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Zatrzymujemy animację i lekko powiększamy */
+    animation: none;
+    transform: scale(1.03);
+}
+
+
+/* ================================================= */
+/* ===== OPERACJA "SZAFIR I DIAMENT" (Wzmocnienie CTA) ===== */
+/* ================================================= */
+
+/* 1. Nowa, mocniejsza animacja pulsowania - Biały blask na szafirowym tle */
+@keyframes pulse-animation-strong {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); /* Biały, mocny blask */
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); /* Większy zasięg */
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* 2. Styl bazowy przycisku CTA - Głęboki niebieski z białym tekstem */
+.header-cta-link {
+    background: linear-gradient(135deg, #0d47a1, #1976d2) !important; /* Ten sam gradient, co w tle */
+    color: #ffffff !important; /* Biały tekst - luksusowy kontrast */
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1rem !important; /* Lekko większy padding */
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Głebszy cień */
+    border: 1px solid #ffffff33 !important; /* Subtelna biała ramka */
+    transition: all 0.3s ease;
+    
+    /* Aplikacja NOWEJ, mocniejszej animacji */
+    animation: pulse-animation-strong 1.5s infinite ease-out; /* Szybsza i bardziej widoczna */
+}
+
+.header-cta-link .cta-icon {
+    margin-right: 8px; /* Lekko większy odstęp od ikony */
+    font-size: 1.1em; /* Lekko większa ikona */
+}
+
+/* 3. Styl przy najechaniu (Hover) */
+.header-cta-link:hover {
+    background: linear-gradient(135deg, #1976d2, #0d47a1) !important; /* Odwrócony gradient lub ciemniejszy */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4); /* Jeszcze głębszy cień */
+    animation: none; /* Zatrzymujemy animację */
+    transform: scale(1.05); /* Mocniejsze powiększenie */
+}
+
+
+/* ================================================= */
+/* ===== OPERACJA "SZAFIR I DIAMENT" v2 (NAPRAWA PULSOWANIA) ===== */
+/* ================================================= */
+
+/* 1. Definicja animacji (bez zmian) */
+@keyframes pulse-animation-strong {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); /* Biały, mocny blask */
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); /* Większy zasięg */
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* 2. Styl bazowy przycisku CTA (NAPRAWIONY) */
+.header-cta-link {
+    background: linear-gradient(135deg, #0d47a1, #1976d2) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1rem !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid #ffffff33 !important;
+    
+    /* --- PANCERNA REGUŁA ANIMACJI --- */
+    /* Usuwamy 'transition', aby uniknąć konfliktu */
+    /* Używamy !important, aby nic tego nie nadpisało */
+    animation-name: pulse-animation-strong !important;
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+    animation-timing-function: ease-out !important;
+}
+
+.header-cta-link .cta-icon {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+/* 3. Styl przy najechaniu (Hover) */
+.header-cta-link:hover {
+    background: linear-gradient(135deg, #1976d2, #0d47a1) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    
+    /* Zatrzymujemy animację */
+    animation-name: none !important; 
+    
+    /* Dodajemy transition TYLKO dla efektu hover */
+    transition: all 0.3s ease; 
+    transform: scale(1.05);
+}
+
+
+/* ================================================= */
+/* ===== OPERACJA "SZAFIR I DIAMENT" v3 (Atak Specyficznością) ===== */
+/* ================================================= */
+
+/* 1. Definicja animacji (bez zmian) */
+@keyframes pulse-animation-strong {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); /* Biały, mocny blask */
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); /* Większy zasięg */
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* 2. Styl bazowy CTA (Używamy BARDZO specyficznej ścieżki) */
+/* Celujemy: .header-right -> .header-badges -> .header-cta-link */
+.header-right .header-badges .header-cta-link {
+    background: linear-gradient(135deg, #0d47a1, #1976d2) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1rem !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid #ffffff33 !important;
+    
+    /* --- PANCERNA REGUŁA ANIMACJI --- */
+    animation-name: pulse-animation-strong !important;
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+    animation-timing-function: ease-out !important;
+    
+    /* "Hack" zmuszający przeglądarkę do akceleracji sprzętowej */
+    transform: translateZ(0); 
+}
+
+.header-right .header-badges .header-cta-link .cta-icon {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+/* 3. Styl przy najechaniu (Hover) */
+.header-right .header-badges .header-cta-link:hover {
+    background: linear-gradient(135deg, #1976d2, #0d47a1) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    
+    /* Zatrzymujemy animację */
+    animation-name: none !important; 
+    
+    /* Dodajemy transition TYLKO dla efektu hover */
+    transition: all 0.3s ease; 
+    transform: scale(1.05) translateZ(0); /* Utrzymujemy akcelerację */
 }
