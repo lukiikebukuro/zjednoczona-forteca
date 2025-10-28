@@ -2127,28 +2127,16 @@ class EcommerceBot:
         return {
             'text_message': """🚗 Witaj w Auto Parts Pro
 
-⚡ Adept AI (Moto) - Zobacz, Gdzie Tracisz Pieniądze
-Witaj! Testujesz nasz uniwersalny silnik analityczny, wytrenowany na danych z branży motoryzacyjnej. Zobacz, jak radzi sobie z zapytaniami, które kosztują Cię utraconą sprzedaż.
+Jestem asystentem sprzedażowym zbudowanym na silniku analitycznym Adept, który widzi więcej niż zwykła wyszukiwarka.
 
-Przetestuj Kluczowe Funkcje:
+**Rzuć mi wyzwanie. Przetestuj moją inteligencję:**
 
-Podstawa: Wpisz klocki bmw e90 lub filtr oleju mann.
+- **Sprawdź, jak radzę sobie z literówką:** wpisz "kloki bosh e90"
+- **Zobacz, jak identyfikuję utracony popyt:** wpisz "klocki bmw e62" lub "klocki ferrari"
+- **Przetestuj mój filtr antyszumowy:** wpisz "asdfgh jkl"
 
-Literówki: Wpisz kloki bosh lub amortyztor sachs.
-
-Kody Produktów: Wpisz GDB1748 lub HU719/7x.
-
-Slang Branżowy: Wpisz części beemka lub aku varta.
-
-🔥 POKAŻ MI UTRACONE PIENIĄDZE (Lost Demand - Różne Scenariusze):
-
-Produkt Premium Spoza Oferty: Wpisz klocki ferrari. (System wie, że tego nie masz).
-
-Konkretny Model Spoza Oferty: Wpisz klocki bmw x3. (System rozumie zapytanie, ale brakuje produktu).
-
-Nieznana Marka/Kod?: Wpisz filtr oleju XYZCorp lub tarcze ABC123DEF. (System wykrywa potencjalnie wartościowe, ale nieznane zapytania).
-
-Filtr Nonsensu: Wpisz asdfgh jkl. (Odróżniamy szum od sygnału),
+**A teraz wpisz własną, skomplikowaną nazwę części i obserwuj na żywo, jak klasyfikuję Twoje intencje na dashboardzie po prawej stronie.**
+""",
             'buttons': [
                 {'text': '🔧 Znajdź część', 'action': 'search_product'},
                 {'text': '📦 Status zamówienia', 'action': 'order_status'},
@@ -2165,7 +2153,7 @@ Filtr Nonsensu: Wpisz asdfgh jkl. (Odróżniamy szum od sygnału),
         
         if action == 'search_product':
             return {
-                'text_message': """\U0001F527 **Wyszukiwarka części**
+                'text_message': """🔧 **Wyszukiwarka części**
 
 Wybierz typ pojazdu:""",
                 'buttons': [
