@@ -11,3 +11,7 @@ maxminddb
 geoip2
 python-dotenv
 user-agents
+Flask-Limiter
+Flask-WTF
+Flask-Talisman
+python-dateutil
