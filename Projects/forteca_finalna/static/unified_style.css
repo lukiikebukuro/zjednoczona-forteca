@@ -4287,8 +4287,8 @@ pricing-main {
 /* 2. Styl bazowy CTA (Używamy BARDZO specyficznej ścieżki) */
 /* Celujemy: .header-right -> .header-badges -> .header-cta-link */
 .header-right .header-badges .header-cta-link {
-    background: linear-gradient(135deg, #0d47a1, #1976d2) !important;
-    color: #ffffff !important;
+    background: linear-gradient(135deg, #FFD700 0%, #F5A623 100%) !important;
+    color: #333 !important;
     font-weight: 700 !important;
     border-radius: 8px !important;
     padding: 0.6rem 1rem !important;
